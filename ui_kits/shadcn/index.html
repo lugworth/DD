@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic × shadcn/ui</title>
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* ── shadcn token contract → digidelic v2.1 ─────────────────── */
+:root{
+  --radius:0px;
+  --background:#0a0a0a; --foreground:#ffffff;
+  --card:#111110; --card-foreground:#ffffff;
+  --popover:#1a1a18; --popover-foreground:#ffffff;
+  --primary:#eaff00; --primary-foreground:#000000;
+  --secondary:#1a1a18; --secondary-foreground:#ffffff;
+  --muted:#1a1a18; --muted-foreground:rgba(255,255,255,.55);
+  --accent:#202020; --accent-foreground:#eaff00;
+  --destructive:#ff0066; --destructive-foreground:#ffffff;
+  --border:rgba(255,255,255,.12); --input:rgba(255,255,255,.14); --ring:#eaff00;
+  --chart-1:#eaff00; --chart-2:#00d9ff; --chart-3:#ff2d87; --chart-4:#0a84e0; --chart-5:#12b39b;
+  /* dd extensions */
+  --coral:#ff6050; --sky:#0a84e0; --teal:#12b39b; --lime:#c6ff3a; --orange:#ff5a00; --green:#39ff6a; --cyan:#00d9ff; --pink:#ff2d87;
+  --font-mono:'Geist Mono','Red Hat Mono',ui-monospace,monospace;
+  --font-sans:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box;border-color:var(--border)}
+html,body{margin:0;background:var(--background);color:var(--foreground);font-family:var(--font-mono);font-size:14px;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-sans);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;margin:0}
+a{color:var(--sky);text-decoration:none}
+::selection{background:var(--primary);color:#000}
+
+/* layout */
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px 80px}
+.chk{height:8px;background-color:var(--coral);background-image:linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%),linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+header{padding:28px 20px 22px;border-bottom:1px solid var(--border);margin-bottom:28px;position:relative;overflow:hidden}
+header .tex{position:absolute;inset:0;background-image:url('../../assets/tex-crossgrid.png');background-size:300px;mix-blend-mode:screen;opacity:.10;pointer-events:none}
+header .inner{max-width:1080px;margin:0 auto;position:relative}
+.kicker{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted-foreground);margin-bottom:8px}
+header h1{font-size:48px;line-height:.95}
+header h1 .y{color:var(--primary)} header h1 .s{color:var(--sky)}
+.lede{font-family:var(--font-sans);color:var(--muted-foreground);max-width:620px;margin-top:12px;font-size:15px;line-height:1.6;text-transform:none;letter-spacing:0}
+
+section{margin-top:40px}
+.sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sec-h h2{font-size:16px;letter-spacing:.12em}
+.sec-h .ix{font-size:10px;color:var(--muted-foreground);letter-spacing:.2em}
+.sec-h .ln{flex:1;height:1px;background:var(--border)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:8px}
+.cap{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted-foreground);margin:14px 0 8px}
+.cap:first-child{margin-top:0}
+.grid{display:grid;gap:14px}
+@media(min-width:720px){.cols-3{grid-template-columns:repeat(3,1fr)}.cols-2{grid-template-columns:repeat(2,1fr)}}
+
+/* ── BUTTON ── shadcn variants ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border:1px solid transparent;cursor:pointer;transition:all .14s cubic-bezier(.22,1,.36,1);white-space:nowrap;background:transparent;color:var(--foreground)}
+.btn:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.btn-default{background:var(--primary);color:var(--primary-foreground)}
+.btn-default:hover{background:#000;color:var(--primary);border-color:var(--primary)}
+.btn-secondary{background:var(--secondary);color:var(--secondary-foreground)}
+.btn-secondary:hover{background:var(--accent)}
+.btn-destructive{background:var(--destructive);color:#fff}
+.btn-destructive:hover{filter:brightness(1.15)}
+.btn-outline{border-color:var(--input);background:transparent;color:var(--foreground)}
+.btn-outline:hover{background:var(--accent);color:var(--accent-foreground);border-color:var(--primary)}
+.btn-ghost{background:transparent}
+.btn-ghost:hover{background:var(--accent);color:var(--accent-foreground)}
+.btn-link{background:transparent;color:var(--sky);text-transform:none;letter-spacing:.02em;font-weight:600}
+.btn-link:hover{text-decoration:underline}
+.btn-sm{height:28px;padding:0 11px;font-size:10px}
+.btn-lg{height:44px;padding:0 22px;font-size:13px}
+.btn-icon{width:36px;height:36px;padding:0}
+.btn-checker{background-color:var(--coral);color:#000;background-image:linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%),linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%);background-size:12px 12px;background-position:0 0,6px 6px;text-shadow:0 1px 2px #000}
+.pip{width:6px;height:6px;background:currentColor;flex-shrink:0}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);color:var(--card-foreground)}
+.card-header{padding:16px;border-bottom:1px solid var(--border)}
+.card-title{font-family:var(--font-sans);font-weight:900;font-size:20px;text-transform:uppercase;letter-spacing:-.01em}
+.card-desc{font-family:var(--font-sans);color:var(--muted-foreground);font-size:13px;margin-top:4px;text-transform:none;letter-spacing:0;line-height:1.5}
+.card-content{padding:16px}
+.card-footer{padding:16px;border-top:1px solid var(--border);display:flex;gap:8px}
+.kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--muted-foreground);font-size:9px;letter-spacing:.14em;text-transform:uppercase}
+
+/* ── INPUT / TEXTAREA / SELECT ── */
+.label{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-foreground);margin-bottom:6px}
+.input,.textarea,.select{width:100%;background:transparent;border:1px solid var(--input);color:var(--foreground);font-family:var(--font-mono);font-size:13px;padding:0 12px;height:36px;outline:none;transition:border-color .14s}
+.input:focus,.textarea:focus,.select:focus{border-color:var(--ring);box-shadow:0 0 0 2px color-mix(in oklab,var(--ring) 25%,transparent)}
+.input::placeholder{color:rgba(255,255,255,.3)}
+.textarea{height:80px;padding:10px 12px;resize:none}
+.select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted-foreground) 50%),linear-gradient(135deg,var(--muted-foreground) 50%,transparent 50%);background-position:calc(100% - 16px) 15px,calc(100% - 11px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;border:1px solid}
+.badge-default{background:var(--primary);color:#000;border-color:var(--primary)}
+.badge-secondary{background:var(--secondary);color:var(--foreground);border-color:var(--border)}
+.badge-destructive{background:var(--destructive);color:#fff;border-color:var(--destructive)}
+.badge-outline{background:transparent;color:var(--foreground)}
+.badge-ok{color:var(--green);border-color:var(--green)}
+.badge-info{color:var(--cyan);border-color:var(--cyan)}
+
+/* ── TABS ── */
+.tabs-list{display:inline-flex;border:1px solid var(--border);background:var(--card)}
+.tab-trigger{padding:8px 16px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-foreground);cursor:pointer;border-right:1px solid var(--border);background:transparent;font-family:var(--font-mono)}
+.tab-trigger:last-child{border-right:none}
+.tab-trigger[data-active="true"]{background:var(--primary);color:#000}
+.tab-panel{padding:16px;border:1px solid var(--border);border-top:none;font-family:var(--font-sans);color:var(--muted-foreground);font-size:13px;line-height:1.6}
+.tab-panel[hidden]{display:none}
+
+/* ── SWITCH ── */
+.switch{width:38px;height:20px;background:var(--input);border:1px solid var(--border);position:relative;cursor:pointer;flex-shrink:0;transition:background .14s}
+.switch[data-on="true"]{background:var(--primary);border-color:var(--primary)}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;background:#000;transition:left .14s cubic-bezier(.22,1,.36,1)}
+.switch[data-on="true"]::after{left:22px}
+.switch-row{display:flex;align-items:center;gap:10px}
+
+/* ── CHECKBOX / RADIO ── */
+.check{width:16px;height:16px;border:1px solid var(--input);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.check[data-on="true"]{background:var(--primary);border-color:var(--primary)}
+.check[data-on="true"]::after{content:'✕';color:#000;font-size:11px;font-weight:700;line-height:1}
+.radio{width:16px;height:16px;border:1px solid var(--input);cursor:pointer;position:relative;flex-shrink:0}
+.radio[data-on="true"]{border-color:var(--primary)}
+.radio[data-on="true"]::after{content:'';position:absolute;inset:3px;background:var(--primary)}
+.opt{display:flex;align-items:center;gap:9px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--foreground);cursor:pointer}
+
+/* ── ALERT ── */
+.alert{border:1px solid var(--border);padding:14px 16px;display:flex;gap:12px;background:var(--card)}
+.alert-icon{font-size:16px;line-height:1.2;flex-shrink:0}
+.alert-title{font-family:var(--font-sans);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:13px;margin-bottom:3px}
+.alert-desc{font-family:var(--font-sans);color:var(--muted-foreground);font-size:12px;line-height:1.5;text-transform:none;letter-spacing:0}
+.alert-destructive{border-color:var(--destructive)}
+.alert-destructive .alert-icon,.alert-destructive .alert-title{color:var(--destructive)}
+
+/* ── PROGRESS / SLIDER ── */
+.progress{height:8px;background:var(--secondary);border:1px solid var(--border);overflow:hidden}
+.progress-bar{height:100%;background:var(--primary)}
+.slider{height:36px;display:flex;align-items:center}
+.slider-track{flex:1;height:4px;background:var(--secondary);position:relative}
+.slider-range{position:absolute;left:0;top:0;bottom:0;background:var(--primary)}
+.slider-thumb{position:absolute;top:50%;width:14px;height:14px;background:#000;border:2px solid var(--primary);transform:translate(-50%,-50%)}
+
+/* ── AVATAR / SKELETON ── */
+.avatar{width:40px;height:40px;background:var(--secondary);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:900;font-family:var(--font-sans);color:var(--primary);font-size:15px}
+.skeleton{height:12px;background:linear-gradient(90deg,var(--secondary),var(--accent),var(--secondary));background-size:200% 100%;animation:sk 1.4s linear infinite}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── TOOLTIP / DIALOG ── */
+.dialog-scrim{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.dialog{background:var(--card);border:1px solid var(--primary);max-width:420px;width:100%}
+.dialog-body{padding:20px}
+.dialog .card-title{margin-bottom:6px}
+
+/* table */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-foreground);padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05)}
+tr:hover td{background:var(--accent)}
+
+.dot{width:6px;height:6px;flex-shrink:0}
+.muted{color:var(--muted-foreground)}
+.foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--border);font-size:11px;color:var(--muted-foreground);letter-spacing:.06em;line-height:1.8}
+code{background:var(--secondary);border:1px solid var(--border);padding:1px 5px;font-size:11px;color:var(--lime)}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<header>
+  <div class="tex"></div>
+  <div class="inner">
+    <div class="kicker">// digidelic × shadcn/ui · themed component kit</div>
+    <h1><span class="y">SHADCN</span> / <span class="s">UI</span></h1>
+    <p class="lede">Every shadcn/ui primitive, re-skinned through the digidelic token contract — acid-yellow primary, near-black surfaces, zero radius, neon status. Drop <code>globals.css</code> into a real shadcn project and these are your components.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- BUTTONS -->
+  <section>
+    <div class="sec-h"><h2>Button</h2><span class="ix">01 · all variants</span><div class="ln"></div></div>
+    <div class="cap">// variants</div>
+    <div class="row">
+      <button class="btn btn-default"><span class="pip"></span>Default</button>
+      <button class="btn btn-secondary">Secondary</button>
+      <button class="btn btn-destructive">Destructive</button>
+      <button class="btn btn-outline">Outline</button>
+      <button class="btn btn-ghost">Ghost</button>
+      <button class="btn btn-link">Link</button>
+      <button class="btn btn-checker">▦ Engage</button>
+    </div>
+    <div class="cap">// sizes + icon</div>
+    <div class="row">
+      <button class="btn btn-default btn-sm">Small</button>
+      <button class="btn btn-default">Default</button>
+      <button class="btn btn-default btn-lg">Large</button>
+      <button class="btn btn-outline btn-icon">▶</button>
+      <button class="btn btn-outline btn-icon">■</button>
+      <button class="btn btn-default" disabled style="opacity:.4;cursor:not-allowed">Disabled</button>
+    </div>
+  </section>
+
+  <!-- CARDS -->
+  <section>
+    <div class="sec-h"><h2>Card</h2><span class="ix">02 · surfaces</span><div class="ln"></div></div>
+    <div class="grid cols-3">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Node-047</div><div class="card-desc">Relay class · sector A1.2</div></div>
+        <div class="card-content stack" style="gap:0">
+          <div class="kv"><span class="k">uptime</span><span>847:23:11</span></div>
+          <div class="kv"><span class="k">signal</span><span>92%</span></div>
+          <div class="kv"><span class="k">status</span><span style="color:var(--green)">▶ nominal</span></div>
+        </div>
+        <div class="card-footer"><button class="btn btn-default btn-sm" style="flex:1">Ping</button><button class="btn btn-outline btn-sm" style="flex:1">Log</button></div>
+      </div>
+      <div class="card" style="position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;background-image:url('../../assets/tex-flower-duotone.png');background-size:cover;mix-blend-mode:overlay;opacity:.3;pointer-events:none"></div>
+        <div class="card-header" style="position:relative"><div class="card-title" style="color:var(--coral)">Dispatch</div><div class="card-desc">Broadcast channel · zine-01</div></div>
+        <div class="card-content stack" style="gap:0;position:relative">
+          <div class="kv"><span class="k">issue</span><span>n.02</span></div>
+          <div class="kv"><span class="k">reach</span><span>4,210</span></div>
+          <div class="kv"><span class="k">layer</span><span style="color:var(--teal)">duotone</span></div>
+        </div>
+        <div class="card-footer" style="position:relative"><button class="btn btn-checker btn-sm" style="flex:1">Broadcast</button></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Telemetry</div><div class="card-desc">Live data feed</div></div>
+        <div class="card-content">
+          <div class="cap" style="margin-top:0">load</div><div class="progress"><div class="progress-bar" style="width:72%"></div></div>
+          <div class="cap">signal</div><div class="progress"><div class="progress-bar" style="width:92%;background:var(--cyan)"></div></div>
+          <div class="row" style="margin-top:14px;gap:6px">
+            <span class="badge badge-ok"><span class="dot" style="background:var(--green)"></span>OK</span>
+            <span class="badge badge-info">SCAN</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORM -->
+  <section>
+    <div class="sec-h"><h2>Form</h2><span class="ix">03 · input · select · switch · check</span><div class="ln"></div></div>
+    <div class="grid cols-2">
+      <div class="stack" style="gap:14px">
+        <div><label class="label">Sector ID</label><input class="input" placeholder="ENTER SECTOR — e.g. A1.2"></div>
+        <div><label class="label">Channel</label>
+          <select class="select"><option>SECTOR: A1.2</option><option>SECTOR: B6</option><option>SECTOR: X.06</option></select>
+        </div>
+        <div><label class="label">Transmission</label><textarea class="textarea" placeholder="// compose message..."></textarea></div>
+      </div>
+      <div class="stack" style="gap:16px">
+        <div class="switch-row"><div class="switch" data-on="true" onclick="this.dataset.on=this.dataset.on==='true'?'false':'true'"></div><span class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.1em">Signal active</span></div>
+        <div class="switch-row"><div class="switch" data-on="false" onclick="this.dataset.on=this.dataset.on==='true'?'false':'true'"></div><span class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.1em">Alarm relay</span></div>
+        <div class="cap" style="margin:0">// checkbox</div>
+        <div class="stack" style="gap:9px">
+          <label class="opt"><span class="check" data-on="true" onclick="this.dataset.on=this.dataset.on==='true'?'false':'true'"></span>Encrypt payload</label>
+          <label class="opt"><span class="check" data-on="false" onclick="this.dataset.on=this.dataset.on==='true'?'false':'true'"></span>Auto-retry</label>
+        </div>
+        <div class="cap" style="margin:0">// radio</div>
+        <div class="stack" style="gap:9px" id="radio-grp">
+          <label class="opt"><span class="radio" data-on="true"></span>Freelance</label>
+          <label class="opt"><span class="radio" data-on="false"></span>Contracted</label>
+          <label class="opt"><span class="radio" data-on="false"></span>Unbound</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABS + DIALOG + TOOLTIP -->
+  <section>
+    <div class="sec-h"><h2>Tabs · Dialog</h2><span class="ix">04 · overlay + nav</span><div class="ln"></div></div>
+    <div class="grid cols-2">
+      <div>
+        <div class="tabs-list" id="tabs">
+          <button class="tab-trigger" data-active="true" data-tab="0">Overview</button>
+          <button class="tab-trigger" data-active="false" data-tab="1">Telemetry</button>
+          <button class="tab-trigger" data-active="false" data-tab="2">Raw</button>
+        </div>
+        <div class="tab-panel" data-panel="0">Node operating within nominal parameters. All relays authenticated, signal integrity at 92%.</div>
+        <div class="tab-panel" data-panel="1" hidden>Live telemetry stream — 22.4 MB/s across 14 peers, latency 47ms.</div>
+        <div class="tab-panel" data-panel="2" hidden><code style="display:block;padding:8px">{ "node":"047", "sector":"A1.2", "status":"nominal" }</code></div>
+      </div>
+      <div class="stack" style="gap:12px">
+        <button class="btn btn-default" onclick="document.getElementById('dlg').style.display='flex'">Open Dialog</button>
+        <div class="alert">
+          <span class="alert-icon" style="color:var(--cyan)">▶</span>
+          <div><div class="alert-title">Heads up</div><div class="alert-desc">A new sector map is available. Re-sync to pull the latest node coordinates.</div></div>
+        </div>
+        <div class="alert alert-destructive">
+          <span class="alert-icon">▲</span>
+          <div><div class="alert-title">Critical</div><div class="alert-desc">Node-003 has gone dark. Last signal 47 cycles ago.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA: BADGE / TABLE / AVATAR / SLIDER -->
+  <section>
+    <div class="sec-h"><h2>Data Display</h2><span class="ix">05 · badge · table · slider</span><div class="ln"></div></div>
+    <div class="cap">// badges</div>
+    <div class="row">
+      <span class="badge badge-default">Default</span>
+      <span class="badge badge-secondary">Secondary</span>
+      <span class="badge badge-destructive">Destructive</span>
+      <span class="badge badge-outline">Outline</span>
+      <span class="badge badge-ok"><span class="dot" style="background:var(--green)"></span>Nominal</span>
+      <span class="badge badge-info"><span class="dot" style="background:var(--cyan)"></span>Scanning</span>
+    </div>
+    <div class="cap">// table</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Node</th><th>Sector</th><th>Class</th><th>Load</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>NODE-047</td><td>A1.2</td><td class="muted">Relay</td><td>72%</td><td><span style="color:var(--green)">▶ nominal</span></td></tr>
+          <tr><td>NODE-088</td><td>B6</td><td class="muted">Terminal</td><td>34%</td><td><span style="color:var(--orange)">▶ warning</span></td></tr>
+          <tr><td>NODE-003</td><td>X.06</td><td class="muted">Beacon</td><td>0%</td><td><span style="color:var(--destructive)">▶ critical</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid cols-3" style="margin-top:14px">
+      <div><div class="cap" style="margin-top:0">// avatar</div><div class="row"><div class="avatar">DD</div><div class="avatar" style="color:var(--coral)">X6</div><div class="avatar" style="color:var(--sky)">4R</div></div></div>
+      <div><div class="cap" style="margin-top:0">// slider</div><div class="slider"><div class="slider-track"><div class="slider-range" style="width:64%"></div><div class="slider-thumb" style="left:64%"></div></div></div></div>
+      <div><div class="cap" style="margin-top:0">// skeleton</div><div class="stack"><div class="skeleton" style="width:100%"></div><div class="skeleton" style="width:70%"></div><div class="skeleton" style="width:85%"></div></div></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    digidelic × shadcn/ui — themed component kit · v1.0<br>
+    Theme file: <code>ui_kits/shadcn/globals.css</code> · drop into a shadcn project (Tailwind v4) and run <code>npx shadcn@latest add button card …</code><br>
+    Tokens follow the shadcn variable contract (--primary, --card, --destructive, --ring, --chart-1..5, --sidebar-*) mapped to digidelic v2.1.
+  </div>
+</div>
+
+<!-- dialog -->
+<div class="dialog-scrim" id="dlg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="dialog">
+    <div class="dialog-body">
+      <div class="card-title">Deploy vector?</div>
+      <div class="card-desc" style="margin-bottom:16px">This dispatches a freelance vector to sector A1.2. The action is logged and cannot be recalled mid-transit.</div>
+      <div class="row" style="justify-content:flex-end">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('dlg').style.display='none'">Cancel</button>
+        <button class="btn btn-default btn-sm" onclick="document.getElementById('dlg').style.display='none'">Deploy ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// tabs
+document.getElementById('tabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab-trigger'); if(!t)return;
+  const i=t.dataset.tab;
+  document.querySelectorAll('#tabs .tab-trigger').forEach(b=>b.dataset.active=String(b.dataset.tab===i));
+  document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==i);
+});
+// radio group
+document.getElementById('radio-grp').addEventListener('click',e=>{
+  const o=e.target.closest('.opt'); if(!o)return;
+  document.querySelectorAll('#radio-grp .radio').forEach(r=>r.dataset.on='false');
+  o.querySelector('.radio').dataset.on='true';
+});
+</script>
+</body>
+</html>

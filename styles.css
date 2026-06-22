@@ -1,0 +1,16 @@
+/* ============================================================
+   digidelic Design System — root entry point
+   Link THIS file from a consumer and you get the whole system:
+     <link rel="stylesheet" href="styles.css">
+
+   It pulls in, in order:
+     1. colors_and_type.css — tokens (color, type, spacing, motion) + base element styles + motifs
+     2. glitch.css          — shared glitch layer + texture-overlay utilities
+   (glitch.js is a behaviour layer; load it separately with <script src="glitch.js"> where needed.)
+
+   For the shadcn/ui variable theme, see ui_kits/shadcn/globals.css.
+   For the Tailwind config, see tailwind.config.js.
+   ============================================================ */
+
+@import url('colors_and_type.css');
+@import url('glitch.css');

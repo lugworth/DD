@@ -1,0 +1,378 @@
+/**
+ * digidelic Design System — v2.0
+ * Rewritten from reference images:
+ *   · Marathon (2025, Bungie / Rigley) — saturated blue/magenta/green dithered environments
+ *   · WILLB / Clov / brutalist fitness UI refs — bold color blocks on black
+ *   · ASCII glitch-blob gif — organic black/white noise
+ *   · Bioluminescent green mushroom — vivid-on-void imagery
+ *
+ * LAW: pure black base. color arrives in SOLID BLOCKS, never gradients.
+ * LAW: zero border-radius. hard corners always.
+ * LAW: type is stacked, tracked, uppercase. multiple weights in one comp is intentional.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+/* Local brand mono — Geist Mono (variable weight) — PRIMARY UI/terminal font */
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Local brand mono — Red Hat Mono (variable weight) — alt/fallback mono */
+@font-face {
+  font-family: 'Red Hat Mono';
+  src: url('fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ─── BASE ──────────────────────────────────────────────── */
+  --black:        #000000;      /* universal canvas */
+  --black-soft:   #0a0a0a;      /* page bg */
+  --black-panel:  #111110;      /* surface */
+  --black-raised: #1a1a18;      /* elevated */
+  --white:        #ffffff;
+  --white-soft:   rgba(255,255,255,0.86);
+  --white-dim:    rgba(255,255,255,0.42);
+  --white-ghost:  rgba(255,255,255,0.12);
+
+  /* ─── THE 7 HEROES (sampled from refs) ──────────────────── */
+
+  /* ELECTRIC YELLOW — Clov, WILLB, hazard (brightest primary) */
+  --yellow:       #eaff00;
+  --yellow-deep:  #d4e800;
+
+  /* HOT PINK — WILLB, Clov, glitch hero, notification */
+  --pink:         #ff2d87;
+  --pink-hot:     #ff0066;
+
+  /* NEON GREEN — Marathon bioluminescent, Clov live states */
+  --green:        #39ff6a;
+  --green-deep:   #00d93d;
+
+  /* ELECTRIC BLUE — Marathon hero fill, dithered environments */
+  --blue:         #2d4cff;
+  --blue-deep:    #0018cc;
+
+  /* MAGENTA — Marathon glitch, chromatic aberration */
+  --magenta:      #c800ff;
+  --magenta-deep: #8a00bf;
+
+  /* CYAN — WILLB accent, data readout */
+  --cyan:         #00d9ff;
+
+  /* ─── ZINE LAYER (from update n.02 collage) ─────────────── */
+  /* SKY BLUE — soft electric blue, zine ground / surface */
+  --sky:    #0a84e0;
+  --periwinkle-lo: #4150d6;
+
+  /* CORAL — checkerboard, tribal dividers, marble swirl */
+  --red:           #ff6050;
+  --red-deep:      #d42218;
+
+  /* ACID LIME — spirograph / lissajous line overlays */
+  --lime:          #c6ff3a;
+
+  /* ─── SEMANTIC TEXT ─────────────────────────────────────── */
+  --fg:           var(--white);
+  --fg-soft:      var(--white-soft);
+  --fg-dim:       var(--white-dim);
+  --fg-ghost:     var(--white-ghost);
+
+  /* Text-on-color — always inverted to black for legibility */
+  --fg-on-color:  var(--black);
+
+  /* ─── SEMANTIC SURFACES ─────────────────────────────────── */
+  --bg-page:      var(--black-soft);
+  --bg-void:      var(--black);
+  --bg-surface:   var(--black-panel);
+  --bg-raised:    var(--black-raised);
+
+  /* ─── BORDERS ───────────────────────────────────────────── */
+  --border:       var(--white-ghost);
+  --border-hi:    rgba(255,255,255,0.25);
+  --border-solid: var(--white);
+
+  /* ─── STATUS ROLES ──────────────────────────────────────── */
+  --st-ok:        var(--green);
+  --st-live:      var(--green);
+  --st-alert:     var(--pink);
+  --st-err:       var(--pink-hot);
+  --st-warn:      var(--yellow);
+  --st-info:      var(--cyan);
+  --st-dead:      var(--white-ghost);
+
+  /* ─── TYPOGRAPHY ────────────────────────────────────────── */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono:    'Geist Mono', 'Red Hat Mono', 'Courier New', monospace;
+  --font-body:    'Space Grotesk', system-ui, sans-serif;
+
+  --text-2xs: 10px;
+  --text-xs:  11px;
+  --text-sm:  12px;
+  --text-md:  14px;
+  --text-lg:  16px;
+  --text-xl:  20px;
+  --text-2xl: 28px;
+  --text-3xl: 40px;
+  --text-4xl: 56px;
+  --text-5xl: 80px;
+  --text-6xl: 120px;
+
+  --fw-regular: 400;   /* @kind font */
+  --fw-semibold:600;   /* @kind font */
+  --fw-bold:    700;   /* @kind font */
+  --fw-black:   900;   /* @kind font */
+
+  --lh-tight:   0.95;  /* @kind font */
+  --lh-snug:    1.15;  /* @kind font */
+  --lh-base:    1.45;  /* @kind font */
+  --lh-relaxed: 1.65;  /* @kind font */
+
+  --ls-tight:  -0.02em; /* @kind font */
+  --ls-normal:  0;      /* @kind font */
+  --ls-wide:    0.06em; /* @kind font */
+  --ls-wider:   0.12em; /* @kind font */
+  --ls-widest:  0.22em; /* @kind font */
+
+  /* ─── SPACING — 4px base ────────────────────────────────── */
+  --sp-1:4px;  --sp-2:8px;  --sp-3:12px; --sp-4:16px;
+  --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+  --sp-12:48px;--sp-16:64px;--sp-20:80px;--sp-24:96px;
+
+  --radius: 0;  /* never anything else */
+
+  /* ─── MOTION ────────────────────────────────────────────── */
+  /* Durations — short + decisive. This is a machine, not a toy. */
+  --dur-instant: 60ms;   /* @kind other */
+  --dur-fast:    100ms;  /* @kind other */
+  --dur-base:    160ms;  /* @kind other */
+  --dur-slow:    260ms;  /* @kind other */
+
+  /* Easings — two fluid curves + one digital step.
+     snap  = quick out, for hovers/taps. flow = expo-out, for entrances.
+     step  = quantised, for glitch/digital reveals (on-brand). */
+  --ease:       linear;                        /* @kind other */
+  --ease-snap:  cubic-bezier(0.2, 0, 0, 1);    /* @kind other */
+  --ease-flow:  cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+  --ease-step:  steps(6, end);                 /* @kind other */
+
+  /* Composite transition presets — drop straight onto `transition:` */
+  --t-hover: color var(--dur-fast) var(--ease-snap),
+             background var(--dur-fast) var(--ease-snap),
+             border-color var(--dur-fast) var(--ease-snap),
+             box-shadow var(--dur-fast) var(--ease-snap); /* @kind other */
+  --t-move:  transform var(--dur-base) var(--ease-flow),
+             opacity var(--dur-base) var(--ease-flow); /* @kind other */
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  background: var(--bg-page);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  line-height: var(--lh-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-black);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  margin: 0 0 var(--sp-4);
+}
+h1 { font-size: var(--text-6xl); }
+h2 { font-size: var(--text-5xl); }
+h3 { font-size: var(--text-4xl); }
+h4 { font-size: var(--text-3xl); letter-spacing: var(--ls-normal); }
+h5 { font-size: var(--text-2xl); letter-spacing: var(--ls-wide); }
+h6 { font-size: var(--text-xl);  letter-spacing: var(--ls-wider); }
+
+p {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: var(--lh-relaxed);
+  margin: 0 0 var(--sp-4);
+}
+
+code, pre, kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--green);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+code { padding: 1px 5px; }
+pre  { padding: var(--sp-4); overflow-x: auto; }
+
+a {
+  color: var(--cyan);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0,217,255,0.35);
+}
+a:hover { color: var(--white); border-bottom-color: var(--cyan); }
+
+/* ============================================================
+   TEXTURES / MOTIFS
+   ============================================================ */
+
+/* Hazard stripes — diagonal yellow/black, etc. */
+.stripes-yellow { background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, var(--black) 14px 28px); }
+.stripes-pink   { background: repeating-linear-gradient(-45deg, var(--pink)   0 14px, var(--black) 14px 28px); }
+.stripes-cyan   { background: repeating-linear-gradient(-45deg, var(--cyan)   0 14px, var(--black) 14px 28px); }
+
+/* ── ZINE MOTIFS (from update n.02 collage) ──────────────── */
+
+/* Checkerboard banner — red/blue, the masthead motif. Tune cell w/ --chk. */
+.checker {
+  --chk: 38px;
+  background-color: var(--red);
+  background-image:
+    linear-gradient(45deg, var(--sky) 25%, transparent 25%, transparent 75%, var(--sky) 75%),
+    linear-gradient(45deg, var(--sky) 25%, transparent 25%, transparent 75%, var(--sky) 75%);
+  background-size: calc(var(--chk)*2) calc(var(--chk)*2);
+  background-position: 0 0, var(--chk) var(--chk);
+}
+.checker-sm { --chk: 16px; }
+
+/* Spirograph / lissajous overlay — thin acid-lime loops.
+   Use as a decorative layer: place an element with .spiro over imagery. */
+.spiro {
+  pointer-events: none;
+  background:
+    repeating-radial-gradient(ellipse 60% 42% at 50% 50%, transparent 0 6px, var(--lime) 6px 6.7px, transparent 6.7px 13px);
+  opacity: .8;
+  mix-blend-mode: screen;
+}
+
+/* Ticker strip — periwinkle band, repeating mono date/text. Wrap inline text. */
+.ticker {
+  background: var(--sky);
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  text-transform: lowercase;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 5px 0;
+}
+.ticker .run { display: inline-block; animation: ticker-run 22s linear infinite; }
+@keyframes ticker-run { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+@media (prefers-reduced-motion: reduce){ .ticker .run{ animation:none } }
+
+/* Arched / cathedral photo frame — round the TOP only, hard bottom. */
+.arch {
+  border-radius: 50% 50% 0 0 / 22% 22% 0 0;
+  overflow: hidden;
+}
+
+/* Tribal / barbed divider — red spiky rule built from clip-path chevrons. */
+.tribal {
+  height: 18px;
+  background: var(--red);
+  clip-path: polygon(
+    0 50%, 4% 0, 8% 50%, 12% 10%, 16% 50%, 20% 0, 24% 50%, 28% 10%, 32% 50%,
+    36% 0, 40% 50%, 44% 10%, 48% 50%, 52% 0, 56% 50%, 60% 10%, 64% 50%,
+    68% 0, 72% 50%, 76% 10%, 80% 50%, 84% 0, 88% 50%, 92% 10%, 96% 50%, 100% 0,
+    100% 100%, 0 100%);
+}
+
+/* Liquify / marble swirl frame — concentric wobble in red on white. */
+.marble {
+  background:
+    repeating-radial-gradient(circle at 40% 45%, var(--red) 0 3px, #fff 3px 9px, var(--red) 9px 11px, #fff 11px 18px);
+}
+
+/* Scanlines */
+.scanlines { position: relative; }
+.scanlines::after {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.16) 1px, rgba(0,0,0,0.16) 2px);
+  z-index: 2;
+}
+
+/* Dither — pixel grid */
+.dither {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* Glitch RGB split */
+.glitch { position: relative; display: inline-block; }
+.glitch::before, .glitch::after {
+  content: attr(data-text);
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.glitch::before { color: var(--pink);    left: 2px;  clip-path: polygon(0 20%,100% 20%,100% 40%,0 40%); opacity:.85; }
+.glitch::after  { color: var(--cyan);    left:-2px;  clip-path: polygon(0 55%,100% 55%,100% 75%,0 75%); opacity:.80; }
+
+/* ============================================================
+   INTERACTION — fluid states. Apply to any clickable surface.
+   ============================================================ */
+
+/* Base: anything that responds to the pointer transitions on the
+   hover preset. Add this class (or copy the transition) to make a
+   surface feel alive rather than instantaneous. */
+.fx {
+  transition: var(--t-hover);
+  cursor: pointer;
+}
+
+/* Lift — card / tile hover. Rises + hairline ring, snaps back on press. */
+.fx-lift { transition: var(--t-hover), transform var(--dur-base) var(--ease-flow); }
+.fx-lift:hover  { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--border-hi); }
+.fx-lift:active { transform: translateY(0); }
+
+/* Slide — list-row hover. Nudges inward, brightens ground. */
+.fx-slide { transition: var(--t-hover), padding-left var(--dur-base) var(--ease-flow); }
+.fx-slide:hover { background: var(--bg-surface); padding-left: calc(var(--sp-3) + 4px); }
+
+/* Fill — outline element floods with its accent on hover. */
+.fx-fill { transition: var(--t-hover); }
+.fx-fill:hover { background: var(--white); color: var(--black); }
+
+/* Glow — accent text/icon brightens + casts a faint bloom. */
+.fx-glow { transition: var(--t-hover), text-shadow var(--dur-fast) var(--ease-snap); }
+.fx-glow:hover { text-shadow: 0 0 8px currentColor; }
+
+/* Entrance — keyed mount reveal. flow-eased, no overshoot. */
+.fx-enter { animation: fx-enter var(--dur-slow) var(--ease-flow) both; }
+@keyframes fx-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Digital reveal — quantised entrance for glitch/system moments. */
+.fx-boot { animation: fx-enter var(--dur-slow) var(--ease-step) both; }
+
+/* ============================================================
+   FOCUS — keyboard reachability. Hard yellow ring, on-brand.
+   ============================================================ */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 1px;
+}
+
+/* ============================================================
+   REDUCED MOTION — honour the OS setting everywhere.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
