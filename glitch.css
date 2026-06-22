@@ -1,0 +1,278 @@
+/* ============================================================
+   digidelic — GLITCH LAYER (shared) · v2 fine-grain
+   Drop-in: <link rel="stylesheet" href="../glitch.css">
+            <body class="gl-stage"> ... </body>
+   Degraded-signal treatment — fine, high-frequency, sub-pixel.
+   Respects prefers-reduced-motion.
+   ============================================================ */
+
+/* ---- 1. STAGE: fine scanlines + sub-pixel RGB mask + soft flicker ---- */
+.gl-stage { position: relative; }
+
+/* high-density scanlines + vertical aperture-grille mask + faint chroma edge */
+.gl-stage::before {
+  content:''; position: fixed; inset: 0; pointer-events: none; z-index: 9998;
+  background:
+    /* horizontal scanlines — 1px line every 3px, low contrast */
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.10) 0 1px, rgba(0,0,0,0) 1px 3px),
+    /* vertical sub-pixel grille — softens edges, reads as "screen" not "blocks" */
+    repeating-linear-gradient(90deg, rgba(255,45,135,0.025) 0 1px, rgba(0,217,255,0.025) 1px 2px, rgba(0,0,0,0) 2px 3px),
+    /* faint chroma fringe at the bezel */
+    linear-gradient(90deg, rgba(255,45,135,0.035), transparent 5%, transparent 95%, rgba(0,217,255,0.035));
+  mix-blend-mode: screen;
+}
+/* rolling band + gentle flicker — smooth, not stepped */
+.gl-stage::after {
+  content:''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,0.03) 50%, transparent);
+  height: 26%;
+  animation: gl-roll 7s linear infinite, gl-flicker 5s ease-in-out infinite;
+}
+@keyframes gl-roll   { 0%{ transform: translateY(-40%);} 100%{ transform: translateY(420%);} }
+@keyframes gl-flicker{ 0%,100%{opacity:.85} 18%{opacity:.7} 33%{opacity:.92} 52%{opacity:.6} 71%{opacity:.88} 88%{opacity:.75} }
+
+/* periodic whole-card slip (frame-tear) — sub-pixel, fast, toggled by JS */
+.gl-stage[data-gl-tear="1"] { animation: gl-tear .12s linear; }
+@keyframes gl-tear {
+  0%{ transform: translate(0,0) }
+  30%{ transform: translate(-0.6px,0.4px) }
+  60%{ transform: translate(0.5px,-0.4px) }
+  100%{ transform: translate(0,0) }
+}
+
+/* ---- 2. RGB SPLIT for any element (add class gl-rgb + data-text) ---- */
+.gl-rgb { position: relative; }
+.gl-rgb::before, .gl-rgb::after {
+  content: attr(data-text); position: absolute; inset: 0;
+  pointer-events: none; opacity: .55;
+}
+/* finer clip bands (more of them = less "halved" look), tiny smooth offsets */
+.gl-rgb::before { color:#ff2d87; animation: gl-shX 3.2s ease-in-out infinite; clip-path: polygon(0 0,100% 0,100% 33%,0 33%); }
+.gl-rgb::after  { color:#00d9ff; animation: gl-shY 3.8s ease-in-out infinite; clip-path: polygon(0 67%,100% 67%,100% 100%,0 100%); }
+@keyframes gl-shX { 0%,100%{transform:translate(0,0)} 35%{transform:translate(-0.8px,0)} 55%{transform:translate(1px,-0.4px)} 80%{transform:translate(-0.5px,0.4px)} }
+@keyframes gl-shY { 0%,100%{transform:translate(0,0)} 30%{transform:translate(0.8px,0)} 55%{transform:translate(-1px,0.4px)} 78%{transform:translate(0.5px,-0.4px)} }
+
+/* ---- 3. TEXT JITTER — fine constant chromatic fringe (sub-pixel) ---- */
+.gl-text {
+  text-shadow: 0.5px 0 rgba(255,45,135,0.45), -0.5px 0 rgba(0,217,255,0.45);
+  animation: gl-jit 4.5s ease-in-out infinite;
+}
+@keyframes gl-jit {
+  0%,100%{ text-shadow: 0.5px 0 rgba(255,45,135,.45), -0.5px 0 rgba(0,217,255,.45) }
+  46%{ text-shadow: 0.8px 0 rgba(255,45,135,.55), -0.8px 0 rgba(0,217,255,.5) }
+  50%{ text-shadow: -0.6px 0 rgba(255,45,135,.6), 1px 0 rgba(0,217,255,.45) }
+  54%{ text-shadow: 0.5px 0 rgba(255,45,135,.45), -0.5px 0 rgba(0,217,255,.45) }
+}
+
+/* ---- 4. MICRO-SLICE — thin scanline-height tears (not big blocks) ---- */
+.gl-slice { position: relative; }
+.gl-slice[data-gl-tear="1"]::before,
+.gl-slice[data-gl-tear="1"]::after {
+  content:''; position:absolute; left:0; right:0; pointer-events:none;
+  height: 2px; mix-blend-mode: screen; opacity:.5;
+}
+.gl-slice[data-gl-tear="1"]::before {
+  top: var(--gl-slice-top, 28%);
+  background: rgba(0,217,255,0.9);
+  transform: translateX(var(--gl-slice-x, 3px));
+  box-shadow: 0 6px 0 -1px rgba(255,45,135,0.6), 0 -5px 0 -1px rgba(57,255,106,0.5);
+}
+.gl-slice[data-gl-tear="1"]::after {
+  top: var(--gl-slice-top2, 62%);
+  background: rgba(255,45,135,0.8);
+  transform: translateX(var(--gl-slice-x2, -2px));
+  box-shadow: 0 4px 0 -1px rgba(0,217,255,0.55);
+}
+
+/* ---- 5. NOISE grain overlay helper — fine, animated ---- */
+.gl-noise { position: relative; }
+.gl-noise::after {
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:1; opacity:.05;
+  background-image: radial-gradient(circle, #fff 0.4px, transparent 0.5px);
+  background-size: 2px 2px;
+  animation: gl-grain 0.6s steps(4,end) infinite;
+}
+@keyframes gl-grain {
+  0%{background-position:0 0} 25%{background-position:-1px 1px}
+  50%{background-position:1px -1px} 75%{background-position:-1px -1px} 100%{background-position:1px 1px}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gl-stage::after, .gl-rgb::before, .gl-rgb::after, .gl-text, .gl-noise::after { animation: none; }
+  .gl-stage[data-gl-tear]{ animation: none; }
+}
+
+/* ============================================================
+   6. TEXTURE OVERLAYS — sampled image refs as ambient layers
+   Robust pattern: a real positioned child, not a pseudo-element,
+   so it renders in every browser AND in thumbnail captures.
+   Usage:
+     <div class="tex-host">
+       <div class="tex tex-crossgrid"></div>   <!-- overlay -->
+       ...your content (gets z-index:1 automatically)...
+     </div>
+   Tune strength with --tex-op on the .tex element.
+   ============================================================ */
+.tex-host { position: relative; }
+.tex-host > *:not(.tex) { position: relative; z-index: 1; }
+
+.tex {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-repeat: repeat; background-position: center;
+}
+/* cross-grid: yellow/cyan/magenta plus-marks on black */
+.tex-crossgrid {
+  background-image: url('assets/tex-crossgrid.png');
+  background-size: 320px;
+  mix-blend-mode: screen;
+  opacity: var(--tex-op, 0.18);
+}
+/* fine tiled cross-grid as a sharp data-texture */
+.tex-grid-fine {
+  background-image: url('assets/tex-crossgrid.png');
+  background-size: 140px; image-rendering: pixelated;
+  mix-blend-mode: screen; opacity: var(--tex-op, 0.12);
+}
+/* flower duotone: coral/blue/teal */
+.tex-flower {
+  background-image: url('assets/tex-flower-duotone.png');
+  background-size: cover; background-repeat: no-repeat;
+  mix-blend-mode: overlay;
+  opacity: var(--tex-op, 0.30);
+}
+/* halftone portrait: warm dotted */
+.tex-halftone {
+  background-image: url('assets/tex-halftone-portrait.png');
+  background-size: cover; background-repeat: no-repeat; background-position: top center;
+  mix-blend-mode: screen;
+  opacity: var(--tex-op, 0.22);
+}
+/* psychedelic Shimoda portraits — rainbow-aura flower figures */
+.tex-psy1 {
+  background-image: url('assets/ref-psy-portrait-1.jpg');
+  background-size: cover; background-repeat: no-repeat; background-position: center;
+  mix-blend-mode: screen; opacity: var(--tex-op, 0.85);
+}
+.tex-psy2 {
+  background-image: url('assets/ref-psy-portrait-2.jpg');
+  background-size: cover; background-repeat: no-repeat; background-position: center;
+  mix-blend-mode: screen; opacity: var(--tex-op, 0.85);
+}
+
+/* ============================================================
+   7. PSYCHEDELIA ENGINE — swirls, rainbow aura, hue-cycle, liquid
+   Decorative layers. Place inside a .tex-host; they sit at z:0
+   behind content. All collapse under prefers-reduced-motion.
+   The .psy-liquid warp needs the #psyGoo SVG filter — glitch.js
+   injects it automatically on load.
+   ============================================================ */
+
+@keyframes psy-spin-cw  { to { transform: rotate(360deg); } }
+@keyframes psy-spin-ccw { to { transform: rotate(-360deg); } }
+/* hue is FIXED to the brand palette — we breathe saturation/brightness only,
+   never hue-rotate (which would drift colors off-palette into muddy tones). */
+@keyframes psy-sat      { 0%,100%{filter:saturate(1)} 50%{filter:saturate(1.4) brightness(1.08)} }
+@keyframes psy-sat-soft { 0%,100%{filter:saturate(1.05)} 50%{filter:saturate(1.3) brightness(1.05)} }
+.psy-hue   { animation: psy-sat 9s ease-in-out infinite; }
+.psy-hue-s { animation: psy-sat-soft 12s ease-in-out infinite; }
+
+/* big rotating multi-color psychedelic sun */
+.psy-sun {
+  position: absolute; width: 160%; aspect-ratio: 1; left: -30%; top: 50%;
+  transform: translateY(-50%); pointer-events: none; border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    #eaff00,#39ff6a,#00d9ff,#2d4cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#eaff00);
+  -webkit-mask: radial-gradient(circle, #000 0%, rgba(0,0,0,.5) 30%, transparent 62%);
+          mask: radial-gradient(circle, #000 0%, rgba(0,0,0,.5) 30%, transparent 62%);
+  mix-blend-mode: screen; opacity: .14;
+  animation: psy-spin-cw 120s linear infinite;
+}
+
+/* concentric ring swirl */
+.psy-swirl {
+  position: absolute; pointer-events: none; border-radius: 50%;
+  background: repeating-radial-gradient(circle at 50% 50%, transparent 0 6px, currentColor 6px 6.6px, transparent 6.6px 13px);
+  -webkit-mask: radial-gradient(circle at 50% 50%, #000 60%, transparent 72%);
+          mask: radial-gradient(circle at 50% 50%, #000 60%, transparent 72%);
+  opacity: .5; mix-blend-mode: screen;
+}
+/* conic pinwheel spiral */
+.psy-pinwheel {
+  position: absolute; pointer-events: none; border-radius: 50%;
+  background: conic-gradient(from 0deg, currentColor 0 8deg, transparent 8deg 30deg,
+            currentColor 30deg 38deg, transparent 38deg 60deg,
+            currentColor 60deg 68deg, transparent 68deg 90deg,
+            currentColor 90deg 98deg, transparent 98deg 120deg);
+  -webkit-mask: radial-gradient(circle, transparent 18%, #000 20%, #000 64%, transparent 70%);
+          mask: radial-gradient(circle, transparent 18%, #000 20%, #000 64%, transparent 70%);
+  opacity: .35; mix-blend-mode: screen;
+}
+
+/* rainbow chromatic-aura streak (Shimoda light-leak) — stays soft/blurred,
+   wave motion comes from transforms (never a displacement filter, which would
+   override the blur and harden the edges). */
+@keyframes psy-aura-drift {
+  0%,100% { transform: translateX(-50%) skewX(-9deg)  scaleY(1)    scaleX(1);   }
+  20%     { transform: translateX(-46%) skewX(7deg)   scaleY(1.08) scaleX(.92); }
+  40%     { transform: translateX(-54%) skewX(-12deg) scaleY(.95)  scaleX(1.1); }
+  60%     { transform: translateX(-48%) skewX(10deg)  scaleY(1.1)  scaleX(.9);  }
+  80%     { transform: translateX(-52%) skewX(-6deg)  scaleY(.97)  scaleX(1.05);}
+}
+.psy-aura {
+  position: absolute; top: -10%; left: 50%; width: 40%; height: 120%;
+  transform: translateX(-50%); pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(255,45,135,0) 0%, #ff2d87 14%, #ff5a00 28%, #eaff00 42%,
+    #39ff6a 56%, #00d9ff 70%, #2d4cff 82%, rgba(200,0,255,0) 100%);
+  filter: blur(16px); mix-blend-mode: screen; opacity: .55;
+  animation: psy-aura-drift 7s ease-in-out infinite;
+}
+.psy-aura-thin { width: 14%; filter: blur(9px); opacity: .7; }
+
+/* flowing rainbow gradient — fill (bars/strips) */
+@keyframes psy-grad-pan { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
+.psy-rainbow {
+  background: linear-gradient(90deg,#eaff00,#39ff6a,#00d9ff,#2d4cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#eaff00);
+  background-size: 300% 100%;
+  animation: psy-grad-pan 5s linear infinite;
+}
+/* flowing rainbow gradient — text */
+.psy-text {
+  background: linear-gradient(90deg,#eaff00,#39ff6a,#00d9ff,#c800ff,#ff2d87,#ff6050,#eaff00);
+  background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: psy-grad-pan 6s linear infinite;
+}
+/* chromatic-aberration pulse */
+@keyframes psy-aberr { 0%,100%{text-shadow:-1px 0 #ff2d87, 1px 0 #00d9ff} 50%{text-shadow:-2px 0 #ff2d87, 2px 0 #00d9ff} }
+.psy-aberr { animation: psy-aberr 2.4s ease-in-out infinite; }
+
+/* liquid warp (needs #psyGoo filter — auto-injected by glitch.js) */
+.psy-liquid { filter: url(#psyGoo); }
+/* stronger horizontal wave warp (needs #psyWave — auto-injected) */
+.psy-wave { filter: url(#psyWave); }
+
+/* pure-CSS undulating wave — skew + translate breathing (no filter needed) */
+@keyframes psy-undulate {
+  0%,100% { transform: skewX(-7deg) skewY(1.2deg) translateY(0)   scaleY(1); }
+  25%     { transform: skewX(5deg)  skewY(-1.4deg) translateY(-3px) scaleY(1.05); }
+  50%     { transform: skewX(8deg)  skewY(1deg)   translateY(2px)  scaleY(.96); }
+  75%     { transform: skewX(-4deg) skewY(-0.8deg) translateY(-2px) scaleY(1.04); }
+}
+.psy-undulate { animation: psy-undulate 7s ease-in-out infinite; transform-origin: center; }
+
+/* wavy ribbon — background-position sine pan + vertical wobble */
+@keyframes psy-ribbon {
+  0%   { background-position:0% 50%;   transform: translateY(0)   skewY(-1.5deg); }
+  50%  { background-position:150% 50%; transform: translateY(-2px) skewY(1.5deg); }
+  100% { background-position:300% 50%; transform: translateY(0)   skewY(-1.5deg); }
+}
+.psy-ribbon { background-size:300% 100%; animation: psy-ribbon 6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .psy-hue,.psy-hue-s,.psy-sun,.psy-swirl,.psy-pinwheel,.psy-aura,.psy-rainbow,.psy-text,.psy-aberr,
+  .psy-undulate,.psy-ribbon {
+    animation: none !important;
+  }
+}
