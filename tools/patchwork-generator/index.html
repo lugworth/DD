@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- @dsCard group="Tools" name="Patchwork Post Generator" subtitle="Live generative Instagram graphic — recursive patch grid with parameter rack" viewport="1280x720" -->
+<!-- @dsCard group="Tools" name="Patchwork Generator" subtitle="Live generative graphic — recursive patch grid with parameter rack" viewport="1280x720" -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -191,7 +191,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
   <header>
     <div class="brand"><span class="mark">digi<em>delic</em></span></div>
     <div class="title-block">
-      <h1>Patchwork Post Generator</h1>
+      <h1>Patchwork Generator</h1>
       <div class="sub">recursive patch grid · live parameter rack</div>
     </div>
     <div class="head-coords">
@@ -201,7 +201,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
 
   <main>
     <section class="stage" aria-label="canvas preview">
-      <span class="corner tl">FRAME ▶ IG</span>
+      <span class="corner tl">FRAME ▶ OUT</span>
       <span class="corner tr">B6</span>
       <span class="corner bl" id="cornerSeed">seed —</span>
       <span class="corner br">4R // 273</span>
@@ -626,7 +626,7 @@ function requestDraw(){
 function exportPNG(){
   const p=params();
   const H=artHeight(p.format);
-  const scale=2;                       // 2160px wide — crisp for IG
+  const scale=2;                       // 2160px wide
   const off=document.createElement('canvas');
   off.width=ART_W*scale; off.height=H*scale;
   const octx=off.getContext('2d');
