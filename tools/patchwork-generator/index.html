@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Patchwork Generator" subtitle="Live generative graphic — recursive patch grid with parameter rack" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — patchwork generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+/* global scanline */
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+/* ── LAYOUT ── */
+.app{display:flex;flex-direction:column;height:100%}
+header{
+  display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);
+  background:var(--black);flex:none;
+}
+.brand{
+  display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border);
+}
+.brand .mark{
+  font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;
+  text-transform:lowercase;
+}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{
+  font-family:var(--font-display);font-weight:700;font-size:15px;
+  text-transform:uppercase;letter-spacing:.12em;line-height:1;
+}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{
+  margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;
+  color:var(--white-dim);font-size:10px;letter-spacing:.18em;
+}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+
+/* ── STAGE ── */
+.stage{
+  flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;
+  padding:32px;background:var(--black-soft);
+}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{
+  content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none;
+}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#efead9}
+
+/* ── CONTROL RACK ── */
+.rack{
+  width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);
+  display:flex;flex-direction:column;min-height:0;
+}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{
+  display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;
+}
+.sect-head h2{
+  font-family:var(--font-display);font-weight:700;font-size:11px;
+  text-transform:uppercase;letter-spacing:.2em;
+}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+
+/* seed row */
+.seed-row{display:flex;gap:8px}
+.seed-read{
+  flex:1;display:flex;align-items:center;justify-content:space-between;
+  border:1px solid var(--border);padding:0 12px;height:36px;
+  font-size:12px;letter-spacing:.08em;color:var(--white-soft);background:var(--black-panel);
+}
+.seed-read .k{color:var(--white-dim);font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+.seed-read .v{color:var(--cyan)}
+
+/* buttons */
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+/* param row */
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{
+  display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;
+}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right}
+
+/* sliders — hard squares, yellow progress track */
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
+  --p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{
+  height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;
+  transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,
+input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{
+  height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));
+}
+input[type=range]::-moz-range-thumb{
+  width:12px;height:12px;background:var(--white);border:0;border-radius:0;
+}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+/* segmented control */
+.seg{display:flex;border:1px solid var(--border-hi)}
+.seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
+.seg button:last-child{border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+/* actions */
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black)}
+.actions button{flex:1;height:42px}
+
+/* footer status */
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:860px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:20px;min-height:60vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Patchwork Generator</h1>
+      <div class="sub">recursive patch grid · live parameter rack</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span>0x4F3A</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="canvas preview">
+      <span class="corner tl">FRAME ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerSeed">seed —</span>
+      <span class="corner br">4R // 273</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
+          <div class="seed-row">
+            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <button id="btnRandom" title="new random seed">⟳ Random</button>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Structure</h2><span class="coord">S.01</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Columns</span><span class="val" data-val="cols"></span></div>
+            <input type="range" id="cols" min="3" max="16" step="1" value="9">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Rows</span><span class="val" data-val="rows"></span></div>
+            <input type="range" id="rows" min="3" max="14" step="1" value="7">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Fragmentation</span><span class="val" data-val="frag"></span></div>
+            <input type="range" id="frag" min="0" max="100" step="1" value="45">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Seam strips</span><span class="val" data-val="seams"></span></div>
+            <input type="range" id="seams" min="0" max="6" step="1" value="3">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Ink</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Fill density</span><span class="val" data-val="density"></span></div>
+            <input type="range" id="density" min="0" max="100" step="1" value="55">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Stripe rate</span><span class="val" data-val="stripes"></span></div>
+            <input type="range" id="stripes" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Line detail</span><span class="val" data-val="lines"></span></div>
+            <input type="range" id="lines" min="0" max="100" step="1" value="60">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Tear noise</span><span class="val" data-val="tear"></span></div>
+            <input type="range" id="tear" min="0" max="100" step="1" value="30">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Palette</span></div>
+            <div class="seg" id="segPalette" role="group" aria-label="palette">
+              <button data-pal="paradise" class="is-active">Paradise</button>
+              <button data-pal="mono">Mono</button>
+              <button data-pal="digidelic">Digidelic</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Format</span></div>
+            <div class="seg" id="segFormat" role="group" aria-label="format">
+              <button data-fmt="square" class="is-active">1:1 Square</button>
+              <button data-fmt="portrait">4:5 Portrait</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Stroke weight</span><span class="val" data-val="stroke"></span></div>
+            <input type="range" id="stroke" min="0.5" max="2.5" step="0.1" value="1">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Margin</span><span class="val" data-val="margin"></span></div>
+            <input type="range" id="margin" min="0" max="90" step="1" value="28">
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnRegen">⟳ Regenerate</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>patchgen v1.0</b></div>
+    <div class="cell">cells <b id="statCells">0</b></div>
+    <div class="cell">render <b id="statMs">0ms</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════ RNG ═══════════════════ */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function weightedPick(rnd,items){
+  let total=0; for(const it of items) total+=it[1];
+  let r=rnd()*total;
+  for(const it of items){ r-=it[1]; if(r<=0) return it[0]; }
+  return items[items.length-1][0];
+}
+
+/* ═══════════════════ PALETTES ═══════════════════ */
+const PALETTES={
+  /* sampled from the "Patched Paradise" reference posts */
+  paradise:{
+    bg:'#efead9', ink:'#22201c',
+    colors:[
+      ['#d7402b',3.0],  // red
+      ['#2e62b5',3.0],  // blue
+      ['#e8721c',2.4],  // orange
+      ['#f2c230',1.6],  // yellow
+      ['#41773c',1.5],  // green
+      ['#a9c7e6',1.8],  // light blue
+    ],
+  },
+  /* black on cream — B&W carousel frames */
+  mono:{
+    bg:'#efead9', ink:'#191813',
+    colors:[['#191813',1]],
+  },
+  /* digidelic brand — neon blocks on void */
+  digidelic:{
+    bg:'#0a0a0a', ink:'rgba(255,255,255,0.45)',
+    colors:[
+      ['#eaff00',3.0],  // yellow
+      ['#ff2d87',2.4],  // pink
+      ['#2d4cff',2.2],  // blue
+      ['#39ff6a',1.6],  // green
+      ['#00d9ff',1.6],  // cyan
+      ['#c800ff',0.9],  // magenta
+    ],
+  },
+};
+
+/* ═══════════════════ STATE ═══════════════════ */
+const state={
+  seed:(Math.random()*0xffffffff)>>>0,
+  palette:'paradise',
+  format:'square',
+};
+const sliders=['cols','rows','frag','seams','density','stripes','lines','tear','stroke','margin'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  return {
+    cols:g('cols'), rows:g('rows'),
+    frag:g('frag')/100, seams:g('seams'),
+    density:g('density')/100, stripes:g('stripes')/100,
+    lines:g('lines')/100, tear:g('tear')/100,
+    stroke:g('stroke'), margin:g('margin'),
+    palette:state.palette, format:state.format,
+  };
+}
+
+/* ═══════════════════ GENERATOR ═══════════════════ */
+const ART_W=1080;
+let cellCount=0;
+
+function artHeight(fmt){ return fmt==='portrait' ? 1350 : 1080; }
+
+function render(ctx,W,H,p,seed){
+  const rnd=mulberry32(seed);
+  const pal=PALETTES[p.palette];
+  const pickColor=()=>weightedPick(rnd,pal.colors);
+  cellCount=0;
+
+  ctx.save();
+  ctx.fillStyle=pal.bg;
+  ctx.fillRect(0,0,W,H);
+
+  const m=p.margin;
+  const rx=m, ry=m, rw=W-m*2, rh=H-m*2;
+
+  /* ── column boundaries · irregular, plus narrow seam strips ── */
+  const nCols=Math.round(p.cols);
+  let weights=[];
+  for(let i=0;i<nCols;i++) weights.push(0.35+Math.pow(rnd(),2)*2.2);
+  // mark seam columns: force them very narrow
+  const seamIdx=new Set();
+  for(let s=0;s<p.seams;s++) seamIdx.add(1+Math.floor(rnd()*Math.max(1,nCols-2)));
+  seamIdx.forEach(i=>{ if(i<weights.length) weights[i]=0.06+rnd()*0.06; });
+  const wSum=weights.reduce((a,b)=>a+b,0);
+  const colX=[rx]; let acc=rx;
+  for(let i=0;i<nCols;i++){ acc+=weights[i]/wSum*rw; colX.push(acc); }
+  colX[colX.length-1]=rx+rw;
+
+  /* ── per-column rows (horizontal cuts don't align across columns) ── */
+  for(let c=0;c<nCols;c++){
+    const cx=colX[c], cw=colX[c+1]-cx;
+    const narrow=cw<32;
+    let nRows=narrow
+      ? 8+Math.floor(rnd()*22)                     // seam strips: dense stacks
+      : Math.max(2,Math.round(p.rows*(0.6+rnd()*0.9)));
+    let rWeights=[];
+    for(let i=0;i<nRows;i++) rWeights.push(0.3+Math.pow(rnd(),2)*2.4);
+    const rSum=rWeights.reduce((a,b)=>a+b,0);
+    let y=ry;
+    for(let r=0;r<nRows;r++){
+      const ch=rWeights[r]/rSum*rh;
+      renderCell(ctx,rnd,p,pal,pickColor,cx,y,cw,ch,3);
+      y+=ch;
+    }
+  }
+
+  /* ── full-width accent bands (the horizontal bars cutting the grid) ── */
+  let bandProb=0.7;
+  for(let b=0;b<3;b++){
+    if(rnd()>bandProb) break;
+    bandProb*=0.55;
+    const bh=8+rnd()*36;
+    const by=ry+rnd()*(rh-bh);
+    ctx.fillStyle=pickColor();
+    ctx.fillRect(rx,by,rw,bh);
+    if(rnd()<0.6){ // paired thin companion bar
+      ctx.fillStyle=pickColor();
+      ctx.fillRect(rx,by+bh+2,rw,2+rnd()*6);
+    }
+    ctx.strokeStyle=pal.ink; ctx.lineWidth=p.stroke*0.6;
+    ctx.strokeRect(rx,by,rw,bh);
+  }
+
+  /* ── tear noise: scanline debris rows ── */
+  const tears=Math.round(p.tear*9);
+  for(let t=0;t<tears;t++){
+    const ty=ry+rnd()*rh;
+    const nLines=3+Math.floor(rnd()*12);
+    for(let l=0;l<nLines;l++){
+      const lw=rw*(0.08+rnd()*0.55);
+      const lx=rx+rnd()*(rw-lw);
+      const lh=Math.max(1,rnd()*2.4);
+      ctx.fillStyle=rnd()<0.4?pal.ink:pickColor();
+      ctx.fillRect(lx,ty+(rnd()-0.5)*26,lw,lh);
+    }
+  }
+
+  /* outer hairline */
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=p.stroke;
+  ctx.strokeRect(rx,ry,rw,rh);
+  ctx.restore();
+}
+
+function renderCell(ctx,rnd,p,pal,pickColor,x,y,w,h,depth){
+  /* recursive fragmentation */
+  if(depth>0 && w>26 && h>26 && rnd()<p.frag){
+    const vertical = w/h>1.4 ? true : h/w>1.4 ? false : rnd()<0.5;
+    let n=2 + (rnd()<0.3?1:0) + (rnd()<0.15?1:0);
+    let weights=[]; for(let i=0;i<n;i++) weights.push(0.4+rnd()*1.6);
+    const sum=weights.reduce((a,b)=>a+b,0);
+    let off=0;
+    for(let i=0;i<n;i++){
+      const frac=weights[i]/sum;
+      if(vertical) renderCell(ctx,rnd,p,pal,pickColor,x+off*w,y,frac*w,h,depth-1);
+      else         renderCell(ctx,rnd,p,pal,pickColor,x,y+off*h,w,frac*h,depth-1);
+      off+=frac;
+    }
+    return;
+  }
+
+  cellCount++;
+  const S=p.stroke;
+
+  /* hairline border, sometimes dashed */
+  if(rnd()<p.lines){
+    ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.55;
+    if(rnd()<0.3) ctx.setLineDash([4,3+rnd()*4]); else ctx.setLineDash([]);
+    ctx.strokeRect(x,y,w,h);
+    ctx.setLineDash([]);
+  }
+
+  /* empty vs inked */
+  if(rnd()>p.density) return;
+
+  const style=weightedPick(rnd,[
+    ['solid',    3.0],
+    ['hstripes', 0.4+p.stripes*4.0],
+    ['vstripes', 0.2+p.stripes*1.0],
+    ['nested',   0.3+p.lines*2.0],
+    ['dashes',   0.3+p.lines*2.0],
+    ['halffill', 1.5],
+    ['subgrid',  1.0],
+  ]);
+
+  switch(style){
+    case 'solid':{
+      const inset=rnd()<0.3 ? Math.min(w,h)*0.1 : 0;
+      ctx.fillStyle=pickColor();
+      if(rnd()<0.25 && h>20){ // band within the cell
+        const bh=h*(0.2+rnd()*0.5);
+        ctx.fillRect(x+inset,y+rnd()*(h-bh),w-inset*2,bh);
+      }else{
+        ctx.fillRect(x+inset,y+inset,w-inset*2,h-inset*2);
+      }
+      break;
+    }
+    case 'hstripes':{
+      const c1=pickColor(), c2=rnd()<0.35?pickColor():null;
+      const sh=Math.max(1,(1+rnd()*2.4)*S);
+      const gap=sh+1+rnd()*6;
+      const fillFrac=rnd()<0.3 ? 0.3+rnd()*0.5 : 1;
+      const yEnd=y+h*fillFrac;
+      let i=0;
+      for(let sy=y+1;sy<yEnd-sh;sy+=gap,i++){
+        ctx.fillStyle=(c2&&i%2)?c2:c1;
+        ctx.fillRect(x+1,sy,w-2,sh);
+      }
+      break;
+    }
+    case 'vstripes':{
+      const c=pickColor();
+      const sw=Math.max(1,(1+rnd()*2.2)*S);
+      const gap=sw+1+rnd()*6;
+      ctx.fillStyle=c;
+      for(let sx=x+1;sx<x+w-sw;sx+=gap) ctx.fillRect(sx,y+1,sw,h-2);
+      break;
+    }
+    case 'nested':{
+      const k=2+Math.floor(rnd()*3);
+      const step=Math.min(w,h)*0.5/(k+1);
+      ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.55;
+      for(let i=1;i<=k;i++)
+        ctx.strokeRect(x+step*i,y+step*i,w-step*i*2,h-step*i*2);
+      if(rnd()<0.5){ // small filled corner square
+        const s=Math.min(w,h)*(0.15+rnd()*0.2);
+        const cx2=rnd()<0.5?x+2:x+w-s-2, cy2=rnd()<0.5?y+2:y+h-s-2;
+        ctx.fillStyle=rnd()<0.5?pal.ink:pickColor();
+        ctx.fillRect(cx2,cy2,s,s);
+      }
+      break;
+    }
+    case 'dashes':{
+      const k=2+Math.floor(rnd()*5);
+      ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.55;
+      ctx.setLineDash([3+rnd()*5,3+rnd()*5]);
+      for(let i=0;i<k;i++){
+        const dy=y+(i+0.5)/k*h;
+        ctx.beginPath(); ctx.moveTo(x+2,dy); ctx.lineTo(x+w-2,dy); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      break;
+    }
+    case 'halffill':{
+      const c=pickColor();
+      ctx.fillStyle=c;
+      const side=Math.floor(rnd()*4);
+      const f=0.3+rnd()*0.45;
+      if(side===0)      ctx.fillRect(x,y,w,h*f);
+      else if(side===1) ctx.fillRect(x,y+h*(1-f),w,h*f);
+      else if(side===2) ctx.fillRect(x,y,w*f,h);
+      else              ctx.fillRect(x+w*(1-f),y,w*f,h);
+      break;
+    }
+    case 'subgrid':{
+      const s=Math.max(5,Math.min(w,h)/(2+Math.floor(rnd()*4)));
+      for(let gy=y;gy<y+h-s*0.5;gy+=s){
+        for(let gx=x;gx<x+w-s*0.5;gx+=s){
+          if(rnd()<0.35){
+            ctx.fillStyle=rnd()<0.4?pal.ink:pickColor();
+            ctx.fillRect(gx+1,gy+1,Math.min(s,x+w-gx)-2,Math.min(s,y+h-gy)-2);
+          }
+        }
+      }
+      break;
+    }
+  }
+}
+
+/* ═══════════════════ DRAW / RESIZE ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+let rafPending=false;
+
+function fitCanvas(){
+  const H=artHeight(state.format);
+  const stage=document.querySelector('.stage');
+  const availW=stage.clientWidth-80, availH=stage.clientHeight-80;
+  const scale=Math.min(availW/ART_W,availH/H,1);
+  canvas.style.width=(ART_W*scale)+'px';
+  canvas.style.height=(H*scale)+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(ART_W*scale*dpr);
+  canvas.height=Math.round(H*scale*dpr);
+}
+
+function draw(){
+  rafPending=false;
+  const p=params();
+  const H=artHeight(p.format);
+  fitCanvas();
+  const t0=performance.now();
+  ctx.setTransform(canvas.width/ART_W,0,0,canvas.height/H,0,0);
+  render(ctx,ART_W,H,p,state.seed);
+  const ms=performance.now()-t0;
+  document.getElementById('statCells').textContent=cellCount;
+  document.getElementById('statMs').textContent=ms.toFixed(1)+'ms';
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+function requestDraw(){
+  if(!rafPending){ rafPending=true; requestAnimationFrame(draw); }
+}
+
+/* ═══════════════════ EXPORT ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const H=artHeight(p.format);
+  const scale=2;                       // 2160px wide
+  const off=document.createElement('canvas');
+  off.width=ART_W*scale; off.height=H*scale;
+  const octx=off.getContext('2d');
+  octx.setTransform(scale,0,0,scale,0,0);
+  render(octx,ART_W,H,p,state.seed);
+  off.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-patch-'+state.seed.toString(16).padStart(8,'0')+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(out){
+    if(el.id==='frag'||el.id==='density'||el.id==='stripes'||el.id==='lines'||el.id==='tear')
+      out.textContent=v+'%';
+    else if(el.id==='stroke') out.textContent=v.toFixed(1)+'px';
+    else if(el.id==='margin') out.textContent=v+'px';
+    else out.textContent=v;
+  }
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
+  syncSlider(el);
+});
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+    requestDraw();
+  });
+}
+wireSeg('segPalette','pal',v=>{ state.palette=v; });
+wireSeg('segFormat','fmt',v=>{ state.format=v; });
+
+document.getElementById('btnRandom').addEventListener('click',()=>{
+  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
+});
+document.getElementById('btnRegen').addEventListener('click',()=>{
+  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
+});
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+window.addEventListener('resize',requestDraw);
+window.addEventListener('keydown',e=>{
+  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); }
+  if(e.key==='e' && !e.target.closest('input')) exportPNG();
+});
+
+draw();
+</script>
+</body>
+</html>
