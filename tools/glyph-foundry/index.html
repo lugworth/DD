@@ -341,14 +341,16 @@ function drawAsemic(ctx,rnd,p,ink,x,y,s){
     nodes.push([nx(i)+(rnd()-0.5)*jit*2, ny(j)+(rnd()-0.5)*jit*2, i,j]);
   const idx=(i,j)=>j*NX+i;
 
-  const kStrokes=2+Math.round(p.complexity*3+rnd()*1.2);
+  const kStrokes=2+Math.round(p.complexity*5+rnd()*1.5);
   const usedEdges=new Set();
   const touched=new Set();
+  const ends=[];                                 // stroke endpoints for terminals
+  const W=ctx.lineWidth;
 
   let ci=Math.floor(rnd()*NX), cj=Math.floor(rnd()*NY);
   let steps=0, guard=0;
   ctx.strokeStyle=ink; ctx.lineCap='round'; ctx.lineJoin='round';
-  while(steps<kStrokes&&guard++<60){
+  while(steps<kStrokes&&guard++<80){
     const di=Math.floor(rnd()*3)-1, dj=Math.floor(rnd()*3)-1;
     if(di===0&&dj===0) continue;
     const ti=ci+di, tj=cj+dj;
@@ -358,6 +360,8 @@ function drawAsemic(ctx,rnd,p,ink,x,y,s){
     if(usedEdges.has(key)) continue;
     usedEdges.add(key); touched.add(a); touched.add(b);
     const [x1,y1]=nodes[a], [x2,y2]=nodes[b];
+    /* calligraphic contrast: some strokes drop to hairline weight */
+    ctx.lineWidth=rnd()<0.3 ? W*0.45 : W;
     ctx.beginPath(); ctx.moveTo(x1,y1);
     if(rnd()<p.curvature){
       const mx=(x1+x2)/2, my=(y1+y2)/2;
@@ -368,11 +372,47 @@ function drawAsemic(ctx,rnd,p,ink,x,y,s){
       ctx.lineTo(x2,y2);
     }
     ctx.stroke();
+    ends.push([x2,y2,x2-x1,y2-y1]);
     // occasionally hop to a fresh start node (second component)
     if(rnd()<0.25){ ci=Math.floor(rnd()*NX); cj=Math.floor(rnd()*NY); }
     else { ci=ti; cj=tj; }
     steps++;
   }
+  ctx.lineWidth=W;
+
+  /* end terminals — dot caps or perpendicular finishing ticks */
+  ctx.fillStyle=ink;
+  for(const [ex,ey,dx,dy] of ends){
+    if(rnd()>p.diacritics*0.4) continue;
+    if(rnd()<0.6){
+      ctx.beginPath(); ctx.arc(ex,ey,W*1.3,0,TAU); ctx.fill();
+    }else{
+      const len=Math.hypot(dx,dy)||1, t=s*0.055;
+      ctx.lineWidth=W*0.7;
+      ctx.beginPath();
+      ctx.moveTo(ex-dy/len*t,ey+dx/len*t);
+      ctx.lineTo(ex+dy/len*t,ey-dx/len*t);
+      ctx.stroke();
+      ctx.lineWidth=W;
+    }
+  }
+
+  /* small closed loop at a touched node — counters, like an eye in a letter */
+  if(rnd()<p.complexity*0.4&&touched.size){
+    const arr=[...touched];
+    const [lx,ly]=nodes[arr[Math.floor(rnd()*arr.length)]];
+    ctx.beginPath(); ctx.arc(lx,ly,s*0.07,0,TAU);
+    if(rnd()<0.4){ ctx.fillStyle=ink; ctx.fill(); } else ctx.stroke();
+  }
+
+  /* baseline bar anchoring the glyph, sometimes */
+  if(rnd()<0.22){
+    ctx.lineWidth=W*0.6;
+    const by=y+s*0.92;
+    ctx.beginPath(); ctx.moveTo(x+s*0.2,by); ctx.lineTo(x+s*0.8,by); ctx.stroke();
+    ctx.lineWidth=W;
+  }
+
   /* diacritics near unused nodes */
   ctx.fillStyle=ink;
   let marks=0;
@@ -380,10 +420,13 @@ function drawAsemic(ctx,rnd,p,ink,x,y,s){
     if(touched.has(n)) continue;
     if(rnd()>p.diacritics*0.55) continue;
     const [px,py]=nodes[n];
-    if(rnd()<0.7){
-      ctx.beginPath(); ctx.arc(px,py,ctx.lineWidth*1.1,0,TAU); ctx.fill();
-    }else{
+    const roll=rnd();
+    if(roll<0.55){
+      ctx.beginPath(); ctx.arc(px,py,W*1.1,0,TAU); ctx.fill();
+    }else if(roll<0.8){
       ctx.beginPath(); ctx.moveTo(px-s*0.05,py); ctx.lineTo(px+s*0.05,py); ctx.stroke();
+    }else{
+      ctx.beginPath(); ctx.arc(px,py,W*1.6,0,TAU); ctx.stroke();
     }
     marks++;
   }
@@ -397,11 +440,17 @@ function drawStack(ctx,rnd,p,ink,x,y,s){
   ctx.strokeStyle=ink; ctx.fillStyle=ink; ctx.lineCap='round';
   for(let i=0;i<n;i++){
     const cy=y+s*0.07+eh*(i+0.5);
-    const el=weightedPick(rnd,[['circle',2.4],['cross',2.2],['crescent',2.2],['tri',1.2],['dot',0.8],['bar',0.8]]);
+    const el=weightedPick(rnd,[
+      ['circle',2.4],['cross',2.2],['crescent',2.2],['tri',1.2],
+      ['dot',0.8],['bar',0.8],['horns',0.9],['rays',0.7],
+    ]);
     ctx.beginPath();
     if(el==='circle'){
       ctx.arc(cx,cy,r,0,TAU);
       if(rnd()<0.22){ ctx.fill(); } else ctx.stroke();
+      if(rnd()<p.complexity*0.4){                     // inner counter-dot
+        ctx.beginPath(); ctx.arc(cx,cy,ctx.lineWidth,0,TAU); ctx.fill();
+      }
     }else if(el==='cross'){
       ctx.moveTo(cx-r,cy); ctx.lineTo(cx+r,cy);
       ctx.moveTo(cx,cy-r); ctx.lineTo(cx,cy+r);
@@ -416,8 +465,28 @@ function drawStack(ctx,rnd,p,ink,x,y,s){
       if(rnd()<0.3) ctx.fill(); else ctx.stroke();
     }else if(el==='dot'){
       ctx.arc(cx,cy,ctx.lineWidth*1.2,0,TAU); ctx.fill();
+    }else if(el==='horns'){                           // paired outward arcs
+      ctx.arc(cx-r*0.55,cy,r*0.55,Math.PI*0.15,Math.PI*1.1);
+      ctx.moveTo(cx+r*1.1,cy);
+      ctx.arc(cx+r*0.55,cy,r*0.55,Math.PI*1.9,Math.PI*0.85);
+      ctx.stroke();
+    }else if(el==='rays'){                            // small circle, radiating ticks
+      ctx.arc(cx,cy,r*0.5,0,TAU); ctx.stroke();
+      const k=4+Math.floor(rnd()*3);
+      for(let j2=0;j2<k;j2++){
+        const a=-Math.PI/2+j2/k*TAU;
+        ctx.beginPath();
+        ctx.moveTo(cx+Math.cos(a)*r*0.65,cy+Math.sin(a)*r*0.65);
+        ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+        ctx.stroke();
+      }
     }else{
       ctx.moveTo(cx-r,cy); ctx.lineTo(cx+r,cy); ctx.stroke();
+    }
+    /* flanking side dots, sparingly */
+    if(rnd()<p.diacritics*0.16){
+      ctx.beginPath(); ctx.arc(cx-r*1.5,cy,ctx.lineWidth,0,TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx+r*1.5,cy,ctx.lineWidth,0,TAU); ctx.fill();
     }
   }
   /* connecting spine, sometimes */
@@ -430,6 +499,7 @@ function drawStack(ctx,rnd,p,ink,x,y,s){
 /* ── bauhaus solid primitive ── */
 function drawBauhaus(ctx,rnd,p,ink,x,y,s){
   const cx=x+s/2, cy=y+s/2, r=s*0.34;
+  const baseW=ctx.lineWidth;
   const kind=weightedPick(rnd,[
     ['disc',2],['ring',1.6],['semi',2.2],['wedge',2.2],['square',1.4],
     ['diamond',1.2],['star',1.6],['petals',1.6],
@@ -474,6 +544,36 @@ function drawBauhaus(ctx,rnd,p,ink,x,y,s){
     }
     ctx.beginPath(); ctx.arc(cx,cy,ctx.lineWidth,0,TAU); ctx.fill();
   }
+  ctx.lineWidth=baseW;
+
+  /* compound overlay — a second, quieter voice on top of the solid */
+  if(rnd()<p.complexity*0.55){
+    ctx.lineWidth=baseW*0.6;
+    const o=weightedPick(rnd,[['orbit',2],['crossbar',1.6],['satellite',1.6],['chord',1.2]]);
+    if(o==='orbit'){                     // offset outline circle
+      ctx.beginPath();
+      ctx.arc(cx+r*(rnd()-0.5)*0.8,cy+r*(rnd()-0.5)*0.8,r*(0.85+rnd()*0.45),0,TAU);
+      ctx.stroke();
+    }else if(o==='crossbar'){            // thin rule through the form
+      const a=Math.floor(rnd()*4)*Math.PI/4;
+      ctx.beginPath();
+      ctx.moveTo(cx-Math.cos(a)*r*1.35,cy-Math.sin(a)*r*1.35);
+      ctx.lineTo(cx+Math.cos(a)*r*1.35,cy+Math.sin(a)*r*1.35);
+      ctx.stroke();
+    }else if(o==='satellite'){           // small dot orbiting the corner
+      const a=rnd()*TAU;
+      ctx.beginPath();
+      ctx.arc(cx+Math.cos(a)*r*1.25,cy+Math.sin(a)*r*1.25,baseW*1.2,0,TAU);
+      ctx.fill();
+    }else{                               // straight chord across
+      const a1=rnd()*TAU, a2=a1+Math.PI*(0.5+rnd()*0.6);
+      ctx.beginPath();
+      ctx.moveTo(cx+Math.cos(a1)*r,cy+Math.sin(a1)*r);
+      ctx.lineTo(cx+Math.cos(a2)*r,cy+Math.sin(a2)*r);
+      ctx.stroke();
+    }
+    ctx.lineWidth=baseW;
+  }
 }
 
 function render(ctx,W,H,p,seed){
@@ -498,12 +598,24 @@ function render(ctx,W,H,p,seed){
   /* ── annotation furniture ── */
   if(p.notes>0.05){
     ctx.strokeStyle=pal.faint; ctx.lineWidth=Math.max(0.6,p.stroke*0.4);
-    /* hairline cell grid */
-    for(let c=0;c<=cols;c++){
-      ctx.beginPath(); ctx.moveTo(fx+c*cs,gy); ctx.lineTo(fx+c*cs,gy+rows*cs); ctx.stroke();
-    }
-    for(let r=0;r<=rows;r++){
-      ctx.beginPath(); ctx.moveTo(fx,gy+r*cs); ctx.lineTo(fx+fw,gy+r*cs); ctx.stroke();
+    if(p.notes<0.3){
+      /* quiet mode: crop-mark ticks at cell intersections only */
+      const t=Math.min(6,cs*0.08);
+      for(let c=0;c<=cols;c++)for(let r=0;r<=rows;r++){
+        const ix=fx+c*cs, iy=gy+r*cs;
+        ctx.beginPath();
+        ctx.moveTo(ix-t,iy); ctx.lineTo(ix+t,iy);
+        ctx.moveTo(ix,iy-t); ctx.lineTo(ix,iy+t);
+        ctx.stroke();
+      }
+    }else{
+      /* hairline cell grid */
+      for(let c=0;c<=cols;c++){
+        ctx.beginPath(); ctx.moveTo(fx+c*cs,gy); ctx.lineTo(fx+c*cs,gy+rows*cs); ctx.stroke();
+      }
+      for(let r=0;r<=rows;r++){
+        ctx.beginPath(); ctx.moveTo(fx,gy+r*cs); ctx.lineTo(fx+fw,gy+r*cs); ctx.stroke();
+      }
     }
     /* margin index labels */
     if(p.notes>0.3){
@@ -527,27 +639,54 @@ function render(ctx,W,H,p,seed){
     }
   }
 
+  /* ── 2×2 display feature cells — editorial focal points ── */
+  const occupied=new Set();
+  const features=[];
+  if(cols>=6&&rows>=4){
+    const fRnd=mulberry32(seed^0xFEA7);
+    const nFeat=1+(fRnd()<0.45?1:0);
+    let attempts=0;
+    while(features.length<nFeat&&attempts++<20){
+      const fc=1+Math.floor(fRnd()*(cols-3));
+      const fr2=1+Math.floor(fRnd()*(rows-3));
+      let clear=true;
+      for(let dr=0;dr<2;dr++)for(let dc=0;dc<2;dc++)
+        if(occupied.has((fr2+dr)*cols+(fc+dc))) clear=false;
+      if(!clear) continue;
+      for(let dr=0;dr<2;dr++)for(let dc=0;dc<2;dc++)
+        occupied.add((fr2+dr)*cols+(fc+dc));
+      features.push([fc,fr2]);
+      glyphCount-=4;                      // the +1 for the display glyph lands later
+    }
+  }
+
   /* ── glyph cells ── */
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
+      if(occupied.has(r*cols+c)) continue;
       const cellSeed=(seed^((r*131+c)*2654435761))>>>0;
       const grnd=mulberry32(cellSeed);
       const gx=fx+c*cs, gyy=gy+r*cs;
       const inset=cs*0.2;
       const bx=gx+inset, by=gyy+inset, bs=cs-inset*2;
 
-      /* accent treatment: colored glyph, or inverted chip */
+      /* accent treatment — restrained: colored ink, corner chip, or rare inverted cell */
       let ink=pal.ink;
       const aRoll=grnd();
       let inverted=false;
-      if(aRoll<p.accents*0.07){
+      if(aRoll<p.accents*0.035){
         inverted=true;
         const chip=pal.accents[Math.floor(grnd()*pal.accents.length)];
         ctx.fillStyle=chip;
-        ctx.fillRect(gx+1,gyy+1,cs-2,cs-2);
+        ctx.fillRect(gx+3,gyy+3,cs-6,cs-6);
         ink=pal.bg;
-      }else if(aRoll<p.accents*0.3){
+      }else if(aRoll<p.accents*0.22){
         ink=pal.accents[Math.floor(grnd()*pal.accents.length)];
+      }else if(aRoll<p.accents*0.34){
+        /* quiet spot: small accent square tucked in the cell corner */
+        ctx.fillStyle=pal.accents[Math.floor(grnd()*pal.accents.length)];
+        const sq=Math.max(4,cs*0.055);
+        ctx.fillRect(gx+cs-sq-6,gyy+6,sq,sq);
       }
 
       ctx.lineWidth=p.stroke*(inverted?1.15:1);
@@ -560,6 +699,14 @@ function render(ctx,W,H,p,seed){
       else if(grammar==='stack') drawStack(ctx,grnd,p,ink,bx,by,bs);
       else drawBauhaus(ctx,grnd,p,ink,bx,by,bs);
 
+      /* specimen baseline under the glyph */
+      if(p.notes>0.45&&!inverted){
+        ctx.strokeStyle=pal.faint; ctx.lineWidth=Math.max(0.5,p.stroke*0.3);
+        ctx.beginPath();
+        ctx.moveTo(gx+cs*0.28,gyy+cs*0.87); ctx.lineTo(gx+cs*0.72,gyy+cs*0.87);
+        ctx.stroke();
+      }
+
       /* per-cell hex code, dense-annotation mode */
       if(p.notes>0.75&&cs>70){
         ctx.fillStyle=pal.label;
@@ -568,6 +715,37 @@ function render(ctx,W,H,p,seed){
         ctx.fillText((cellSeed%4096).toString(16).padStart(3,'0'),gx+cs-5,gyy+cs-5);
       }
     }
+  }
+
+  /* ── draw the feature glyphs: enlarged, ringed, labelled ── */
+  for(const [fc,fr2] of features){
+    const cellSeed=(seed^((fr2*131+fc)*2654435761)^0x51F7)>>>0;
+    const grnd=mulberry32(cellSeed);
+    const gx=fx+fc*cs, gyy=gy+fr2*cs, span=cs*2;
+    /* clear ground + fine double frame */
+    ctx.fillStyle=pal.bg;
+    ctx.fillRect(gx+1,gyy+1,span-2,span-2);
+    ctx.strokeStyle=pal.faint; ctx.lineWidth=Math.max(0.6,p.stroke*0.4);
+    ctx.strokeRect(gx+4,gyy+4,span-8,span-8);
+    /* dashed orbit ring behind the glyph */
+    ctx.setLineDash([3,5]);
+    ctx.beginPath(); ctx.arc(gx+span/2,gyy+span/2,span*0.36,0,TAU); ctx.stroke();
+    ctx.setLineDash([]);
+    /* the display glyph, at double scale */
+    let ink=pal.ink;
+    if(grnd()<p.accents*0.5) ink=pal.accents[Math.floor(grnd()*pal.accents.length)];
+    ctx.lineWidth=p.stroke*1.6;
+    const inset=span*0.24;
+    if(grnd()<0.72) drawAsemic(ctx,grnd,p,ink,gx+inset,gyy+inset,span-inset*2);
+    else drawStack(ctx,grnd,p,ink,gx+inset,gyy+inset,span-inset*2);
+    /* specimen label */
+    if(p.notes>0.3){
+      ctx.fillStyle=pal.label;
+      ctx.font='500 9px "Geist Mono","Red Hat Mono",monospace';
+      ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+      ctx.fillText('SPEC '+(cellSeed%4096).toString(16).padStart(3,'0').toUpperCase(),gx+10,gyy+span-10);
+    }
+    glyphCount++;
   }
 
   /* outer frame */
