@@ -38,7 +38,7 @@ The three glyph grammars were synthesised from web research:
 | | Curvature | Probability a stroke bends into an arc instead of a straight segment |
 | | Diacritics | Dot/tick marks placed near unused lattice nodes |
 | | Solid shapes | Mix-in rate of Bauhaus primitives and planetary stacks vs pure asemic strokes |
-| Sheet | Columns | Specimen grid resolution (rows derive from square cells) |
+| Sheet | Columns | Specimen grid resolution (rows derive from square cells); wide sheets earn 2×2 ringed display-glyph feature cells |
 | | Annotations | Hairline cell grid → margin index labels → header rule → per-cell hex codes |
 | | Accents | Spot-color glyphs and inverted color-chip cells |
 | | Jitter | Hand-wobble applied to lattice node positions |
