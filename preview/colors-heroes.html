@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:12px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace}
+.grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
+@media(max-width:560px){.grid{grid-template-columns:repeat(2,1fr)}}
+.sw{height:90px;position:relative;display:flex;flex-direction:column;justify-content:space-between;padding:8px 10px}
+.sw .name{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.sw .hex{font-size:9px;letter-spacing:.08em;opacity:.65;line-height:1}
+.sw .role{font-size:8px;text-transform:uppercase;letter-spacing:.18em;line-height:1.3}
+.dark .name,.dark .hex,.dark .role{color:#000}
+.light .name,.light .hex,.light .role{color:#fff}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>
+  <link rel="stylesheet" href="../glitch.css">
+</head>
+<body class="gl-stage">
+<div class="chk-strip"></div>
+<div class="grid">
+  <div class="sw dark" style="background:#eaff00"><span class="name">YELLOW</span><span class="role">cta · hazard · big stat</span><span class="hex">#eaff00</span></div>
+  <div class="sw light" style="background:#ff2d87"><span class="name">PINK</span><span class="role">notif · alert · glitch</span><span class="hex">#ff2d87</span></div>
+  <div class="sw light" style="background:#ff0066"><span class="name">PINK / HOT</span><span class="role">error · critical</span><span class="hex">#ff0066</span></div>
+  <div class="sw dark" style="background:#39ff6a"><span class="name">GREEN</span><span class="role">live · biolume · ok</span><span class="hex">#39ff6a</span></div>
+  <div class="sw light" style="background:#2d4cff"><span class="name">BLUE</span><span class="role">electric hero</span><span class="hex">#2d4cff</span></div>
+  <div class="sw light" style="background:#c800ff"><span class="name">MAGENTA</span><span class="role">glitch · RGB split</span><span class="hex">#c800ff</span></div>
+  <div class="sw dark" style="background:#00d9ff"><span class="name">CYAN</span><span class="role">data · link · accent</span><span class="hex">#00d9ff</span></div>
+  <div class="sw dark" style="background:#ffffff"><span class="name">WHITE</span><span class="role">text · ink on color</span><span class="hex">#ffffff</span></div>
+</div>
+<div style="margin-top:14px;font-size:9px;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.4)">// law: always paired with pure black · never gradient · text on color = black</div>
+<script src="../glitch.js"></script>
+</body></html>

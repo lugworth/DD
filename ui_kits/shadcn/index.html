@@ -19,15 +19,20 @@
   --muted:#1a1a18; --muted-foreground:rgba(255,255,255,.55);
   --accent:#202020; --accent-foreground:#eaff00;
   --destructive:#ff0066; --destructive-foreground:#ffffff;
-  --border:rgba(255,255,255,.12); --input:rgba(255,255,255,.14); --ring:#eaff00;
+  --border:rgba(120,90,160,.16); --input:rgba(255,255,255,.14); --ring:#eaff00;
   --chart-1:#eaff00; --chart-2:#00d9ff; --chart-3:#ff2d87; --chart-4:#0a84e0; --chart-5:#12b39b;
   /* dd extensions */
   --coral:#ff6050; --sky:#0a84e0; --teal:#12b39b; --lime:#c6ff3a; --orange:#ff5a00; --green:#39ff6a; --cyan:#00d9ff; --pink:#ff2d87;
+  --night:#150a1c; --violet:#8a3fb0; --indigo:#4653e8; --blood:#e02020;
   --font-mono:'Geist Mono','Red Hat Mono',ui-monospace,monospace;
   --font-sans:'Space Grotesk',system-ui,sans-serif;
 }
 *{box-sizing:border-box;border-color:var(--border)}
 html,body{margin:0;background:var(--background);color:var(--foreground);font-family:var(--font-mono);font-size:14px;-webkit-font-smoothing:antialiased}
+/* ambient texture wash over the whole page */
+body::before{content:'';position:fixed;inset:0;background-image:url('../../assets/tex-ascii-02.png');background-size:620px;opacity:.05;mix-blend-mode:screen;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.14) 2px,rgba(0,0,0,.14) 3px);pointer-events:none;z-index:1}
+.wrap,header{position:relative;z-index:2}
 h1,h2,h3,h4{font-family:var(--font-sans);font-weight:900;text-transform:uppercase;letter-spacing:-.02em;margin:0}
 a{color:var(--sky);text-decoration:none}
 ::selection{background:var(--primary);color:#000}
@@ -35,9 +40,14 @@ a{color:var(--sky);text-decoration:none}
 /* layout */
 .wrap{max-width:1080px;margin:0 auto;padding:0 20px 80px}
 .chk{height:8px;background-color:var(--coral);background-image:linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%),linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%);background-size:16px 16px;background-position:0 0,8px 8px}
-header{padding:28px 20px 22px;border-bottom:1px solid var(--border);margin-bottom:28px;position:relative;overflow:hidden}
-header .tex{position:absolute;inset:0;background-image:url('../../assets/tex-crossgrid.png');background-size:300px;mix-blend-mode:screen;opacity:.10;pointer-events:none}
-header .inner{max-width:1080px;margin:0 auto;position:relative}
+header{padding:0;border-bottom:1px solid var(--border);margin-bottom:28px;position:relative;overflow:hidden}
+header .tex{position:absolute;inset:0;background-image:url('../../assets/photo-night-01.png');background-size:cover;background-position:center;opacity:.5;pointer-events:none}
+header .night-scrim{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.82))}
+header .inner{max-width:1080px;margin:0 auto;position:relative;z-index:2;padding:28px 20px 22px}
+.swirl{position:absolute;pointer-events:none;border-radius:50%;opacity:.14;mix-blend-mode:screen;background:repeating-radial-gradient(circle at 50% 50%,transparent 0 7px,currentColor 7px 7.6px,transparent 7.6px 15px);-webkit-mask:radial-gradient(circle at 50% 50%,#000 56%,transparent 72%);mask:radial-gradient(circle at 50% 50%,#000 56%,transparent 72%)}
+.pinwheel{position:absolute;pointer-events:none;border-radius:50%;opacity:.12;mix-blend-mode:screen;background:conic-gradient(from 0deg,currentColor 0 10deg,transparent 10deg 45deg,currentColor 45deg 55deg,transparent 55deg 90deg,currentColor 90deg 100deg,transparent 100deg 135deg);-webkit-mask:radial-gradient(circle,transparent 20%,#000 22%,#000 62%,transparent 70%);mask:radial-gradient(circle,transparent 20%,#000 22%,#000 62%,transparent 70%)}
+@keyframes spin-cw{to{transform:rotate(360deg)}}@keyframes spin-ccw{to{transform:rotate(-360deg)}}
+@media(prefers-reduced-motion:no-preference){.spin-cw{animation:spin-cw 60s linear infinite}.spin-ccw{animation:spin-ccw 90s linear infinite}}
 .kicker{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted-foreground);margin-bottom:8px}
 header h1{font-size:48px;line-height:.95}
 header h1 .y{color:var(--primary)} header h1 .s{color:var(--sky)}
@@ -47,7 +57,7 @@ section{margin-top:40px}
 .sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .sec-h h2{font-size:16px;letter-spacing:.12em}
 .sec-h .ix{font-size:10px;color:var(--muted-foreground);letter-spacing:.2em}
-.sec-h .ln{flex:1;height:1px;background:var(--border)}
+.sec-h .ln{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .stack{display:flex;flex-direction:column;gap:8px}
 .cap{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted-foreground);margin:14px 0 8px}
@@ -77,13 +87,16 @@ section{margin-top:40px}
 .pip{width:6px;height:6px;background:currentColor;flex-shrink:0}
 
 /* ── CARD ── */
-.card{background:var(--card);border:1px solid var(--border);color:var(--card-foreground)}
+/* card — subtle ascii texture backing, softer edge */
+.card{background:var(--card);border:1px solid var(--border);color:var(--card-foreground);position:relative}
+.card::before{content:'';position:absolute;inset:0;background-image:url('../../assets/tex-ascii-01.png');background-size:460px;mix-blend-mode:screen;opacity:.05;pointer-events:none}
+.card>*{position:relative}
 .card-header{padding:16px;border-bottom:1px solid var(--border)}
 .card-title{font-family:var(--font-sans);font-weight:900;font-size:20px;text-transform:uppercase;letter-spacing:-.01em}
 .card-desc{font-family:var(--font-sans);color:var(--muted-foreground);font-size:13px;margin-top:4px;text-transform:none;letter-spacing:0;line-height:1.5}
 .card-content{padding:16px}
 .card-footer{padding:16px;border-top:1px solid var(--border);display:flex;gap:8px}
-.kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(120,90,160,.1);font-size:12px}
 .kv:last-child{border-bottom:none}
 .kv .k{color:var(--muted-foreground);font-size:9px;letter-spacing:.14em;text-transform:uppercase}
 
@@ -109,7 +122,9 @@ section{margin-top:40px}
 .tab-trigger{padding:8px 16px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-foreground);cursor:pointer;border-right:1px solid var(--border);background:transparent;font-family:var(--font-mono)}
 .tab-trigger:last-child{border-right:none}
 .tab-trigger[data-active="true"]{background:var(--primary);color:#000}
-.tab-panel{padding:16px;border:1px solid var(--border);border-top:none;font-family:var(--font-sans);color:var(--muted-foreground);font-size:13px;line-height:1.6}
+.tab-panel{padding:16px;border:1px solid var(--border);border-top:none;font-family:var(--font-sans);color:var(--muted-foreground);font-size:13px;line-height:1.6;position:relative;overflow:hidden}
+.tab-panel::before{content:'';position:absolute;inset:0;background-image:url('../../assets/tex-ascii-03.png');background-size:520px;mix-blend-mode:screen;opacity:.05;pointer-events:none}
+.tab-panel>*{position:relative}
 .tab-panel[hidden]{display:none}
 
 /* ── SWITCH ── */
@@ -129,7 +144,9 @@ section{margin-top:40px}
 .opt{display:flex;align-items:center;gap:9px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--foreground);cursor:pointer}
 
 /* ── ALERT ── */
-.alert{border:1px solid var(--border);padding:14px 16px;display:flex;gap:12px;background:var(--card)}
+.alert{border:1px solid var(--border);padding:14px 16px;display:flex;gap:12px;background:var(--card);position:relative;overflow:hidden}
+.alert::before{content:'';position:absolute;inset:0;background-image:url('../../assets/tex-ascii-04.png');background-size:420px;mix-blend-mode:screen;opacity:.06;pointer-events:none}
+.alert>*{position:relative}
 .alert-icon{font-size:16px;line-height:1.2;flex-shrink:0}
 .alert-title{font-family:var(--font-sans);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:13px;margin-bottom:3px}
 .alert-desc{font-family:var(--font-sans);color:var(--muted-foreground);font-size:12px;line-height:1.5;text-transform:none;letter-spacing:0}
@@ -158,7 +175,7 @@ section{margin-top:40px}
 /* table */
 table{width:100%;border-collapse:collapse;font-size:12px}
 th{text-align:left;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-foreground);padding:8px 10px;border-bottom:1px solid var(--border)}
-td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05)}
+td{padding:8px 10px;border-bottom:1px solid rgba(120,90,160,.1)}
 tr:hover td{background:var(--accent)}
 
 .dot{width:6px;height:6px;flex-shrink:0}
@@ -171,6 +188,9 @@ code{background:var(--secondary);border:1px solid var(--border);padding:1px 5px;
 <div class="chk"></div>
 <header>
   <div class="tex"></div>
+  <div class="night-scrim"></div>
+  <span class="pinwheel spin-cw" style="width:200px;height:200px;top:-60px;right:-30px;color:var(--sky)"></span>
+  <span class="swirl spin-ccw" style="width:160px;height:160px;bottom:-70px;left:24%;color:var(--coral)"></span>
   <div class="inner">
     <div class="kicker">// digidelic × shadcn/ui · themed component kit</div>
     <h1><span class="y">SHADCN</span> / <span class="s">UI</span></h1>
@@ -207,6 +227,48 @@ code{background:var(--secondary);border:1px solid var(--border);padding:1px 5px;
   <!-- CARDS -->
   <section>
     <div class="sec-h"><h2>Card</h2><span class="ix">02 · surfaces</span><div class="ln"></div></div>
+    <div class="cap" style="margin-top:0">// color-block cards · positive (solid) vs negative (void)</div>
+    <div class="grid cols-3" style="margin-bottom:18px">
+      <!-- POSITIVE: solid coral block -->
+      <div style="background:var(--coral);border:1px solid var(--coral)">
+        <div style="padding:8px 11px;display:flex;align-items:center;justify-content:space-between">
+          <span class="card-title" style="font-size:18px;color:#000">Node-047</span>
+          <span style="font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:2px 5px;background:#000;color:var(--coral)">critical</span>
+        </div>
+        <div style="background:#000;margin:0 4px 4px;padding:8px 9px">
+          <div class="kv"><span class="k">class</span><span>relay</span></div>
+          <div class="kv"><span class="k">load</span><span style="color:var(--coral)">98%</span></div>
+          <div class="kv"><span class="k">signal</span><span>22%</span></div>
+        </div>
+      </div>
+      <!-- POSITIVE: solid green block -->
+      <div style="background:var(--green);border:1px solid var(--green)">
+        <div style="padding:8px 11px;display:flex;align-items:center;justify-content:space-between">
+          <span class="card-title" style="font-size:18px;color:#000">Node-088</span>
+          <span style="font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:2px 5px;background:#000;color:var(--green)">running</span>
+        </div>
+        <div style="background:#000;margin:0 4px 4px;padding:8px 9px">
+          <div class="kv"><span class="k">class</span><span>terminal</span></div>
+          <div class="kv"><span class="k">load</span><span style="color:var(--green)">64%</span></div>
+          <div class="kv"><span class="k">signal</span><span>88%</span></div>
+        </div>
+      </div>
+      <!-- NEGATIVE: void card, color as top rule + big number -->
+      <div style="background:#000;border:1px solid var(--border);border-top:2px solid var(--cyan);padding:10px 12px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+          <span class="card-title" style="font-size:18px">Node-112</span>
+          <span style="font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)">▸ scanning</span>
+        </div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between">
+          <div style="font-size:9px;color:var(--muted-foreground);line-height:1.7">beacon<br>412:08</div>
+          <div style="text-align:right">
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted-foreground)">load</div>
+            <div class="card-title" style="font-size:28px;line-height:1">31<span style="font-size:12px;color:var(--muted-foreground)">%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cap">// standard surfaces + texture overlays</div>
     <div class="grid cols-3">
       <div class="card">
         <div class="card-header"><div class="card-title">Node-047</div><div class="card-desc">Relay class · sector A1.2</div></div>
@@ -218,8 +280,9 @@ code{background:var(--secondary);border:1px solid var(--border);padding:1px 5px;
         <div class="card-footer"><button class="btn btn-default btn-sm" style="flex:1">Ping</button><button class="btn btn-outline btn-sm" style="flex:1">Log</button></div>
       </div>
       <div class="card" style="position:relative;overflow:hidden">
-        <div style="position:absolute;inset:0;background-image:url('../../assets/tex-flower-duotone.png');background-size:cover;mix-blend-mode:overlay;opacity:.3;pointer-events:none"></div>
-        <div class="card-header" style="position:relative"><div class="card-title" style="color:var(--coral)">Dispatch</div><div class="card-desc">Broadcast channel · zine-01</div></div>
+        <div style="position:absolute;inset:0;background-image:url('../../assets/photo-night-09.png');background-size:cover;background-position:center;opacity:.42;pointer-events:none"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.72));pointer-events:none"></div>
+        <div class="card-header" style="position:relative"><div class="card-title" style="color:var(--coral)">Dispatch</div><div class="card-desc">Broadcast channel · night-garden</div></div>
         <div class="card-content stack" style="gap:0;position:relative">
           <div class="kv"><span class="k">issue</span><span>n.02</span></div>
           <div class="kv"><span class="k">reach</span><span>4,210</span></div>
@@ -328,8 +391,49 @@ code{background:var(--secondary);border:1px solid var(--border);padding:1px 5px;
     </div>
   </section>
 
+  <!-- NIGHT GARDEN: feature banner + backdrop library -->
+  <section>
+    <div class="sec-h"><h2>Night Garden</h2><span class="ix">06 · photo backdrops · ascii textures</span><div class="ln"></div></div>
+    <!-- full-bleed feature banner -->
+    <div style="position:relative;overflow:hidden;border:1px solid var(--border);min-height:210px;display:flex;flex-direction:column;justify-content:space-between;padding:22px 24px;margin-bottom:16px">
+      <div style="position:absolute;inset:0;background-image:url('../../assets/photo-night-04.png');background-size:cover;background-position:center"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.8))"></div>
+      <span class="pinwheel spin-cw" style="width:240px;height:240px;top:-80px;right:-50px;color:var(--violet)"></span>
+      <span class="swirl spin-ccw" style="width:180px;height:180px;bottom:-70px;left:26%;color:var(--blood)"></span>
+      <div style="position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start">
+        <span style="font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.7)">// infrared sweep · sector A1.2</span>
+        <span class="badge" style="border-color:var(--blood);color:var(--blood)"><span class="dot" style="background:var(--blood)"></span>live</span>
+      </div>
+      <div style="position:relative;z-index:2">
+        <h2 style="font-size:52px;line-height:.9;color:#fff">SIGNAL<br><span style="color:var(--coral)">BLOOM</span></h2>
+        <div class="row" style="margin-top:14px">
+          <span class="badge" style="background:var(--blood);color:#fff;border-color:var(--blood)">infrared</span>
+          <span class="badge" style="background:var(--violet);color:#000;border-color:var(--violet)">dusk</span>
+          <span class="badge" style="background:var(--indigo);color:#fff;border-color:var(--indigo)">foliage</span>
+        </div>
+      </div>
+    </div>
+    <div class="cap">// backdrop library — cover photos behind a dark scrim</div>
+    <div class="grid" style="grid-template-columns:repeat(6,1fr);gap:4px">
+      <div style="position:relative;aspect-ratio:3/4;overflow:hidden;border:1px solid var(--border)"><div style="position:absolute;inset:0;background-image:url('../../assets/photo-night-01.png');background-size:cover;background-position:center"></div><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.7))"></div><span style="position:absolute;left:5px;bottom:5px;z-index:2;font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7)">n-01</span></div>
+      <div style="position:relative;aspect-ratio:3/4;overflow:hidden;border:1px solid var(--border)"><div style="position:absolute;inset:0;background-image:url('../../assets/photo-night-02.png');background-size:cover;background-position:center"></div><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.7))"></div><span style="position:absolute;left:5px;bottom:5px;z-index:2;font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7)">n-02</span></div>
+      <div style="position:relative;aspect-ratio:3/4;overflow:hidden;border:1px solid var(--border)"><div style="position:absolute;inset:0;background-image:url('../../assets/photo-night-03.png');background-size:cover;background-position:center"></div><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.7))"></div><span style="position:absolute;left:5px;bottom:5px;z-index:2;font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7)">n-03</span></div>
+      <div style="position:relative;aspect-ratio:3/4;overflow:hidden;border:1px solid var(--border)"><div style="position:absolute;inset:0;background-image:url('../../assets/photo-night-05.png');background-size:cover;background-position:center"></div><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.7))"></div><span style="position:absolute;left:5px;bottom:5px;z-index:2;font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7)">n-05</span></div>
+      <div style="position:relative;aspect-ratio:3/4;overflow:hidden;border:1px solid var(--border)"><div style="position:absolute;inset:0;background-image:url('../../assets/photo-night-06.png');background-size:cover;background-position:center"></div><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.7))"></div><span style="position:absolute;left:5px;bottom:5px;z-index:2;font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7)">n-06</span></div>
+      <div style="position:relative;aspect-ratio:3/4;overflow:hidden;border:1px solid var(--border)"><div style="position:absolute;inset:0;background-image:url('../../assets/photo-night-07.jpeg');background-size:cover;background-position:center"></div><div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,.7))"></div><span style="position:absolute;left:5px;bottom:5px;z-index:2;font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7)">n-07</span></div>
+    </div>
+    <div class="cap">// ascii data-textures — screen blend over black</div>
+    <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:4px">
+      <div style="position:relative;height:80px;overflow:hidden;border:1px solid var(--border);background:#000"><div style="position:absolute;inset:0;background-image:url('../../assets/tex-ascii-01.png');background-size:320px;mix-blend-mode:screen;opacity:.72"></div></div>
+      <div style="position:relative;height:80px;overflow:hidden;border:1px solid var(--border);background:#000"><div style="position:absolute;inset:0;background-image:url('../../assets/tex-ascii-02.png');background-size:320px;mix-blend-mode:screen;opacity:.72"></div></div>
+      <div style="position:relative;height:80px;overflow:hidden;border:1px solid var(--border);background:#000"><div style="position:absolute;inset:0;background-image:url('../../assets/tex-ascii-03.png');background-size:320px;mix-blend-mode:screen;opacity:.72"></div></div>
+      <div style="position:relative;height:80px;overflow:hidden;border:1px solid var(--border);background:#000"><div style="position:absolute;inset:0;background-image:url('../../assets/tex-ascii-04.png');background-size:320px;mix-blend-mode:screen;opacity:.72"></div></div>
+      <div style="position:relative;height:80px;overflow:hidden;border:1px solid var(--border);background:#000"><div style="position:absolute;inset:0;background-image:url('../../assets/tex-ascii-05.png');background-size:320px;mix-blend-mode:screen;opacity:.72"></div></div>
+    </div>
+  </section>
+
   <div class="foot">
-    digidelic × shadcn/ui — themed component kit · v1.0<br>
+    digidelic × shadcn/ui — themed component kit · v2.3 · night-garden<br>
     Theme file: <code>ui_kits/shadcn/globals.css</code> · drop into a shadcn project (Tailwind v4) and run <code>npx shadcn@latest add button card …</code><br>
     Tokens follow the shadcn variable contract (--primary, --card, --destructive, --ring, --chart-1..5, --sidebar-*) mapped to digidelic v2.1.
   </div>

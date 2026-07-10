@@ -32,9 +32,9 @@ body::after {
 body::before {
   content:'';
   position: fixed; inset:-50%;
-  background-image:url('../../assets/tex-crossgrid.png');
-  background-size:340px;
-  opacity:0.05; mix-blend-mode:screen;
+  background-image:url('../../assets/tex-ascii-02.png');
+  background-size:620px;
+  opacity:0.06; mix-blend-mode:screen;
   pointer-events:none; z-index:9998;
   animation:grain-drift 8s steps(6) infinite;
 }
@@ -53,6 +53,12 @@ body::before {
 .tex-halftone{ background-image:url('../../assets/tex-halftone-portrait.png'); background-size:cover; background-repeat:no-repeat; mix-blend-mode:screen; opacity:.55; }
 .tex-flower  { background-image:url('../../assets/tex-flower-duotone.png');    background-size:cover; background-repeat:no-repeat; mix-blend-mode:overlay; opacity:.7; }
 .tex-flower-screen{background-image:url('../../assets/tex-flower-duotone.png');background-size:cover; background-repeat:no-repeat; mix-blend-mode:screen; opacity:.32; }
+/* ASCII data-textures + night-garden photos (07-2026 refs) */
+.tex-ascii   { background-image:url('../../assets/tex-ascii-01.png'); background-size:560px; mix-blend-mode:screen; opacity:.14; }
+.tex-ascii-b { background-image:url('../../assets/tex-ascii-04.png'); background-size:560px; mix-blend-mode:screen; opacity:.12; }
+.bg-night    { background-image:url('../../assets/photo-night-01.png'); background-size:cover; background-position:center; }
+.bg-night-b  { background-image:url('../../assets/photo-night-09.png'); background-size:cover; background-position:center; }
+.night-scrim { position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.8)); }
 
 /* ── SWIRL / SPIRAL PATTERNS ── */
 @keyframes spin-cw  { to{transform:rotate(360deg)} }
@@ -556,8 +562,9 @@ function DetailPanel({node, onClose, mobile}) {
       display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
       flexShrink:0, overflow:'hidden',
     }}>
-      {/* psychedelic Shimoda portrait fills the empty inspector */}
-      <div className="tex" style={{backgroundImage:`url('../../assets/ref-psy-portrait-1.jpg')`, backgroundSize:'cover', backgroundPosition:'center', opacity:.8}}/>
+      {/* night-garden infrared photo fills the empty inspector */}
+      <div className="tex bg-night" style={{backgroundSize:'cover', opacity:1, mixBlendMode:'normal'}}/>
+      <div className="night-scrim"/>
       {/* signature rainbow chromatic-aura streak */}
       <span className="aura aura-thin" style={{left:'42%'}}/>
       {/* slow swirl over the portrait */}
@@ -681,7 +688,7 @@ function TerminalPanel({selectedNode}) {
 
   return (
     <div className="tex-host" style={{height:150, background:'#090908', borderTop:`1px solid ${C.border}`, display:'flex', flexDirection:'column', flexShrink:0, overflow:'hidden'}}>
-      <div className="tex tex-cross-fine" style={{opacity:.07}}/>
+      <div className="tex tex-ascii-b" style={{opacity:.08}}/>
       <div style={{position:'relative', zIndex:1, padding:'3px 10px', borderBottom:`1px solid ${C.void}`, display:'flex', justifyContent:'space-between'}}>
         <span style={{fontSize:8, textTransform:'uppercase', letterSpacing:'0.18em', color:C.fg4}}>// TERMINAL</span>
         <span style={{fontSize:8, color:C.fg4}}>help</span>
@@ -794,7 +801,7 @@ function App() {
             <span className="aura aura-thin" style={{left:'72%', color:C.pink, animationDelay:'-4s'}}/>
             <span className="s pinwheel psy-wave" style={{width:300,height:300, top:-80, right:-60, color:C.sky, animation:'spin-cw 90s linear infinite'}}/>
             <span className="s swirl psy-liquid" style={{width:260,height:260, bottom:-70, left:-50, color:C.teal, animation:'spin-ccw 120s linear infinite'}}/>
-            <span className="tex tex-cross-fine" style={{opacity:.05}}/>
+            <span className="tex tex-ascii" style={{opacity:.09}}/>
           </div>
           {view==='sectors' ? <div style={{flex:1, display:'flex', position:'relative', zIndex:1, overflow:'hidden'}}><SectorsView/></div> : view==='term' ? (
             <div className="view-fade" style={{flex:1, overflowY:'auto', padding:16, position:'relative', zIndex:1}}>

@@ -79,6 +79,12 @@
   /* ACID LIME — spirograph / lissajous line overlays */
   --lime:          #c6ff3a;
 
+  /* ─── NIGHT GARDEN LAYER (infrared photo refs, 07-2026) ── */
+  --night:        #150a1c;   /* deep violet night sky — alt hero ground */
+  --violet:       #8a3fb0;   /* violet dusk — gradients over --night */
+  --indigo:       #4653e8;   /* indigo leaf — calm data surfaces */
+  --blood:        #e02020;   /* blood red — infrared foliage, urgent fills */
+
   /* ─── SEMANTIC TEXT ─────────────────────────────────────── */
   --fg:           var(--white);
   --fg-soft:      var(--white-soft);

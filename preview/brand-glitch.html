@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Glitch Compositions" subtitle="RGB split headline + hero block" viewport="700x240" -->
+<html><head><meta charset="UTF-8"><style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:16px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.item{display:flex;flex-direction:column}
+.label{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:5px}
+/* chromatic abberation headline */
+.ch{position:relative;display:inline-block;font-family:'Space Grotesk', sans-serif;font-weight:900;font-size:48px;text-transform:uppercase;color:#fff;line-height:1;letter-spacing:0.02em;padding:12px 16px;border:1px solid rgba(255,255,255,0.15);background:#000}
+.ch::before,.ch::after{content:attr(data-t);position:absolute;top:12px;left:16px;pointer-events:none}
+.ch::before{color:#ff2d87;transform:translate(-2px,0);clip-path:polygon(0 20%,100% 20%,100% 45%,0 45%)}
+.ch::after{color:#00d9ff;transform:translate(2px,0);clip-path:polygon(0 55%,100% 55%,100% 80%,0 80%)}
+/* hero block with blob */
+.hero{position:relative;width:300px;height:180px;background:#2d4cff;border:1px solid rgba(255,255,255,0.1);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:14px}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:invert(1);mix-blend-mode:screen;opacity:0.35}
+.hero .top{position:relative;z-index:1;display:flex;justify-content:space-between;font-size:9px;letter-spacing:0.2em;color:#fff;text-transform:uppercase}
+.hero h1{position:relative;z-index:1;font-family:'Space Grotesk', sans-serif;font-weight:900;font-size:56px;text-transform:uppercase;color:#fff;line-height:1;letter-spacing:-0.01em}
+.hero h1 .y{color:#eaff00}
+.hero .sub{position:relative;z-index:1;font-size:10px;letter-spacing:0.2em;color:#eaff00;text-transform:uppercase}
+/* scanline overlay */
+.sl{position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,0.2) 1px,rgba(0,0,0,0.2) 2px);pointer-events:none;z-index:2}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+<div class="item"><div class="label">// RGB SPLIT HEADLINE</div><div class="ch" data-t="SIGNAL">SIGNAL</div></div>
+<div class="item"><div class="label">// HERO COMPOSITION</div><div class="hero"><img src="../assets/glitch-blob.gif" alt=""/><div class="sl"></div><div class="top"><span>SECTOR A1.2</span><span>▶ LIVE</span></div><h1>RUN<br/><span class="y">SEQUENCE</span></h1><div class="sub">// 273 · X.06 · B6</div></div></div>
+<script src="../glitch.js"></script>
+</body></html>

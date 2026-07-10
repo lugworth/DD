@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Texture Overlays" subtitle="Cross-grid, flower duotone, halftone — ambient overlays" viewport="760x480" -->
+<html><head><meta charset="UTF-8"><style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:16px;font-family:'Geist Mono',monospace;color:#fff}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+.cap{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:620px){.grid{grid-template-columns:1fr}}
+.tile{position:relative;height:170px;border:1px solid rgba(255,255,255,.14);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:10px;background:#0a0a0a}
+.tile .t{position:relative;z-index:2;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.tile .m{position:relative;z-index:2;font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.6);line-height:1.5}
+.coord{position:absolute;top:8px;right:8px;z-index:2;font-size:8px;border:1px solid currentColor;padding:1px 5px;letter-spacing:.1em}
+
+/* applied-in-context demos */
+.demo{position:relative;border:1px solid rgba(255,255,255,.14);overflow:hidden;padding:16px;min-height:120px;display:flex;flex-direction:column;gap:8px;justify-content:center;background:#0a0a0a}
+.demo h4{position:relative;z-index:2;font-family:'Geist Mono',monospace;font-weight:900;font-size:24px;letter-spacing:.02em;text-transform:uppercase}
+.demo .row{position:relative;z-index:2;display:flex;gap:8px;flex-wrap:wrap}
+.b{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:3px 9px;border:1px solid}
+</style>
+<link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+
+<div class="cap">// raw overlay textures — image refs sampled into ambient layers</div>
+<div class="grid" style="margin-bottom:18px">
+  <div class="tile tex-host"><div class="tex tex-crossgrid" style="--tex-op:.6"></div><span class="coord" style="color:#eaff00">T1</span><span class="t" style="color:#eaff00">CROSS-GRID</span><span class="m">screen blend · 320px tile<br/>yellow/cyan/magenta plus-marks</span></div>
+  <div class="tile tex-host"><div class="tex tex-flower" style="--tex-op:.9"></div><span class="coord" style="color:#ff6050">T2</span><span class="t" style="color:#ff6050">FLOWER DUOTONE</span><span class="m">overlay blend · cover<br/>coral · sky · teal</span></div>
+  <div class="tile tex-host"><div class="tex tex-halftone" style="--tex-op:.75"></div><span class="coord" style="color:#ff5a00">T3</span><span class="t" style="color:#ff5a00">HALFTONE</span><span class="m">screen blend · cover<br/>warm dotted portrait</span></div>
+</div>
+
+<div class="cap">// in context — overlay sits above bg, below content (tune via --tex-op)</div>
+<div class="grid">
+  <div class="demo tex-host">
+    <div class="tex tex-crossgrid" style="--tex-op:.2"></div>
+    <h4 class="gl-text">SECTOR A1.2</h4>
+    <div class="row">
+      <span class="b" style="color:#eaff00;border-color:#eaff00">▶ NOMINAL</span>
+      <span class="b" style="color:#00d9ff;border-color:#00d9ff">SCAN</span>
+    </div>
+  </div>
+  <div class="demo tex-host">
+    <div class="tex tex-flower" style="--tex-op:.34"></div>
+    <h4 style="color:#fff">DISPATCH</h4>
+    <div class="row">
+      <span class="b" style="color:#ff6050;border-color:#ff6050">CORAL</span>
+      <span class="b" style="color:#12b39b;border-color:#12b39b">TEAL</span>
+      <span class="b" style="color:#0a84e0;border-color:#0a84e0">SKY</span>
+    </div>
+  </div>
+  <div class="demo tex-host">
+    <div class="tex tex-halftone" style="--tex-op:.26"></div>
+    <h4 style="color:#ff5a00">VECTOR</h4>
+    <div class="row">
+      <span class="b" style="color:#fff;border-color:rgba(255,255,255,.4)">FREELANCE</span>
+    </div>
+  </div>
+</div>
+
+<script src="../glitch.js"></script>
+</body></html>

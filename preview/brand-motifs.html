@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Motifs & Textures" subtitle="Stripes, checker, dither, ASCII, glitch blob" viewport="700x250" -->
+<html><head><meta charset="UTF-8"><style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:16px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.item{display:flex;flex-direction:column}
+.label{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:5px}
+.sy{width:140px;height:84px;background:repeating-linear-gradient(-45deg,#eaff00 0 14px,#000 14px 28px);border:1px solid rgba(255,255,255,0.1)}
+.sp{width:140px;height:84px;background:repeating-linear-gradient(-45deg,#ff2d87 0 14px,#000 14px 28px);border:1px solid rgba(255,255,255,0.1)}
+.sc{width:140px;height:84px;background:repeating-linear-gradient(-45deg,#00d9ff 0 14px,#000 14px 28px);border:1px solid rgba(255,255,255,0.1)}
+.ck{width:140px;height:84px;background:repeating-conic-gradient(#000 0% 25%,#eaff00 0% 50%);background-size:14px 14px;border:1px solid rgba(255,255,255,0.1)}
+.ck-p{width:140px;height:84px;background:repeating-conic-gradient(#000 0% 25%,#ff2d87 0% 50%);background-size:14px 14px;border:1px solid rgba(255,255,255,0.1)}
+.vs{width:140px;height:84px;background:repeating-linear-gradient(90deg,#00d9ff 0 4px,#000 4px 10px);border:1px solid rgba(255,255,255,0.1)}
+.dt{width:140px;height:84px;background-image:radial-gradient(circle,rgba(255,255,255,0.22) 1px,transparent 1px);background-size:5px 5px;border:1px solid rgba(255,255,255,0.15)}
+.ascii{width:140px;height:84px;border:1px solid rgba(255,255,255,0.15);padding:6px;font-size:9px;line-height:1.2;color:rgba(255,255,255,0.55);letter-spacing:0.05em;white-space:pre;overflow:hidden;background:#000}
+.blob{width:140px;height:84px;border:1px solid rgba(255,255,255,0.15);background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.blob img{width:100%;height:100%;object-fit:cover;filter:invert(1);mix-blend-mode:screen;opacity:0.85}
+.blob-y{width:140px;height:84px;border:1px solid #eaff00;background:#000;overflow:hidden}
+.blob-y img{width:100%;height:100%;object-fit:cover;filter:invert(1) sepia(1) saturate(5) hue-rotate(5deg);mix-blend-mode:screen}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+<div class="item"><div class="label">// STRIPES / YELLOW</div><div class="sy"></div></div>
+<div class="item"><div class="label">// STRIPES / PINK</div><div class="sp"></div></div>
+<div class="item"><div class="label">// STRIPES / CYAN</div><div class="sc"></div></div>
+<div class="item"><div class="label">// CHECKER / YELLOW</div><div class="ck"></div></div>
+<div class="item"><div class="label">// CHECKER / PINK</div><div class="ck-p"></div></div>
+<div class="item"><div class="label">// VERTICAL STRIPE</div><div class="vs"></div></div>
+<div class="item"><div class="label">// DITHER</div><div class="dt"></div></div>
+<div class="item"><div class="label">// ASCII</div><div class="ascii">▓▓▒▒░░▓▓▒▒░░▓▓
+░░▓▓▒▒░░▓▓▒▒░░▓
+▒▒░░▓▓▒▒░░▓▓▒▒░
+▓▓▒▒░░▓▓▒▒░░▓▓▒
+░░▓▓▒▒░░▓▓▒▒░░▓</div></div>
+<div class="item"><div class="label">// GLITCH BLOB</div><div class="blob"><img src="../assets/glitch-blob.gif" alt=""/></div></div>
+<div class="item"><div class="label">// BLOB / YELLOW</div><div class="blob-y"><img src="../assets/glitch-blob.gif" alt=""/></div></div>
+<script src="../glitch.js"></script>
+</body></html>

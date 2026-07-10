@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Navigation" subtitle="Top bar, sidebar, tabs, pills, breadcrumb, pagination, mobile" viewport="760x560" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+:root{
+  --black:#000;--soft:#0a0a0a;--panel:#111110;--raised:#1a1a18;
+  --white:#fff;--dim:rgba(255,255,255,.42);--ghost:rgba(255,255,255,.12);--hi:rgba(255,255,255,.25);
+  --yellow:#eaff00;--pink:#ff2d87;--green:#39ff6a;--cyan:#00d9ff;--blue:#2d4cff;--sky:#0a84e0;--red:#ff6050;
+  --mono:'Geist Mono','Courier New',monospace;--disp:'Space Grotesk',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--soft);color:var(--white);font-family:var(--mono);padding:16px;display:flex;flex-direction:column;gap:18px}
+.label{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.label::after{content:'';flex:1;height:1px;background:var(--ghost)}
+
+/* ───────────── TOP BAR ───────────── */
+.topbar{display:flex;align-items:stretch;height:46px;background:var(--black);border:1px solid var(--ghost)}
+.brand{display:flex;align-items:center;gap:9px;padding:0 16px;border-right:1px solid var(--ghost);flex-shrink:0}
+.brand .mk{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase;line-height:1}
+.brand .mk .d1{color:var(--yellow)}.brand .mk .d2{color:var(--sky)}
+.brand .sq{width:9px;height:9px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:6px 6px;background-position:0 0,3px 3px}
+.navset{display:flex;align-items:stretch}
+.navitem{position:relative;display:flex;align-items:center;gap:7px;padding:0 16px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);cursor:pointer;border-right:1px solid var(--ghost);transition:color var(--d,120ms) linear,background var(--d,120ms) linear;text-decoration:none}
+.navitem .ix{font-size:8px;color:rgba(255,255,255,.3)}
+.navitem:hover{color:var(--white);background:var(--raised)}
+.navitem:hover .ix{color:var(--cyan)}
+.navitem.active{background:var(--yellow);color:#000}
+.navitem.active .ix{color:rgba(0,0,0,.55)}
+.navitem.active::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#000}
+.spacer{flex:1;border-right:1px solid var(--ghost)}
+.sysbox{display:flex;align-items:center;gap:8px;padding:0 14px;font-size:10px;letter-spacing:.12em;color:var(--dim)}
+.dot{width:6px;height:6px;background:var(--green);animation:beat 1.1s steps(8,end) infinite}
+@keyframes beat{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.6)}}
+.cta{display:flex;align-items:center;padding:0 16px;background:var(--pink);color:#000;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;border-left:1px solid var(--ghost)}
+.cta:hover{background:var(--yellow)}
+
+/* glitch on hover for nav labels */
+.gl{position:relative}
+.navitem:hover .gl::before,.navitem:hover .gl::after{content:attr(data-t);position:absolute;inset:0;pointer-events:none}
+.navitem:hover .gl::before{color:var(--pink);left:1.5px;clip-path:polygon(0 15%,100% 15%,100% 42%,0 42%)}
+.navitem:hover .gl::after{color:var(--cyan);left:-1.5px;clip-path:polygon(0 58%,100% 58%,100% 82%,0 82%)}
+
+/* ───────────── LAYOUT: SIDEBAR + TABS ───────────── */
+.split{display:grid;grid-template-columns:230px 1fr;gap:16px;align-items:start}
+
+.sidebar{background:var(--black);border:1px solid var(--ghost)}
+.side-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--ghost)}
+.side-head .t{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.side-head .c{font-size:9px;color:var(--yellow);letter-spacing:.1em}
+.side-link{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;color:var(--dim);transition:color 120ms linear,background 120ms linear;text-decoration:none}
+.side-link .coord{font-size:9px;width:30px;border:1px solid var(--ghost);text-align:center;padding:2px 0;letter-spacing:.06em;color:var(--dim);flex-shrink:0}
+.side-link .nm{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.side-link .badge{margin-left:auto;font-size:8px;padding:1px 5px;letter-spacing:.12em;border:1px solid currentColor}
+.side-link:hover{color:var(--white);background:var(--raised)}
+.side-link:hover .coord{border-color:var(--cyan);color:var(--cyan)}
+.side-link.active{color:#000;background:var(--yellow)}
+.side-link.active .coord{border-color:#000;color:#000}
+.side-link.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#000}
+.side-foot{padding:10px 12px;border-top:1px solid var(--ghost);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.1em;line-height:1.6}
+
+.rightcol{display:flex;flex-direction:column;gap:16px}
+
+/* TABS / segmented */
+.tabs{display:flex;border:1px solid var(--ghost);background:var(--black)}
+.tab{flex:1;text-align:center;padding:9px 0;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);cursor:pointer;border-right:1px solid var(--ghost);transition:all 120ms linear}
+.tab:last-child{border-right:none}
+.tab:hover{color:var(--white);background:var(--raised)}
+.tab.active{background:var(--sky);color:#fff}
+
+/* pill tabs (zine) */
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:6px 13px;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--hi);color:var(--dim);cursor:pointer;transition:all 120ms linear}
+.pill:hover{color:var(--white);border-color:var(--white)}
+.pill.active{background:var(--white);color:#000;border-color:var(--white)}
+.pill.active.y{background:var(--yellow);border-color:var(--yellow)}
+.pill.active.g{background:var(--green);border-color:var(--green)}
+.pill.active.p{background:var(--pink);border-color:var(--pink)}
+
+/* breadcrumb */
+.crumbs{display:flex;align-items:center;gap:9px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;flex-wrap:wrap}
+.crumbs a{color:var(--dim);text-decoration:none;border:none;cursor:pointer}
+.crumbs a:hover{color:var(--cyan)}
+.crumbs .sep{color:rgba(255,255,255,.25)}
+.crumbs .here{color:var(--yellow)}
+
+/* pagination */
+.pager{display:flex;align-items:center;gap:4px}
+.pg{min-width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid var(--ghost);font-size:11px;letter-spacing:.05em;color:var(--dim);cursor:pointer;transition:all 120ms linear;background:var(--black)}
+.pg:hover{color:var(--white);border-color:var(--hi)}
+.pg.active{background:var(--yellow);color:#000;border-color:var(--yellow)}
+.pg.edge{color:rgba(255,255,255,.35);letter-spacing:.1em;padding:0 9px}
+.pg.dots{border:none;cursor:default;color:rgba(255,255,255,.3)}
+.pg.dots:hover{color:rgba(255,255,255,.3)}
+
+/* mobile bottom nav */
+.mobile{width:300px;border:1px solid var(--ghost);background:var(--black);display:flex}
+.mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;color:var(--dim);cursor:pointer;border-right:1px solid var(--ghost);transition:all 120ms linear}
+.mtab:last-child{border-right:none}
+.mtab .gly{font-size:15px;line-height:1}
+.mtab .ml{font-size:8px;letter-spacing:.12em;text-transform:uppercase}
+.mtab:hover{color:var(--white);background:var(--raised)}
+.mtab.active{color:var(--green)}
+.mtab.active .gly{color:var(--green)}
+
+.block{display:flex;flex-direction:column}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>
+</head>
+<body>
+<div class="chk-strip"></div>
+
+<!-- TOP BAR -->
+<div class="block">
+  <div class="label">Primary · top bar</div>
+  <nav class="topbar">
+    <div class="brand"><span class="sq"></span><span class="mk"><span class="d1">d</span>igi<span class="d2">d</span>elic</span></div>
+    <div class="navset">
+      <a class="navitem active"><span class="ix">01</span><span class="gl" data-t="GRID">GRID</span></a>
+      <a class="navitem"><span class="ix">02</span><span class="gl" data-t="NODES">NODES</span></a>
+      <a class="navitem"><span class="ix">03</span><span class="gl" data-t="SIGNAL">SIGNAL</span></a>
+      <a class="navitem"><span class="ix">04</span><span class="gl" data-t="LOGS">LOGS</span></a>
+    </div>
+    <div class="spacer"></div>
+    <div class="sysbox"><span class="dot"></span>SYS:0x4F3A</div>
+    <div class="cta">DEPLOY ▶</div>
+  </nav>
+</div>
+
+<!-- SIDEBAR + RIGHT COLUMN -->
+<div class="split">
+  <div class="block">
+    <div class="label">Sidebar · sector list</div>
+    <nav class="sidebar">
+      <div class="side-head"><span class="t">// SECTORS</span><span class="c">37</span></div>
+      <a class="side-link active"><span class="coord">A1</span><span class="nm">Grid</span></a>
+      <a class="side-link"><span class="coord">B6</span><span class="nm">Nodes</span><span class="badge" style="color:var(--green)">12</span></a>
+      <a class="side-link"><span class="coord">X06</span><span class="nm">Signal</span><span class="badge" style="color:var(--pink)">ERR</span></a>
+      <a class="side-link"><span class="coord">4R</span><span class="nm">Vectors</span></a>
+      <a class="side-link"><span class="coord">D9</span><span class="nm">Logs</span><span class="badge" style="color:var(--yellow)">99+</span></a>
+      <div class="side-foot">BUILD 0x0044<br>UPTIME 847H · SESSION AUTH</div>
+    </nav>
+  </div>
+
+  <div class="rightcol">
+    <div class="block">
+      <div class="label">Segmented · tabs</div>
+      <div class="tabs">
+        <div class="tab active">OVERVIEW</div>
+        <div class="tab">TELEMETRY</div>
+        <div class="tab">DIAGNOSTIC</div>
+        <div class="tab">RAW</div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="label">Pills · filter nav</div>
+      <div class="pills">
+        <div class="pill active y">ALL</div>
+        <div class="pill">NOMINAL</div>
+        <div class="pill">WARNING</div>
+        <div class="pill">CRITICAL</div>
+        <div class="pill">OFFLINE</div>
+      </div>
+    </div>
+
+    <div class="cols2">
+      <div class="block">
+        <div class="label">Breadcrumb</div>
+        <div class="crumbs">
+          <a>SYS</a><span class="sep">//</span>
+          <a>SECTOR-A1</a><span class="sep">//</span>
+          <a>NODE-047</a><span class="sep">//</span>
+          <span class="here">TELEMETRY</span>
+        </div>
+      </div>
+      <div class="block">
+        <div class="label">Mobile · bottom bar</div>
+        <nav class="mobile">
+          <div class="mtab active"><span class="gly">■</span><span class="ml">Grid</span></div>
+          <div class="mtab"><span class="gly">◈</span><span class="ml">Nodes</span></div>
+          <div class="mtab"><span class="gly">▶</span><span class="ml">Live</span></div>
+          <div class="mtab"><span class="gly">≡</span><span class="ml">Logs</span></div>
+        </nav>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="label">Pagination</div>
+      <div class="pager">
+        <div class="pg edge">◀ PREV</div>
+        <div class="pg">1</div>
+        <div class="pg active">2</div>
+        <div class="pg">3</div>
+        <div class="pg">4</div>
+        <div class="pg dots">···</div>
+        <div class="pg">12</div>
+        <div class="pg edge">NEXT ▶</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

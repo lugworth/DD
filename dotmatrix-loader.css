@@ -1,0 +1,69 @@
+/* ============================================================
+   digidelic — dot matrix loader styles
+   Ported from @dotmatrix/dotm-square-3 (dotmatrix.zzzzshawn.cloud)
+   shadcn registry → local code, retimed + rethemed for digidelic.
+   Subset: base + spiral-snake pattern + bloom + reduced-motion.
+   ============================================================ */
+
+.dmx-root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  --dmx-cycle: 1500ms;
+  --dmx-opacity-base: 0.16;
+  --dmx-opacity-mid: 0.32;
+  --dmx-opacity-peak: 1;
+}
+
+.dmx-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+}
+
+.dmx-dot {
+  display: block;
+  background: var(--dmx-dot-fill, currentColor);
+  opacity: calc(0.5 * (var(--dmx-opacity-base) + var(--dmx-opacity-mid)));
+  transform-origin: center;
+  will-change: opacity;
+  /* digidelic: hard corners — square dots by default (source default is circle) */
+  border-radius: 0;
+}
+.dmx-root.dmx-dot-shape-circle .dmx-dot { border-radius: 999px; }
+.dmx-root.dmx-dot-shape-diamond .dmx-dot { transform: rotate(45deg) scale(0.7071067812); }
+
+/* bloom — neon glow on the bright dot (digidelic: pairs with phosphor colors) */
+.dmx-bloom .dmx-dot {
+  filter:
+    drop-shadow(0 0 calc(var(--dmx-dot-size, 3px) * 0.75 * var(--dmx-bloom-level, 0)) currentColor)
+    drop-shadow(0 0 calc(var(--dmx-dot-size, 3px) * 1.35 * var(--dmx-bloom-level, 0)) currentColor);
+  will-change: opacity, filter;
+}
+
+.dmx-spiral-snake {
+  animation: dmx-spiral-snake calc(var(--dmx-cycle) * var(--dmx-speed, 1)) linear infinite;
+  animation-delay: calc(var(--dmx-spiral-order, 0) * 0.04 * var(--dmx-cycle) * var(--dmx-speed, 1));
+  will-change: opacity;
+}
+
+/* digidelic variant: quantised steps — CRT/terminal feel */
+.dmx-root.dmx-step .dmx-spiral-snake {
+  animation-timing-function: steps(6, end);
+}
+
+@keyframes dmx-spiral-snake {
+  0%, 100% { opacity: calc(0.5 * var(--dmx-opacity-base)); --dmx-bloom-level: 0; }
+  8%   { opacity: var(--dmx-opacity-peak); --dmx-bloom-level: 1; }
+  16%  { opacity: calc(0.5 * var(--dmx-opacity-peak) + 0.4 * var(--dmx-opacity-mid) + 0.1 * var(--dmx-opacity-base)); --dmx-bloom-level: 0; }
+  24%  { opacity: calc(0.25 * var(--dmx-opacity-peak) + 0.45 * var(--dmx-opacity-mid) + 0.3 * var(--dmx-opacity-base)); --dmx-bloom-level: 0; }
+  32%  { opacity: calc(0.5 * var(--dmx-opacity-mid) + 0.5 * var(--dmx-opacity-base)); --dmx-bloom-level: 0; }
+  40%  { opacity: calc(0.75 * var(--dmx-opacity-base)); --dmx-bloom-level: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dmx-spiral-snake { animation: none !important; }
+  /* static spiral gradient fallback — brightness follows spiral position */
+  .dmx-dot { opacity: calc(var(--dmx-opacity-base) + var(--dmx-spiral-norm, 0) * 0.78); }
+}

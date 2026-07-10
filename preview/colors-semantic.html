@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:14px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace}
+.row{display:grid;grid-template-columns:110px 1fr;align-items:center;height:28px;border-bottom:1px solid rgba(255,255,255,.08)}
+.row:last-child{border-bottom:none}
+.tok{font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:rgba(255,255,255,.4);padding:0 10px;border-right:1px solid rgba(255,255,255,.08)}
+.demo{display:flex;align-items:center;gap:8px;padding:0 10px;font-size:11px;letter-spacing:.06em}
+.dot{width:10px;height:10px;flex-shrink:0}
+.sect{font-size:9px;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.3);padding:12px 0 4px;border-top:1px solid rgba(255,255,255,.08)}
+.sect:first-child{border-top:none;padding-top:0}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+
+<div class="sect">// STATUS</div>
+<div class="row"><span class="tok">st-live</span><span class="demo"><span class="dot" style="background:#39ff6a"></span><span style="color:#39ff6a">▶ LIVE — stream active</span></span></div>
+<div class="row"><span class="tok">st-ok</span><span class="demo"><span class="dot" style="background:#39ff6a"></span><span style="color:#39ff6a">▶ NOMINAL — all systems go</span></span></div>
+<div class="row"><span class="tok">st-alert</span><span class="demo"><span class="dot" style="background:#ff2d87"></span><span style="color:#ff2d87">▶ ALERT — notification</span></span></div>
+<div class="row"><span class="tok">st-err</span><span class="demo"><span class="dot" style="background:#ff0066"></span><span style="color:#ff0066">▶ CRITICAL — err 0x00</span></span></div>
+<div class="row"><span class="tok">st-warn</span><span class="demo"><span class="dot" style="background:#eaff00"></span><span style="color:#eaff00">▶ WARNING — attention</span></span></div>
+<div class="row"><span class="tok">st-info</span><span class="demo"><span class="dot" style="background:#00d9ff"></span><span style="color:#00d9ff">▶ INFO — scanning</span></span></div>
+<div class="row"><span class="tok">st-dead</span><span class="demo"><span class="dot" style="background:rgba(255,255,255,.3)"></span><span style="color:rgba(255,255,255,.3)">▶ OFFLINE — no signal</span></span></div>
+
+<div class="sect">// TEXT ROLES</div>
+<div class="row"><span class="tok">fg</span><span class="demo"><span style="color:#fff">primary body text — #fff</span></span></div>
+<div class="row"><span class="tok">fg-soft</span><span class="demo"><span style="color:rgba(255,255,255,.86)">secondary — rgba 86%</span></span></div>
+<div class="row"><span class="tok">fg-dim</span><span class="demo"><span style="color:rgba(255,255,255,.42)">muted / caption — rgba 42%</span></span></div>
+<div class="row"><span class="tok">fg-ghost</span><span class="demo"><span style="color:rgba(255,255,255,.2)">border hints — rgba 20%</span></span></div>
+
+<script src="../glitch.js"></script>
+</body></html>

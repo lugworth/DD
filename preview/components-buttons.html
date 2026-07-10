@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Buttons" subtitle="Solid, ghost, sizes, states" viewport="700x220" -->
+<html><head><meta charset="UTF-8"><style>
+
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:16px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.label{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);width:100%;margin-bottom:4px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;padding:0 14px;height:32px;border:none;cursor:pointer;white-space:nowrap;color:#000}
+.pri{background:#eaff00;color:#000;border:1px solid #eaff00}
+.pink{background:#ff2d87;color:#000;border:1px solid #ff2d87}
+.green{background:#39ff6a;color:#000;border:1px solid #39ff6a}
+.cyan{background:#00d9ff;color:#000;border:1px solid #00d9ff}
+.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.25)}
+.ghost-y{background:transparent;color:#eaff00;border:1px solid #eaff00}
+.ghost-p{background:transparent;color:#ff2d87;border:1px solid #ff2d87}
+.danger{background:#ff0066;color:#fff;border:1px solid #ff0066}
+.sm{height:22px;font-size:9px;padding:0 10px}
+.lg{height:44px;font-size:13px;padding:0 20px}
+.icon{width:32px;height:32px;padding:0;justify-content:center;font-size:14px}
+.pip{width:6px;height:6px;background:currentColor}
+.dis{opacity:0.3;cursor:not-allowed}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+<div class="label">// PRIMARY / SOLID</div>
+<div class="row">
+<button class="btn pri"><span class="pip"></span>INITIALIZE</button>
+<button class="btn pink"><span class="pip"></span>NOTIFY</button>
+<button class="btn green"><span class="pip"></span>LIVE</button>
+<button class="btn cyan">DATA</button>
+<button class="btn danger">ABORT</button>
+</div>
+<div class="label">// GHOST / OUTLINE</div>
+<div class="row">
+<button class="btn ghost">INSPECT</button>
+<button class="btn ghost-y"><span class="pip"></span>RUN</button>
+<button class="btn ghost-p">SIGNAL</button>
+</div>
+<div class="label">// SIZES</div>
+<div class="row">
+<button class="btn pri sm">SMALL</button>
+<button class="btn pri">DEFAULT</button>
+<button class="btn pri lg"><span class="pip"></span>LARGE CTA</button>
+</div>
+<div class="label">// ICON + DISABLED</div>
+<div class="row">
+<button class="btn ghost-y icon">▶</button>
+<button class="btn ghost icon">■</button>
+<button class="btn ghost-p icon">×</button>
+<button class="btn cyan icon">▓</button>
+<button class="btn ghost dis">OFFLINE</button>
+</div>
+<div class="label">// CHECKER ACCENT</div>
+<div class="row">
+<button class="btn chk" style="color:#fff;border:1px solid #fff;text-shadow:0 0 4px #000,0 1px 2px #000">▦ ENGAGE</button>
+<button class="btn" style="background:#000;color:#fff;border:1px solid #fff;gap:0;padding:0"><span class="chk" style="width:18px;height:32px;display:inline-block"></span><span style="padding:0 14px">SYNC</span></button>
+</div>
+<script src="../glitch.js"></script>
+</body></html>
