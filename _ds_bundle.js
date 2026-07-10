@@ -1,4 +1,4 @@
-/* @ds-bundle: {"format":3,"namespace":"DigidelicDesignSystem_da5439","components":[],"sourceHashes":{"glitch.js":"a617609109f8","tailwind.config.js":"1b4caf4cf520"},"inlinedExternals":[],"unexposedExports":[]} */
+/* @ds-bundle: {"format":4,"namespace":"DigidelicDesignSystem_da5439","components":[],"sourceHashes":{"glitch.js":"a617609109f8","tailwind.config.js":"1b4caf4cf520"},"inlinedExternals":[],"unexposedExports":[]} */
 
 (() => {
 

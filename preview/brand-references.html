@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Style References" subtitle="Psychedelic portraiture, dither bleed, DIY zine collage — mood" viewport="760x510" -->
+<html><head><meta charset="UTF-8"><style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:14px;font-family:'Geist Mono',monospace;color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.tile{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.14);background:#0a0a0a}
+.tile img{width:100%;height:100%;object-fit:cover;display:block}
+.tall{height:330px}
+.zine{grid-row:span 1;height:330px}
+.cap{position:absolute;left:0;bottom:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:7px 9px;background:linear-gradient(0deg,rgba(0,0,0,0.85),transparent);z-index:2}
+.cap .t{font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase}
+.cap .c{font-size:8px;letter-spacing:0.14em;color:rgba(255,255,255,0.55);text-transform:uppercase}
+.tag{position:absolute;top:8px;left:8px;z-index:2;font-size:8px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;padding:2px 6px;background:#eaff00;color:#000}
+.scan{position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,0.18) 1px,rgba(0,0,0,0.18) 2px);pointer-events:none;z-index:1}
+.notes{margin-top:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.note{border:1px solid rgba(255,255,255,0.12);padding:9px 10px}
+.note h4{font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:5px}
+.note p{font-size:9px;line-height:1.55;color:rgba(255,255,255,0.6);letter-spacing:0.02em}
+.sw{display:inline-block;width:9px;height:9px;margin-right:2px;vertical-align:middle}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+<div class="grid">
+  <div class="tile tall">
+    <span class="tag" style="background:#ff2d87;color:#000">PSYCH / 01</span>
+    <img src="../research/ref-psychedelic-cat.jpg" alt="psychedelic portrait — flowers"/>
+    <div class="scan"></div>
+    <div class="cap"><span class="t" style="color:#39ff6a">RAINBOW AURA</span><span class="c">A1.2</span></div>
+  </div>
+  <div class="tile tall">
+    <span class="tag" style="background:#2d4cff;color:#fff">PSYCH / 02</span>
+    <img src="../research/ref-psychedelic-boy.jpg" alt="psychedelic portrait — dither garden"/>
+    <div class="scan"></div>
+    <div class="cap"><span class="t" style="color:#00d9ff">DITHER BLOOM</span><span class="c">B6</span></div>
+  </div>
+  <div class="tile zine">
+    <span class="tag">ZINE / 03</span>
+    <img src="../research/ref-zine-collage.png" alt="zine collage — update n.02"/>
+    <div class="scan"></div>
+    <div class="cap"><span class="t" style="color:#eaff00">COLLAGE / DIY</span><span class="c">N.02</span></div>
+  </div>
+</div>
+
+<div class="notes">
+  <div class="note">
+    <h4 style="color:#ff2d87">// PSYCHEDELIC PORTRAITURE</h4>
+    <p>Hikari-Shimoda-adjacent. Black-clad figures dissolving into chromatic rainbow auras + vivid wildflower fields. The neon is emotional, not technical — bleed, glow, oversaturation. Pull as hero imagery behind glitch type.</p>
+  </div>
+  <div class="note">
+    <h4 style="color:#00d9ff">// DITHER + BLEED</h4>
+    <p>Heavy ordered-dither grain over deep blues/greens. Rainbow light-leak columns. Soft focus + hard pixel noise coexist. This is the "degraded signal" texture — apply as overlay on photography.</p>
+  </div>
+  <div class="note">
+    <h4 style="color:#eaff00">// DIY ZINE COLLAGE</h4>
+    <p><span class="sw" style="background:#ff2d87"></span><span class="sw" style="background:#2d4cff"></span>Red/blue checker header, neon-green spirograph loops, tribal/gothic display, ticker footer (<i>::/// june 1st ///</i>), torn-photo collage. The brand's loud, lo-fi voice.</p>
+  </div>
+</div>
+<script src="../glitch.js"></script>
+</body></html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Type" name="Mono Type" subtitle="Geist Mono — UI, terminal, data readouts" viewport="700x300" -->
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #000; padding: 16px; font-family: 'Geist Mono','Geist Mono','Red Hat Mono',monospace; }
+  .row { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.06); align-items: baseline; }
+  .row:last-child { border-bottom: none; }
+  .meta { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.3); line-height: 1.4; }
+  .fg-white { color: #fff; }
+  .fg-soft  { color: rgba(255,255,255,0.86); }
+  .fg-dim   { color: rgba(255,255,255,0.42); }
+  .fg-y { color: #eaff00; }
+  .fg-p { color: #ff2d87; }
+  .fg-g { color: #39ff6a; }
+  .fg-c { color: #00d9ff; }
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>
+  <link rel="stylesheet" href="../glitch.css">
+</head>
+<body class="gl-stage">
+<div class="chk-strip"></div>
+  <div class="row"><div class="meta">16 / 400</div><div class="fg-white" style="font-size:16px;">SYS_INIT — build 0x0044 — uptime 847:23:11</div></div>
+  <div class="row"><div class="meta">14 / 400</div><div class="fg-g" style="font-size:14px;">▶ session authenticated — sector: A1.2</div></div>
+  <div class="row"><div class="meta">14 / 700</div><div class="fg-y" style="font-size:14px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;">WARNING · SIGNAL DEGRADED</div></div>
+  <div class="row"><div class="meta">12 / 400</div><div class="fg-soft" style="font-size:12px;">LOC: 44.2N // 0x4F3A // ERR_NULL // [SYS:0x44]</div></div>
+  <div class="row"><div class="meta">12 / 400</div><div class="fg-p" style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em;">▶ CRITICAL — NODE OFFLINE</div></div>
+  <div class="row"><div class="meta">11 / 400</div><div class="fg-dim" style="font-size:11px;">// no carrier &nbsp;·&nbsp; awaiting input &nbsp;·&nbsp; signal lost &nbsp;·&nbsp; d1g1d3l1c</div></div>
+  <div class="row"><div class="meta">10 / label</div><div class="fg-dim" style="font-size:10px; text-transform:uppercase; letter-spacing:0.22em;">UPTIME · SECTOR · SESSION · PROTOCOL · NODE</div></div>
+  <div class="row"><div class="meta">12 / italic</div><div style="font-size:12px; font-style:italic; color:rgba(255,255,255,0.3);">/* transmission interrupted — retry 0x03 */</div></div>
+  <div class="row"><div class="meta">14 / 700</div><div class="fg-c" style="font-size:14px; letter-spacing:0.08em;">▶ DATA STREAM 22.4 MB/s</div></div>
+<script src="../glitch.js"></script>
+</body>
+</html>

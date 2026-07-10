@@ -159,6 +159,25 @@
   mix-blend-mode: screen; opacity: var(--tex-op, 0.85);
 }
 
+/* ASCII dot-matrix grids (uploads, 07-2026) — THE core data-texture.
+   Colorful character cells on black; tile them as ambient backdrops. */
+.tex-ascii-1 { background-image: url('assets/tex-ascii-01.png'); background-size: 560px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
+.tex-ascii-2 { background-image: url('assets/tex-ascii-02.png'); background-size: 560px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
+.tex-ascii-3 { background-image: url('assets/tex-ascii-03.png'); background-size: 620px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
+.tex-ascii-4 { background-image: url('assets/tex-ascii-04.png'); background-size: 560px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
+.tex-ascii-5 { background-image: url('assets/tex-ascii-05.png'); background-size: 620px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
+
+/* Night-garden infrared photography (uploads, 07-2026) — hero backdrops.
+   Use as cover images behind dark scrims, not blend-textures. */
+.bg-night-1 { background-image: url('assets/photo-night-01.png'); background-size: cover; background-position: center; }
+.bg-night-2 { background-image: url('assets/photo-night-02.png'); background-size: cover; background-position: center; }
+.bg-night-4 { background-image: url('assets/photo-night-04.png'); background-size: cover; background-position: center; }
+.bg-night-6 { background-image: url('assets/photo-night-06.png'); background-size: cover; background-position: center; }
+.bg-night-9 { background-image: url('assets/photo-night-09.png'); background-size: cover; background-position: center; }
+/* dark scrim so type stays legible on the photos */
+.night-scrim { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.78)); }
+
 /* ============================================================
    7. PSYCHEDELIA ENGINE — swirls, rainbow aura, hue-cycle, liquid
    Decorative layers. Place inside a .tex-host; they sit at z:0

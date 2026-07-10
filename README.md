@@ -65,6 +65,8 @@ See the **Style References** card in the Design System tab for the moodboard.
 | `--cyan` | `#00d9ff` | Data readout, links |
 | `--white` | `#ffffff` | Text, ink on color blocks |
 
+> **v2.3 — Night Garden.** Latest refs (07-2026): infrared night-garden photography (deep violet skies, blood-red foliage, indigo leaves) + colorful ASCII dot-matrix grids. These are now the canonical backdrop layer: `--night/--violet/--indigo/--blood` tokens, `.tex-ascii-1…5` tiled data-textures, `.bg-night-*` photo backdrops with `.night-scrim`. See the **Night Garden** card.
+
 ### Duotone layer (from flower / halftone / cross-grid refs)
 
 | Token | Hex | Role |

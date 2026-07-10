@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Night Garden" subtitle="Infrared photo backdrops + ASCII data-textures — 07-2026 refs" viewport="760x560" -->
+<html><head><meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:14px;font-family:'Geist Mono',monospace;color:#fff}
+.cap{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:12px 0 6px}
+.cap:first-child{margin-top:0}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ph{position:relative;aspect-ratio:3/4;border:1px solid rgba(255,255,255,.12);overflow:hidden}
+.ph .im{position:absolute;inset:0}
+.ph .tag{position:absolute;left:6px;bottom:6px;z-index:2;font-size:8px;letter-spacing:.14em;text-transform:uppercase;background:#000;padding:2px 6px;color:#fff}
+.hero{position:relative;height:150px;border:1px solid rgba(255,255,255,.12);overflow:hidden;display:flex;align-items:flex-end;padding:12px;margin-top:6px}
+.hero h2{position:relative;z-index:2;font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:34px;text-transform:uppercase;letter-spacing:-.01em;line-height:.95}
+.hero .sub{position:relative;z-index:2;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#e02020;margin-left:auto}
+.texrow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tx{position:relative;height:92px;border:1px solid rgba(255,255,255,.12);overflow:hidden;background:#000}
+.tx .tex{opacity:.9}
+.tx .lb{position:absolute;left:5px;bottom:5px;z-index:2;font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.6)}
+.sw{display:flex;gap:6px;margin-top:6px}
+.sw .s{flex:1;height:44px;position:relative;display:flex;align-items:flex-end;padding:5px}
+.sw .s span{font-size:8px;letter-spacing:.1em;text-transform:uppercase;mix-blend-mode:difference;color:#fff}
+</style></head><body>
+
+<div class="cap">// NIGHT GARDEN — INFRARED PHOTO BACKDROPS (dark scrim keeps type legible)</div>
+<div class="strip">
+  <div class="ph"><div class="im bg-night-1"></div><div class="night-scrim"></div><span class="tag">N-01</span></div>
+  <div class="ph"><div class="im bg-night-2"></div><div class="night-scrim"></div><span class="tag">N-02</span></div>
+  <div class="ph"><div class="im bg-night-6"></div><div class="night-scrim"></div><span class="tag">N-06</span></div>
+  <div class="ph"><div class="im bg-night-9"></div><div class="night-scrim"></div><span class="tag">N-09</span></div>
+</div>
+
+<div class="hero">
+  <div class="im bg-night-4" style="position:absolute;inset:0"></div>
+  <div class="night-scrim"></div>
+  <h2>SIGNAL<br>BLOOM</h2>
+  <span class="sub">// hero usage — photo + scrim + display type</span>
+</div>
+
+<div class="cap">// ASCII DATA-TEXTURES — tile behind panels at 10–20% (screen blend)</div>
+<div class="texrow">
+  <div class="tx"><div class="tex tex-ascii-1"></div><span class="lb">ascii-1</span></div>
+  <div class="tx"><div class="tex tex-ascii-2"></div><span class="lb">ascii-2</span></div>
+  <div class="tx"><div class="tex tex-ascii-3"></div><span class="lb">ascii-3</span></div>
+  <div class="tx"><div class="tex tex-ascii-4"></div><span class="lb">ascii-4</span></div>
+  <div class="tx"><div class="tex tex-ascii-5"></div><span class="lb">ascii-5</span></div>
+</div>
+
+<div class="cap">// NIGHT-GARDEN TOKENS</div>
+<div class="sw">
+  <div class="s" style="background:#150a1c"><span>--night 150a1c</span></div>
+  <div class="s" style="background:#8a3fb0"><span>--violet 8a3fb0</span></div>
+  <div class="s" style="background:#4653e8"><span>--indigo 4653e8</span></div>
+  <div class="s" style="background:#e02020"><span>--blood e02020</span></div>
+  <div class="s" style="background:#ff6050"><span>--red ff6050</span></div>
+  <div class="s" style="background:#00d9ff"><span>--cyan 00d9ff</span></div>
+</div>
+
+</body></html>

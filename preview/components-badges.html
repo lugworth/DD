@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Badges & Coordinates" subtitle="Status, solid, coord markers, tags" viewport="700x220" -->
+<html><head><meta charset="UTF-8"><style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:16px;font-family:'Geist Mono',monospace;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+.b{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;padding:0 8px;height:20px;border:1px solid;position:relative;overflow:hidden}
+.pip{width:5px;height:5px;background:currentColor;flex-shrink:0}
+.ok{color:#39ff6a;border-color:#39ff6a}
+.wa{color:#eaff00;border-color:#eaff00}
+.er{color:#ff0066;border-color:#ff0066}
+.in{color:#00d9ff;border-color:#00d9ff}
+.de{color:rgba(255,255,255,0.4);border-color:rgba(255,255,255,0.15)}
+.sy{background:#eaff00;color:#000;border-color:#eaff00}
+.sp{background:#ff2d87;color:#000;border-color:#ff2d87}
+.sg{background:#39ff6a;color:#000;border-color:#39ff6a}
+.sc{background:#00d9ff;color:#000;border-color:#00d9ff}
+.w{width:100%;font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-top:4px}
+.w:first-child{margin-top:0}
+
+/* ── MOTION ───────────────────────────────────────── */
+@keyframes beat{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(2);opacity:0.35}}
+.pip-beat{animation:beat 1s steps(10,end) infinite}
+@keyframes hardblink{0%,55%{opacity:1}56%,100%{opacity:0.25}}
+.b-blink{animation:hardblink 0.7s steps(1,end) infinite}
+@keyframes sweep{0%{left:-45%}100%{left:145%}}
+.shimmer::after{content:'';position:absolute;top:0;bottom:0;width:45%;left:-45%;background:linear-gradient(90deg,transparent,rgba(0,217,255,0.6),transparent);animation:sweep 1.3s linear infinite}
+@keyframes flash{0%,100%{background:#ff0066;color:#fff}50%{background:#000;color:#ff0066}}
+.b-flash{animation:flash 0.55s steps(1,end) infinite;border-color:#ff0066}
+@keyframes slide{0%{background-position:0 0}100%{background-position:28px 0}}
+.b-hazard{background:repeating-linear-gradient(-45deg,#eaff00 0 7px,#000 7px 14px);background-size:28px 20px;color:#eaff00;border-color:#eaff00;animation:slide 0.5s linear infinite;text-shadow:0 0 3px #000,0 0 5px #000}
+.b-ring{padding-left:18px}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(57,255,106,0.6)}100%{box-shadow:0 0 0 7px rgba(57,255,106,0)}}
+.b-ring::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:5px;height:5px;background:#39ff6a;animation:ring 1.2s ease-out infinite}
+
+/* coord chip */
+.cd{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #fff;color:#fff;font-size:11px;font-weight:700;letter-spacing:0.05em;position:relative}
+.cd.y{border-color:#eaff00;color:#eaff00}
+.cd.p{border-color:#ff2d87;color:#ff2d87}
+.cd.g{border-color:#39ff6a;color:#39ff6a}
+.cd.b{border-color:#2d4cff;color:#2d4cff}
+.cd.fy{background:#eaff00;border-color:#eaff00;color:#000}
+.cd.fp{background:#ff2d87;border-color:#ff2d87;color:#000}
+@keyframes lock{0%,100%{border-color:#ff0066}50%{border-color:rgba(255,0,102,0.15)}}
+.cd.lock{color:#ff0066;animation:lock 0.5s steps(1,end) infinite}
+.cd.lock::before,.cd.lock::after{content:'';position:absolute;width:6px;height:6px;border:1.5px solid #ff0066}
+.cd.lock::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
+.cd.lock::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
+@keyframes tick{0%,49%{opacity:1}50%,100%{opacity:0.45}}
+.cd.tick span{animation:tick 0.5s steps(1,end) infinite}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+<div class="w">// STATUS — LIVE</div>
+<div class="b ok"><span class="pip pip-beat"></span>NOMINAL</div>
+<div class="b wa"><span class="pip pip-beat"></span>WARNING</div>
+<div class="b er b-blink"><span class="pip"></span>CRITICAL</div>
+<div class="b in shimmer"><span class="pip"></span>SCANNING</div>
+<div class="b de"><span class="pip"></span>OFFLINE</div>
+
+<div class="w">// URGENT / PRIORITY</div>
+<div class="b b-flash">▶ BREACH DETECTED</div>
+<div class="b b-hazard">⚠ HARD ALERT</div>
+<div class="b er b-blink">REACTOR 00:09</div>
+<div class="b sg b-ring">▶ LIVE</div>
+
+<div class="w">// SOLID FILLS</div>
+<div class="b sy">ACTIVE</div>
+<div class="b sp">NOTIFY</div>
+<div class="b sg">LIVE</div>
+<div class="b sc">DATA</div>
+
+<div class="w">// COORDINATE MARKERS</div>
+<div class="cd">B6</div>
+<div class="cd y">A1.2</div>
+<div class="cd p">X.06</div>
+<div class="cd g">4R</div>
+<div class="cd b">D9</div>
+<div class="cd lock">XX</div>
+<div class="cd fy tick"><span>40</span></div>
+<div class="cd fp">17</div>
+<div class="cd chk" style="border-color:#fff;color:#fff;text-shadow:0 0 3px #000,0 1px 2px #000">▦</div>
+
+<div class="w">// CLASS TAGS</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">RELAY</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">TERMINAL</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">BEACON</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">VECTOR</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">SENTINEL</div>
+<script src="../glitch.js"></script>
+</body></html>

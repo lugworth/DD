@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Palette" subtitle="7 neon heroes + void — sampled from refs" viewport="700x290" -->
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #000; padding: 16px; font-family: 'Geist Mono', monospace; }
+  .cap { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+  @media(max-width:560px){ .grid{ grid-template-columns: repeat(2,1fr); } }
+  .swatch { padding: 10px; display: flex; flex-direction: column; justify-content: space-between; position: relative; border: 1px solid rgba(0,0,0,0.2); }
+  .primary .swatch { height: 132px; }
+  .secondary { margin-top: 2px; }
+  .secondary .swatch { height: 84px; }
+  .swatch .top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .swatch .num { font-family: 'Space Grotesk', sans-serif; font-weight: 900; font-size: 28px; line-height: 0.9; letter-spacing: -0.02em; }
+  .secondary .swatch .num { font-size: 20px; }
+  .swatch .coord { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.75; }
+  .swatch .hex { font-size: 10px; letter-spacing: 0.08em; }
+  .swatch .label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em; }
+.checker{--chk:21px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:calc(var(--chk)*2) calc(var(--chk)*2);background-position:0 0,var(--chk) var(--chk)}
+  .dark-ink { color: #000; }
+  .light-ink { color: #fff; }
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>
+  <link rel="stylesheet" href="../glitch.css">
+</head>
+<body class="gl-stage">
+<div class="chk-strip"></div>
+  <div class="cap">// PRIMARY — the four heroes</div>
+  <div class="grid primary">
+    <div class="swatch dark-ink" style="background:#eaff00">
+      <div class="top"><span class="num">01</span><span class="coord">A1.2</span></div>
+      <div><div class="hex">#eaff00</div><div class="label">— ELECTRIC YELLOW</div></div>
+    </div>
+    <div class="swatch light-ink" style="background:#ff2d87">
+      <div class="top"><span class="num">02</span><span class="coord">B3</span></div>
+      <div><div class="hex">#ff2d87</div><div class="label">— HOT PINK</div></div>
+    </div>
+    <div class="swatch dark-ink" style="background:#39ff6a">
+      <div class="top"><span class="num">03</span><span class="coord">C7</span></div>
+      <div><div class="hex">#39ff6a</div><div class="label">— NEON GREEN</div></div>
+    </div>
+    <div class="swatch light-ink" style="background:#2d4cff">
+      <div class="top"><span class="num">04</span><span class="coord">D9</span></div>
+      <div><div class="hex">#2d4cff</div><div class="label">— ELECTRIC BLUE</div></div>
+    </div>
+  </div>
+
+  <div class="cap" style="margin-top:14px">// SECONDARY + BASE</div>
+  <div class="grid secondary">
+    <div class="swatch light-ink" style="background:#c800ff">
+      <div class="top"><span class="num">05</span><span class="coord">E4</span></div>
+      <div><div class="hex">#c800ff</div><div class="label">— MAGENTA</div></div>
+    </div>
+    <div class="swatch dark-ink" style="background:#00d9ff">
+      <div class="top"><span class="num">06</span><span class="coord">F2</span></div>
+      <div><div class="hex">#00d9ff</div><div class="label">— CYAN</div></div>
+    </div>
+    <div class="swatch dark-ink" style="background:#ffffff">
+      <div class="top"><span class="num">07</span><span class="coord">W0</span></div>
+      <div><div class="hex">#ffffff</div><div class="label">— WHITE</div></div>
+    </div>
+    <div class="swatch light-ink" style="background:#000; border:1px solid rgba(255,255,255,0.25)">
+      <div class="top"><span class="num">00</span><span class="coord">—</span></div>
+      <div><div class="hex">#000000</div><div class="label">— THE VOID</div></div>
+    </div>
+  </div>
+
+  <div class="cap" style="margin-top:14px">// DUOTONE LAYER — from flower / halftone refs</div>
+  <div class="grid secondary">
+    <div class="swatch light-ink" style="background:#0a84e0">
+      <div class="top"><span class="num">08</span><span class="coord">P1</span></div>
+      <div><div class="hex">#0a84e0</div><div class="label">— SKY BLUE</div></div>
+    </div>
+    <div class="swatch light-ink" style="background:#ff6050">
+      <div class="top"><span class="num">09</span><span class="coord">R5</span></div>
+      <div><div class="hex">#ff6050</div><div class="label">— CORAL</div></div>
+    </div>
+    <div class="swatch light-ink" style="background:#12b39b">
+      <div class="top"><span class="num">10</span><span class="coord">T2</span></div>
+      <div><div class="hex">#12b39b</div><div class="label">— TEAL</div></div>
+    </div>
+    <div class="swatch dark-ink" style="background:#c6ff3a">
+      <div class="top"><span class="num">11</span><span class="coord">L3</span></div>
+      <div><div class="hex">#c6ff3a</div><div class="label">— ACID LIME</div></div>
+    </div>
+    <div class="swatch light-ink checker" style="--chk:21px">
+      <div class="top"><span class="num" style="mix-blend-mode:difference;color:#fff">▦</span><span class="coord" style="mix-blend-mode:difference;color:#fff">CHK</span></div>
+      <div><div class="hex" style="mix-blend-mode:difference;color:#fff">coral × blue</div><div class="label" style="mix-blend-mode:difference;color:#fff">— CHECKER MOTIF</div></div>
+    </div>
+  </div>
+<script src="../glitch.js"></script>
+</body>
+</html>

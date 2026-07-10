@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Wordmark" subtitle="Primary, glitch, tag, block, mono" viewport="700x420" -->
+<html><head><meta charset="UTF-8"><style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:24px;display:flex;flex-direction:column;gap:18px;align-items:flex-start}
+.label{font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px}
+.wm{font-family:'Space Grotesk', sans-serif;font-weight:900;font-size:84px;text-transform:lowercase;letter-spacing:-0.03em;color:#fff;line-height:1}
+.wm .d{color:#eaff00}
+.wm-glitch{font-family:'Space Grotesk', sans-serif;font-weight:900;font-size:84px;text-transform:lowercase;letter-spacing:-0.03em;color:#fff;line-height:1;position:relative;display:inline-block}
+.wm-glitch::before{content:'digidelic';position:absolute;top:0;left:0.8px;color:#ff2d87;clip-path:polygon(0 0,100% 0,100% 34%,0 34%);opacity:0.55;animation:wm-jx 3.4s ease-in-out infinite}
+.wm-glitch::after{content:'digidelic';position:absolute;top:0;left:-0.8px;color:#00d9ff;clip-path:polygon(0 66%,100% 66%,100% 100%,0 100%);opacity:0.5;animation:wm-jy 4s ease-in-out infinite}
+@keyframes wm-jx{0%,100%{transform:translate(0,0)}40%{transform:translate(-1px,0)}52%{transform:translate(1.4px,0)}66%{transform:translate(-0.6px,0)}}
+@keyframes wm-jy{0%,100%{transform:translate(0,0)}38%{transform:translate(1px,0)}52%{transform:translate(-1.4px,0)}70%{transform:translate(0.6px,0)}}
+@media(prefers-reduced-motion:reduce){.wm-glitch::before,.wm-glitch::after{animation:none}}
+.tag{display:inline-flex;align-items:center;gap:10px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:0.22em;background:#eaff00;color:#000;padding:6px 12px;font-weight:700}
+.tag .sq{width:8px;height:8px;background:#000}
+.mono{font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;font-size:24px;font-weight:700;text-transform:lowercase;letter-spacing:0.12em;color:#39ff6a}
+.block{display:inline-flex;align-items:center;background:#000;border:1px solid #fff;padding:8px 14px;gap:10px}
+.block .sq{width:12px;height:12px;background:#eaff00}
+.block .nm{font-family:'Space Grotesk', sans-serif;font-weight:900;font-size:22px;text-transform:lowercase;letter-spacing:-0.01em;color:#fff}
+.block .nm .d{color:#eaff00}
+.block .coord{font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:0.15em;text-transform:uppercase;border-left:1px solid rgba(255,255,255,0.25);padding-left:10px}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+<div><div class="label">// PRIMARY WORDMARK</div><div class="wm"><span class="d">d</span>igidelic</div></div>
+<div><div class="label">// GLITCH VARIANT</div><div class="wm-glitch">digidelic</div></div>
+<div><div class="label">// SYSTEM TAG</div><div class="tag"><span class="sq"></span>digidelic<span class="sq"></span></div></div>
+<div><div class="label">// BLOCK LOCKUP</div><div class="block"><span class="sq"></span><span class="nm"><span class="d">d</span>igidelic</span><span class="coord">SYS:0x4F3A</span></div></div>
+<div><div class="label">// MONO TERMINAL</div><div class="mono">// digidelic_</div></div>
+<script src="../glitch.js"></script>
+</body></html>

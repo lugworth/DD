@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Inputs & Toggles" subtitle="Text, select, textarea, toggle, radio" viewport="700x290" -->
+<html><head><meta charset="UTF-8"><style>
+
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:16px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace}
+.label{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px}
+.group{margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}
+input,select,textarea{background:#0a0a0a;border:1px solid rgba(255,255,255,0.15);color:#fff;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;font-size:12px;padding:0 10px;height:32px;width:230px;outline:none;border-radius:0;-webkit-appearance:none;letter-spacing:0.05em}
+input:focus,select:focus,textarea:focus{border-color:#eaff00}
+input::placeholder{color:rgba(255,255,255,0.28)}
+.err{border-color:#ff0066!important;color:#ff0066}
+textarea{height:60px;padding:8px 10px;resize:none;width:230px}
+.field-note{font-size:9px;color:rgba(255,255,255,0.35);margin-top:3px;letter-spacing:0.05em}
+.field-note.e{color:#ff0066}
+.toggle{width:36px;height:18px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.22);position:relative;cursor:pointer;flex-shrink:0}
+.toggle.on{background:#eaff00;border-color:#eaff00}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;background:#000;transition:left 80ms linear}
+.toggle.on::after{left:20px}
+.tl{display:flex;align-items:center;gap:10px}
+.tl-label{font-size:10px;text-transform:uppercase;letter-spacing:0.15em;color:rgba(255,255,255,0.7)}
+.radio{display:inline-flex;align-items:center;gap:6px;font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.7);cursor:pointer}
+.radio .box{width:12px;height:12px;border:1px solid rgba(255,255,255,0.3);flex-shrink:0;position:relative}
+.radio.sel .box{border-color:#eaff00;background:#000}
+.radio.sel .box::after{content:'';position:absolute;inset:2px;background:#eaff00}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+<div class="group"><div class="label">// TEXT INPUT</div><div class="row">
+<div><input type="text" placeholder="ENTER SECTOR ID"><div class="field-note">sector identifier — alphanumeric</div></div>
+<div><input type="text" class="err" value="ERR_INVALID"><div class="field-note e">▶ invalid sector — retry</div></div>
+</div></div>
+<div class="group"><div class="label">// SELECT / TEXTAREA</div><div class="row">
+<select><option>SECTOR: A1.2</option><option>SECTOR: B6</option><option>SECTOR: X.06</option></select>
+<textarea placeholder="// enter transmission..."></textarea>
+</div></div>
+<div class="group"><div class="label">// TOGGLES</div><div class="row" style="gap:20px">
+<div class="tl"><div class="toggle on"></div><span class="tl-label">SIGNAL ACTIVE</span></div>
+<div class="tl"><div class="toggle"></div><span class="tl-label" style="color:rgba(255,255,255,0.3)">SIGNAL OFF</span></div>
+<div class="tl"><div class="toggle on" style="background:#ff0066;border-color:#ff0066"></div><span class="tl-label" style="color:#ff0066">ALARM</span></div>
+</div></div>
+<div class="group"><div class="label">// RADIO</div><div class="row" style="gap:18px">
+<div class="radio sel"><div class="box"></div>FREELANCE</div>
+<div class="radio"><div class="box"></div>CONTRACTED</div>
+<div class="radio"><div class="box"></div>UNBOUND</div>
+</div></div>
+<script src="../glitch.js"></script>
+</body></html>

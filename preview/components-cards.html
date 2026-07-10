@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Cards" subtitle="Default, yellow/pink/green fills, stats" viewport="700x200" -->
+<html><head><meta charset="UTF-8"><style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:16px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.card{background:#111110;border:1px solid rgba(255,255,255,0.12);width:210px}
+.hd{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center}
+.ti{font-family:'Space Grotesk', sans-serif;font-weight:900;font-size:16px;text-transform:uppercase;letter-spacing:0.05em;color:#fff}
+.co{font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.1em}
+.body{padding:10px}
+.rw{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.rw:last-child{border-bottom:none}
+.k{font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.35)}
+.v{font-size:10px;color:rgba(255,255,255,0.8);letter-spacing:0.05em}
+/* Yellow block card — Clov/WILLB style */
+.card-y{background:#eaff00;border:1px solid #eaff00;color:#000;padding:12px;width:210px}
+.card-y .ti{color:#000;font-size:20px}
+.card-y .k{color:rgba(0,0,0,0.5)}
+.card-y .v{color:#000;font-weight:700}
+.card-y .hd{border-bottom-color:#000}
+/* Pink card */
+.card-p{background:#ff2d87;border:1px solid #ff2d87;color:#000;padding:12px;width:210px}
+.card-p .ti{color:#000;font-size:20px}
+.card-p .k{color:rgba(0,0,0,0.5)}
+.card-p .v{color:#000;font-weight:700}
+.card-p .hd{border-bottom-color:#000}
+/* Green */
+.card-g{background:#39ff6a;border:1px solid #39ff6a;color:#000;padding:12px;width:210px}
+.card-g .ti{color:#000;font-size:20px}
+.card-g .k{color:rgba(0,0,0,0.5)}
+.card-g .v{color:#000;font-weight:700}
+.card-g .hd{border-bottom-color:#000}
+/* Stats stack */
+.stat{background:#111110;border:1px solid rgba(255,255,255,0.12);padding:10px;width:110px}
+.stat-n{font-family:'Space Grotesk', sans-serif;font-weight:900;font-size:44px;line-height:1;color:#eaff00}
+.stat-l{font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-top:4px}
+.stat-s{font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px;letter-spacing:0.08em}
+.pip{display:inline-block;width:5px;height:5px;background:currentColor;margin-right:4px}
+
+/* ── checker motif (coral × blue) ── */
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+<div class="card"><div class="hd"><span class="ti">NODE-047</span><span class="co">[0x2F]</span></div><div class="body">
+<div class="rw"><span class="k">sector</span><span class="v">A1.2</span></div>
+<div class="rw"><span class="k">class</span><span class="v">RELAY</span></div>
+<div class="rw"><span class="k">uptime</span><span class="v">847:23:11</span></div>
+<div class="rw"><span class="k">status</span><span class="v" style="color:#39ff6a"><span class="pip"></span>NOMINAL</span></div>
+</div></div>
+
+<div class="card-y">
+<div class="hd"><span class="ti">CAMPAIGN</span><span class="co" style="color:rgba(0,0,0,0.5)">75%</span></div>
+<div style="padding-top:10px">
+<div class="rw"><span class="k">node</span><span class="v">NODE-088</span></div>
+<div class="rw"><span class="k">sector</span><span class="v">B3</span></div>
+<div class="rw"><span class="k">uptime</span><span class="v">002:17:44</span></div>
+</div></div>
+
+<div class="card-p">
+<div class="hd"><span class="ti">TODAY</span><span class="co" style="color:rgba(0,0,0,0.5)">11:00 AM</span></div>
+<div style="padding-top:10px">
+<div class="rw"><span class="k">event</span><span class="v">SIGNAL SYNC</span></div>
+<div class="rw"><span class="k">vector</span><span class="v">FREELANCE</span></div>
+<div class="rw"><span class="k">status</span><span class="v">▶ RUNNING</span></div>
+</div></div>
+
+<div class="card-g">
+<div class="hd"><span class="ti">LIVE</span><span class="co" style="color:rgba(0,0,0,0.5)">▶</span></div>
+<div style="padding-top:10px">
+<div class="rw"><span class="k">stream</span><span class="v">22.4 MB/s</span></div>
+<div class="rw"><span class="k">peers</span><span class="v">14</span></div>
+<div class="rw"><span class="k">latency</span><span class="v">47ms</span></div>
+</div></div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div class="stat"><div class="stat-n">847</div><div class="stat-l">UPTIME HRS</div><div class="stat-s" style="color:#39ff6a">▶ NOMINAL</div></div>
+<div class="stat"><div class="stat-n" style="color:#ff0066">003</div><div class="stat-l">FAILURES</div><div class="stat-s" style="color:#ff0066">▶ CRITICAL</div></div>
+</div>
+
+<div class="card">
+<div class="hd chk" style="border-bottom:1px solid #000"><span class="ti" style="text-shadow:0 0 4px #000,0 1px 2px #000">DISPATCH</span><span class="co" style="color:#fff;text-shadow:0 1px 2px #000">[0xZN]</span></div>
+<div class="body">
+<div class="rw"><span class="k">channel</span><span class="v">ZINE-01</span></div>
+<div class="rw"><span class="k">issue</span><span class="v">n.02</span></div>
+<div class="rw"><span class="k">vector</span><span class="v">FREELANCE</span></div>
+<div class="rw"><span class="k">status</span><span class="v" style="color:#0a84e0"><span class="pip"></span>BROADCAST</span></div>
+</div></div>
+<script src="../glitch.js"></script>
+</body></html>
