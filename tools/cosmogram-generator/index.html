@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Cosmogram Generator" subtitle="Live generative esoteric diagram — orbital bodies, circuit combs, glyph borders" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — cosmogram generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:32px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#e8dab8}
+
+.rack{width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+
+.seed-row{display:flex;gap:8px}
+.seed-read{
+  flex:1;display:flex;align-items:center;justify-content:space-between;
+  border:1px solid var(--border);padding:0 12px;height:36px;
+  font-size:12px;letter-spacing:.08em;color:var(--white-soft);background:var(--black-panel);
+}
+.seed-read .k{color:var(--white-dim);font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+.seed-read .v{color:var(--cyan)}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
+  --p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,
+input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+.seg{display:flex;border:1px solid var(--border-hi)}
+.seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
+.seg button:last-child{border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black)}
+.actions button{flex:1;height:42px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:860px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:20px;min-height:60vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Cosmogram Generator</h1>
+      <div class="sub">esoteric diagram engine · live parameter rack</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span>0x4F3A</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="canvas preview">
+      <span class="corner tl">FRAME ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerSeed">seed —</span>
+      <span class="corner br">4R // 273</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
+          <div class="seed-row">
+            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <button id="btnRandom" title="new random seed">⟳ Random</button>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Cosmos</h2><span class="coord">S.01</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Orbs</span><span class="val" data-val="orbs"></span></div>
+            <input type="range" id="orbs" min="1" max="6" step="1" value="4">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Orbit rings</span><span class="val" data-val="orbits"></span></div>
+            <input type="range" id="orbits" min="0" max="100" step="1" value="55">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Circuit combs</span><span class="val" data-val="circuits"></span></div>
+            <input type="range" id="circuits" min="0" max="100" step="1" value="60">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Ornament</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Border glyphs</span><span class="val" data-val="border"></span></div>
+            <input type="range" id="border" min="0" max="100" step="1" value="70">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Bead scatter</span><span class="val" data-val="scatter"></span></div>
+            <input type="range" id="scatter" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Register grid</span><span class="val" data-val="redgrid"></span></div>
+            <input type="range" id="redgrid" min="0" max="100" step="1" value="45">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Paper age</span><span class="val" data-val="age"></span></div>
+            <input type="range" id="age" min="0" max="100" step="1" value="35">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Palette</span></div>
+            <div class="seg" id="segPalette" role="group" aria-label="palette">
+              <button data-pal="codex" class="is-active">Codex</button>
+              <button data-pal="mono">Mono</button>
+              <button data-pal="digidelic">Digidelic</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Format</span></div>
+            <div class="seg" id="segFormat" role="group" aria-label="format">
+              <button data-fmt="square" class="is-active">1:1 Square</button>
+              <button data-fmt="portrait">4:5 Portrait</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Stroke weight</span><span class="val" data-val="stroke"></span></div>
+            <input type="range" id="stroke" min="0.5" max="2.5" step="0.1" value="1">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Margin</span><span class="val" data-val="margin"></span></div>
+            <input type="range" id="margin" min="0" max="90" step="1" value="26">
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnRegen">⟳ Regenerate</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>cosmogen v1.0</b></div>
+    <div class="cell">marks <b id="statCells">0</b></div>
+    <div class="cell">render <b id="statMs">0ms</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════ RNG ═══════════════════ */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function weightedPick(rnd,items){
+  let total=0; for(const it of items) total+=it[1];
+  let r=rnd()*total;
+  for(const it of items){ r-=it[1]; if(r<=0) return it[0]; }
+  return items[items.length-1][0];
+}
+const TAU=Math.PI*2;
+
+/* ═══════════════════ PALETTES ═══════════════════ */
+const PALETTES={
+  /* aged occult-codex paper — sampled from the reference plate */
+  codex:{
+    bg:'#e8dab8', ink:'#211d16', reg:'rgba(198,66,48,0.55)',
+    stain:'rgba(120,88,40,',
+    colors:[
+      ['#c23a2e',2.6],  // vermillion
+      ['#4a7fb5',2.4],  // slate blue
+      ['#cf9231',2.0],  // ochre
+      ['#d97f35',1.4],  // orange
+      ['#7a7671',1.2],  // graphite gray
+      ['#3f7a44',0.9],  // moss green
+    ],
+  },
+  mono:{
+    bg:'#e8dab8', ink:'#1d1a14', reg:'rgba(29,26,20,0.35)',
+    stain:'rgba(110,95,60,',
+    colors:[['#1d1a14',1]],
+  },
+  digidelic:{
+    bg:'#0a0a0a', ink:'rgba(255,255,255,0.78)', reg:'rgba(255,45,135,0.55)',
+    stain:'rgba(45,76,255,',
+    colors:[
+      ['#eaff00',2.6],  // yellow
+      ['#00d9ff',2.2],  // cyan
+      ['#ff2d87',2.0],  // pink
+      ['#39ff6a',1.4],  // green
+      ['#2d4cff',1.4],  // blue
+      ['#c800ff',0.8],  // magenta
+    ],
+  },
+};
+
+/* ═══════════════════ STATE ═══════════════════ */
+const state={
+  seed:(Math.random()*0xffffffff)>>>0,
+  palette:'codex',
+  format:'square',
+};
+const sliders=['orbs','orbits','circuits','border','scatter','redgrid','age','stroke','margin'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  return {
+    orbs:g('orbs'), orbits:g('orbits')/100, circuits:g('circuits')/100,
+    border:g('border')/100, scatter:g('scatter')/100, redgrid:g('redgrid')/100,
+    age:g('age')/100, stroke:g('stroke'), margin:g('margin'),
+    palette:state.palette, format:state.format,
+  };
+}
+
+/* ═══════════════════ GENERATOR ═══════════════════ */
+const ART_W=1080;
+let markCount=0;
+function artHeight(fmt){ return fmt==='portrait' ? 1350 : 1080; }
+
+/* ── glyph library — each draws centred inside rect(x,y,w,h) ── */
+function gSquareWave(ctx,rnd,pal,S,x,y,w,h){
+  const steps=5+Math.floor(rnd()*5), sw=w*0.82/steps;
+  let px=x+w*0.09, top=y+h*0.3, bot=y+h*0.7;
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S; ctx.beginPath();
+  ctx.moveTo(px,bot);
+  for(let i=0;i<steps;i++){
+    const yy=i%2?bot:top;
+    ctx.lineTo(px,yy); px+=sw; ctx.lineTo(px,yy);
+  }
+  ctx.stroke(); markCount++;
+}
+function gSineWave(ctx,rnd,pal,S,x,y,w,h){
+  const amp=h*0.22, n=1.5+Math.floor(rnd()*2);
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S; ctx.beginPath();
+  for(let i=0;i<=60;i++){
+    const t=i/60, px=x+w*0.08+t*w*0.84, py=y+h/2+Math.sin(t*TAU*n)*amp;
+    i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+  }
+  ctx.stroke();
+  ctx.setLineDash([2,3]); ctx.beginPath();
+  ctx.moveTo(x+w*0.08,y+h/2); ctx.lineTo(x+w*0.92,y+h/2); ctx.stroke();
+  ctx.setLineDash([]); markCount++;
+}
+function gShapeRow(ctx,rnd,pal,S,x,y,w,h,pickColor){
+  const n=3+Math.floor(rnd()*3), cw=w/n, r=Math.min(cw,h)*0.28;
+  for(let i=0;i<n;i++){
+    const cx=x+cw*(i+0.5), cy=y+h/2;
+    ctx.fillStyle=pickColor();
+    if(rnd()<0.55){ // triangle
+      ctx.beginPath(); ctx.moveTo(cx,cy-r); ctx.lineTo(cx+r,cy+r*0.85); ctx.lineTo(cx-r,cy+r*0.85);
+      ctx.closePath(); ctx.fill();
+    }else{
+      ctx.beginPath(); ctx.arc(cx,cy,r*0.9,0,TAU); ctx.fill();
+    }
+    markCount++;
+  }
+}
+function gDotMatrix(ctx,rnd,pal,S,x,y,w,h,pickColor){
+  const rows=3+Math.floor(rnd()*2), cols=Math.max(4,Math.floor(w/14));
+  const r=Math.min(h/(rows*2.6),5);
+  for(let ry=0;ry<rows;ry++)for(let cx2=0;cx2<cols;cx2++){
+    const px=x+w*(cx2+0.5)/cols, py=y+h*(ry+0.5)/rows;
+    ctx.beginPath(); ctx.arc(px,py,r,0,TAU);
+    if(rnd()<0.5){ ctx.fillStyle=pal.ink; ctx.fill(); }
+    else{ ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.8; ctx.stroke(); }
+  }
+  markCount++;
+}
+function gBeadRow(ctx,rnd,pal,S,x,y,w,h,pickColor,vertical){
+  const len=vertical?h:w, n=Math.max(3,Math.floor(len/16));
+  const r=3+rnd()*2;
+  for(let i=0;i<n;i++){
+    const t=(i+0.5)/n;
+    const px=vertical?x+w/2:x+len*t+(x?0:0), py=vertical?y+len*t:y+h/2;
+    ctx.fillStyle=rnd()<0.35?pal.ink:pickColor();
+    ctx.beginPath(); ctx.arc(vertical?px:x+len*t,py,r,0,TAU); ctx.fill();
+  }
+  markCount++;
+}
+function gEye(ctx,rnd,pal,S,cx,cy,ew,burst){
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S;
+  ctx.beginPath();
+  ctx.moveTo(cx-ew,cy);
+  ctx.quadraticCurveTo(cx,cy-ew*0.95,cx+ew,cy);
+  ctx.quadraticCurveTo(cx,cy+ew*0.95,cx-ew,cy);
+  ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,ew*0.34,0,TAU); ctx.stroke();
+  ctx.fillStyle=pal.ink;
+  ctx.beginPath(); ctx.arc(cx,cy,ew*0.13,0,TAU); ctx.fill();
+  if(burst){
+    const n=22;
+    for(let i=0;i<n;i++){
+      const a=i/n*TAU, r1=ew*1.35, r2=ew*(1.8+rnd()*0.7);
+      ctx.beginPath();
+      ctx.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1*0.8);
+      ctx.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2*0.8);
+      ctx.stroke();
+    }
+  }
+  markCount++;
+}
+function gMoonPhases(ctx,rnd,pal,S,x,y,w,h){
+  const n=5+2*Math.floor(rnd()*2), cw=w/n, rr=Math.min(cw*0.34,h*0.32);
+  for(let i=0;i<n;i++){
+    const t=n===1?0:i/(n-1)*2-1;         // -1..1
+    const cx=x+cw*(i+0.5), cy=y+h/2;
+    const off=(1-Math.abs(t))*rr*2.4*(t<0?1:-1);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx,cy,rr,0,TAU); ctx.clip();
+    ctx.fillStyle=pal.ink; ctx.fillRect(cx-rr,cy-rr,rr*2,rr*2);
+    ctx.fillStyle=pal.bg;
+    ctx.beginPath(); ctx.arc(cx+(t===0?rr*3:off),cy,rr,0,TAU); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.9;
+    ctx.beginPath(); ctx.arc(cx,cy,rr,0,TAU); ctx.stroke();
+    markCount++;
+  }
+}
+function gPolyOrb(ctx,rnd,pal,S,cx,cy,r){
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.9;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,TAU); ctx.stroke();
+  const n=5+Math.floor(rnd()*3), pts=[];
+  const a0=rnd()*TAU;
+  for(let i=0;i<n;i++){
+    const a=a0+i/n*TAU;
+    pts.push([cx+Math.cos(a)*r*0.82,cy+Math.sin(a)*r*0.82]);
+  }
+  // full chord web
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+    ctx.beginPath(); ctx.moveTo(pts[i][0],pts[i][1]); ctx.lineTo(pts[j][0],pts[j][1]); ctx.stroke();
+  }
+  markCount++;
+}
+function gBars(ctx,rnd,pal,S,x,y,w,h){
+  const rows=3+Math.floor(rnd()*3), bh=h*0.55/rows;
+  ctx.fillStyle=pal.ink;
+  for(let i=0;i<rows;i++){
+    const bw=w*(0.35+rnd()*0.45);
+    ctx.fillRect(x+(w-bw)/2,y+h*0.22+i*(bh+3),bw,bh);
+  }
+  markCount++;
+}
+function gChevron(ctx,rnd,pal,S,cx,cy,r){
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S;
+  ctx.beginPath();
+  ctx.moveTo(cx-r,cy-r*0.7); ctx.lineTo(cx+r,cy-r*0.7); ctx.lineTo(cx,cy+r);
+  ctx.closePath(); ctx.stroke(); markCount++;
+}
+function gHexStar(ctx,rnd,pal,S,cx,cy,r){
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.9;
+  for(const flip of [1,-1]){
+    ctx.beginPath();
+    for(let i=0;i<3;i++){
+      const a=-Math.PI/2*flip+i/3*TAU;
+      const px=cx+Math.cos(a)*r, py=cy+Math.sin(a)*r;
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+    }
+    ctx.closePath(); ctx.stroke();
+  }
+  markCount++;
+}
+
+/* ── corner emblem: ringed circle + eye or star ── */
+function cornerEmblem(ctx,rnd,pal,S,cx,cy,r){
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.9;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,TAU); ctx.stroke();
+  ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.72,0,TAU); ctx.stroke();
+  ctx.setLineDash([]);
+  if(rnd()<0.5) gEye(ctx,rnd,pal,S,cx,cy,r*0.44,false);
+  else if(rnd()<0.5) gHexStar(ctx,rnd,pal,S,cx,cy,r*0.5);
+  else gPolyOrb(ctx,rnd,pal,S,cx,cy,r*0.52);
+}
+
+/* ── celestial orb on the central axis ── */
+function drawOrb(ctx,rnd,pal,S,pickColor,cx,cy,r){
+  const kind=weightedPick(rnd,[['bull',3.4],['disc',2.8],['half',1.7],['arc',1.3]]);
+  ctx.lineWidth=S;
+  if(kind==='bull'){
+    ctx.fillStyle=rnd()<0.6?pal.ink:pickColor();
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,TAU); ctx.fill();
+    const c2=pickColor();
+    ctx.fillStyle=c2;
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.55,0,TAU); ctx.fill();
+    ctx.strokeStyle=pal.bg; ctx.setLineDash([3,4]);
+    for(const f of [0.78,0.4,0.22]){
+      ctx.beginPath(); ctx.arc(cx,cy,r*f,0,TAU); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.fillStyle=pal.bg;
+    ctx.beginPath(); ctx.arc(cx,cy,S*3,0,TAU); ctx.fill();
+  }else if(kind==='disc'){
+    ctx.fillStyle=pickColor();
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,TAU); ctx.fill();
+    ctx.strokeStyle=pal.bg; ctx.setLineDash([3,4]);
+    const k=2+Math.floor(rnd()*3);
+    for(let i=1;i<=k;i++){
+      ctx.beginPath(); ctx.arc(cx,cy,r*i/(k+1),0,TAU); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.fillStyle=pal.bg;
+    ctx.beginPath(); ctx.arc(cx,cy,S*3,0,TAU); ctx.fill();
+  }else if(kind==='half'){
+    const up=rnd()<0.5;                       // flat side up or down
+    ctx.fillStyle=rnd()<0.5?pal.ink:pickColor();
+    ctx.beginPath(); ctx.arc(cx,cy,r,up?Math.PI:0,up?TAU:Math.PI); ctx.closePath(); ctx.fill();
+    const c2=pickColor();
+    ctx.fillStyle=c2;
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.5,0,TAU); ctx.fill();
+    ctx.strokeStyle=pal.bg; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.72,0,TAU); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.3,0,TAU); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=pal.bg;
+    ctx.beginPath(); ctx.arc(cx,cy,S*2.6,0,TAU); ctx.fill();
+  }else{ // thick U / arch annulus
+    const up=rnd()<0.65;                      // opening upward like the ochre U
+    ctx.strokeStyle=pickColor(); ctx.lineWidth=r*0.34;
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.75,up?0:Math.PI,up?Math.PI:TAU); ctx.stroke();
+    ctx.strokeStyle=pal.bg; ctx.lineWidth=S; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.75,up?0:Math.PI,up?Math.PI:TAU); ctx.stroke();
+    ctx.setLineDash([]); ctx.lineWidth=S;
+  }
+  markCount++;
+}
+
+/* ── mirrored circuit-comb side field, spec-driven so both sides match ── */
+function drawCombs(ctx,pal,S,spec,x0,x1,mirrorAxis){
+  /* lines run from the outer edge (x0) inward; dot at inner tip */
+  for(const comb of spec){
+    ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.7; ctx.fillStyle=pal.ink;
+    const {y,h,rows,mode,inset} = comb;
+    const w=x1-x0;
+    for(let i=0;i<rows;i++){
+      const t=rows===1?0.5:i/(rows-1);
+      const yy=y+t*h;
+      let f;                                   // 0..1 length factor
+      if(mode===0) f=0.35+0.65*(1-Math.abs(t*2-1));          // chevron ◁
+      else if(mode===1) f=0.35+0.65*Math.abs(t*2-1);         // anti-chevron ▷
+      else f=0.4+0.6*((i%5)/4);                              // staircase
+      const tip=x0+inset+(w-inset)*f;
+      let ax=x0, bx=tip;
+      if(mirrorAxis!==null){ ax=2*mirrorAxis-ax; bx=2*mirrorAxis-bx; }
+      ctx.beginPath(); ctx.moveTo(ax,yy); ctx.lineTo(bx,yy); ctx.stroke();
+      ctx.beginPath(); ctx.arc(bx,yy,S*2,0,TAU); ctx.fill();
+    }
+    // spine rail on the outer edge
+    let sx=x0; if(mirrorAxis!==null) sx=2*mirrorAxis-sx;
+    ctx.beginPath(); ctx.moveTo(sx,y); ctx.lineTo(sx,y+h); ctx.stroke();
+    markCount++;
+  }
+}
+
+function render(ctx,W,H,p,seed){
+  const rnd=mulberry32(seed);
+  const pal=PALETTES[p.palette];
+  const pickColor=()=>weightedPick(rnd,pal.colors);
+  markCount=0;
+
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.fillStyle=pal.bg; ctx.fillRect(0,0,W,H);
+  const S=p.stroke;
+
+  /* ── paper age: soft stains under the ink ── */
+  const stains=Math.round(p.age*14);
+  for(let i=0;i<stains;i++){
+    const sx=rnd()*W, sy=rnd()*H, sr=40+rnd()*220;
+    const g=ctx.createRadialGradient(sx,sy,0,sx,sy,sr);
+    g.addColorStop(0,pal.stain+(0.03+rnd()*0.07)+')');
+    g.addColorStop(1,pal.stain+'0)');
+    ctx.fillStyle=g;
+    ctx.fillRect(sx-sr,sy-sr,sr*2,sr*2);
+  }
+
+  const m=p.margin;
+  const bb=64;                                  // ornament border band
+  const fx=m+bb, fy=m+bb, fw=W-2*(m+bb), fh=H-2*(m+bb);
+  const axis=W/2;
+
+  /* ── red registration layer (under ink) ── */
+  ctx.strokeStyle=pal.reg; ctx.lineWidth=Math.max(0.6,S*0.5);
+  const nReg=Math.round(p.redgrid*8);
+  const regY=[], regX=[];
+  for(let i=0;i<nReg;i++){
+    const yy=fy+rnd()*fh; regY.push(yy);
+    if(rnd()<0.4) ctx.setLineDash([5,4]); else ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(fx-bb*0.5,yy); ctx.lineTo(fx+fw+bb*0.5,yy); ctx.stroke();
+  }
+  for(let i=0;i<Math.round(nReg*0.6);i++){
+    const xx=fx+rnd()*fw; regX.push(xx);
+    if(rnd()<0.4) ctx.setLineDash([5,4]); else ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(xx,fy-bb*0.5); ctx.lineTo(xx,fy+fh+bb*0.5); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  // little red crosses at some intersections
+  for(const yy of regY)for(const xx of regX){
+    if(rnd()<0.3){
+      ctx.beginPath();
+      ctx.moveTo(xx-4,yy); ctx.lineTo(xx+4,yy);
+      ctx.moveTo(xx,yy-4); ctx.lineTo(xx,yy+4);
+      ctx.stroke(); markCount++;
+    }
+  }
+  // red inner frame just inside the border band
+  ctx.strokeRect(fx-bb*0.32,fy-bb*0.32,fw+bb*0.64,fh+bb*0.64);
+
+  /* ── central axis ── */
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.8;
+  ctx.beginPath(); ctx.moveTo(axis,fy+4); ctx.lineTo(axis,fy+fh-4); ctx.stroke();
+  ctx.fillStyle=pal.ink;
+  for(const yy of [fy+4,fy+fh-4]){ ctx.beginPath(); ctx.arc(axis,yy,S*2.2,0,TAU); ctx.fill(); }
+
+  /* ── orbs along the axis ── */
+  const nOrbs=Math.round(p.orbs);
+  const orbYs=[], orbRs=[];
+  for(let i=0;i<nOrbs;i++){
+    const t=(i+0.5+((rnd()-0.5)*0.24))/nOrbs;
+    orbYs.push(fy+fh*(0.08+t*0.84));
+    orbRs.push(fh*(0.055+rnd()*0.065)*(nOrbs>4?0.75:1));
+  }
+
+  /* orbit rings + rules first (under the orbs) */
+  ctx.strokeStyle=pal.ink;
+  for(let i=0;i<nOrbs;i++){
+    const cy=orbYs[i], r=orbRs[i];
+    const rings=Math.round(p.orbits*4)+1;
+    for(let k=1;k<=rings;k++){
+      const rr=r*(1.2+k*0.38+rnd()*0.12);
+      ctx.lineWidth=S*0.6;
+      if(rnd()<0.55) ctx.setLineDash([3,4]); else ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(axis,cy,rr,0,TAU); ctx.stroke();
+      ctx.setLineDash([]);
+      if(rnd()<0.4){ // node dots on the ring
+        for(const a of [Math.PI/2,-Math.PI/2,0,Math.PI]){
+          if(rnd()<0.5) continue;
+          ctx.fillStyle=pal.ink;
+          ctx.beginPath(); ctx.arc(axis+Math.cos(a)*rr,cy+Math.sin(a)*rr,S*1.8,0,TAU); ctx.fill();
+        }
+      }
+      markCount++;
+    }
+    // horizontal rule through the orb centre
+    ctx.lineWidth=S*0.7;
+    ctx.beginPath(); ctx.moveTo(fx+8,cy); ctx.lineTo(fx+fw-8,cy); ctx.stroke();
+    ctx.fillStyle=pal.ink;
+    for(const xx of [fx+8,fx+fw-8]){ ctx.beginPath(); ctx.arc(xx,cy,S*1.8,0,TAU); ctx.fill(); }
+    // small hollow nodes flanking the axis
+    for(const dx of [-1,1]){
+      const nx=axis+dx*(r*2+30+rnd()*40);
+      ctx.beginPath(); ctx.arc(nx,cy,4,0,TAU); ctx.stroke();
+    }
+    // diagonals through the middle orb
+    if(i===Math.floor(nOrbs/2)&&p.orbits>0.25){
+      const dr=r*2.4;
+      ctx.lineWidth=S*0.55;
+      for(const a of [Math.PI/4,3*Math.PI/4]){
+        ctx.beginPath();
+        ctx.moveTo(axis-Math.cos(a)*dr,cy-Math.sin(a)*dr);
+        ctx.lineTo(axis+Math.cos(a)*dr,cy+Math.sin(a)*dr);
+        ctx.stroke();
+      }
+    }
+  }
+  /* grand ellipse spanning the stack */
+  if(nOrbs>=2&&p.orbits>0.15){
+    const top=Math.min(...orbYs), bot=Math.max(...orbYs);
+    ctx.lineWidth=S*0.6; ctx.strokeStyle=pal.ink;
+    ctx.setLineDash([4,5]);
+    ctx.beginPath(); ctx.ellipse(axis,(top+bot)/2,fw*0.16,(bot-top)/2+fh*0.06,0,0,TAU); ctx.stroke();
+    if(rnd()<0.6){
+      ctx.beginPath(); ctx.ellipse(axis,(top+bot)/2,fw*0.11,(bot-top)/2,0,0,TAU); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    markCount++;
+  }
+
+  /* the orbs themselves */
+  for(let i=0;i<nOrbs;i++) drawOrb(ctx,rnd,pal,S,pickColor,axis,orbYs[i],orbRs[i]);
+
+  /* ── mirrored circuit combs ── */
+  if(p.circuits>0.02){
+    const combX0=fx+16, combX1=axis-fw*0.19;
+    const nCombs=1+Math.round(p.circuits*4);
+    const spec=[];
+    let y=fy+14;
+    const avail=fh-28, gap=12;
+    const each=(avail-gap*(nCombs-1))/nCombs;
+    for(let i=0;i<nCombs;i++){
+      const h=each*(0.75+rnd()*0.5);
+      const spacing=8+rnd()*6;
+      spec.push({
+        y, h,
+        rows:Math.max(3,Math.floor(h/spacing)),
+        mode:Math.floor(rnd()*3),
+        inset:rnd()*20,
+      });
+      y+=each+gap;
+    }
+    drawCombs(ctx,pal,S,spec,combX0,combX1,null);      // left
+    drawCombs(ctx,pal,S,spec,combX0,combX1,axis);      // right (mirrored)
+  }
+
+  /* ── bead strings + scatter ── */
+  const beadCols=Math.round(p.scatter*3);
+  for(let b=0;b<beadCols;b++){
+    const off=fw*(0.055+b*0.045);
+    const n=6+Math.floor(rnd()*10);
+    const y0=fy+fh*(0.1+rnd()*0.25), y1=fy+fh*(0.65+rnd()*0.25);
+    const beads=[];
+    for(let i=0;i<n;i++)
+      beads.push([y0+(y1-y0)*i/(n-1), rnd()<0.3?pal.ink:pickColor(), 3+rnd()*2.4]);
+    for(const dx of [-1,1]){
+      const xx=axis+dx*(fw/2-off);
+      ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.5; ctx.setLineDash([1,4]);
+      ctx.beginPath(); ctx.moveTo(xx,y0); ctx.lineTo(xx,y1); ctx.stroke();
+      ctx.setLineDash([]);
+      for(const [by,c,br] of beads){
+        ctx.fillStyle=c;
+        ctx.beginPath(); ctx.arc(xx,by,br,0,TAU); ctx.fill();
+      }
+      markCount++;
+    }
+  }
+  /* loose plus-marks in the field */
+  const nPlus=Math.round(p.scatter*22);
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.5;
+  for(let i=0;i<nPlus;i++){
+    const px=fx+rnd()*fw, py=fy+rnd()*fh, pr=2+rnd()*2;
+    if(Math.abs(px-axis)<fw*0.2&&rnd()<0.7) continue;   // keep the axis zone clean
+    ctx.beginPath();
+    ctx.moveTo(px-pr,py); ctx.lineTo(px+pr,py);
+    ctx.moveTo(px,py-pr); ctx.lineTo(px,py+pr);
+    ctx.stroke();
+  }
+
+  /* ── ornament border ── */
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=S;
+  ctx.strokeRect(m,m,W-2*m,H-2*m);
+  ctx.lineWidth=S*0.7;
+  ctx.strokeRect(m+5,m+5,W-2*m-10,H-2*m-10);
+  ctx.strokeRect(fx-6,fy-6,fw+12,fh+12);
+
+  if(p.border>0.02){
+    const cs=bb;                                 // corner cell size
+    /* corners */
+    const cr=bb*0.36;
+    cornerEmblem(ctx,rnd,pal,S,m+bb/2+3,m+bb/2+3,cr);
+    cornerEmblem(ctx,rnd,pal,S,W-m-bb/2-3,m+bb/2+3,cr);
+    cornerEmblem(ctx,rnd,pal,S,m+bb/2+3,H-m-bb/2-3,cr);
+    cornerEmblem(ctx,rnd,pal,S,W-m-bb/2-3,H-m-bb/2-3,cr);
+
+    /* top + bottom glyph panels */
+    const nPan=3+Math.round(p.border*4)*2;       // odd count → true centre panel
+    const bandW=W-2*(m+cs), px0=m+cs;
+    for(const isTop of [true,false]){
+      const by=isTop?m+8:H-m-bb+2, bh2=bb-14;
+      const pw=bandW/nPan;
+      for(let i=0;i<nPan;i++){
+        const gx=px0+i*pw, centre=i===(nPan-1)/2;
+        // panel separators
+        ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.6;
+        if(i>0){ ctx.beginPath(); ctx.moveTo(gx,by); ctx.lineTo(gx,by+bh2); ctx.stroke(); }
+        const rrnd=mulberry32((seed^(isTop?0xA5A5:0x5A5A))+i*7919);
+        if(centre){
+          if(isTop) gEye(ctx,rrnd,pal,S,gx+pw/2,by+bh2/2,Math.min(pw*0.14,bh2*0.32),true);
+          else gMoonPhases(ctx,rrnd,pal,S,gx+pw*0.08,by,pw*0.84,bh2);
+          continue;
+        }
+        const glyph=weightedPick(rrnd,[
+          ['sq',2],['sine',2],['shapes',2.4],['dots',2.2],['star',1],['poly',1],['bars',1.2],['beads',1.4],
+        ]);
+        if(glyph==='sq') gSquareWave(ctx,rrnd,pal,S,gx,by,pw,bh2);
+        else if(glyph==='sine') gSineWave(ctx,rrnd,pal,S,gx,by,pw,bh2);
+        else if(glyph==='shapes') gShapeRow(ctx,rrnd,pal,S,gx,by,pw,bh2,pickColor);
+        else if(glyph==='dots') gDotMatrix(ctx,rrnd,pal,S,gx+4,by+4,pw-8,bh2-8,pickColor);
+        else if(glyph==='star') gHexStar(ctx,rrnd,pal,S,gx+pw/2,by+bh2/2,bh2*0.34);
+        else if(glyph==='poly') gPolyOrb(ctx,rrnd,pal,S,gx+pw/2,by+bh2/2,bh2*0.36);
+        else if(glyph==='bars') gBars(ctx,rrnd,pal,S,gx+4,by,pw-8,bh2);
+        else gBeadRow(ctx,rrnd,pal,S,gx+4,by,pw-8,bh2,pickColor,false);
+      }
+    }
+
+    /* left + right side cells — identical stacks, mirrored placement */
+    const nCells=4+Math.round(p.border*5);
+    const cellH=(H-2*(m+cs))/nCells;
+    for(let i=0;i<nCells;i++){
+      const cy0=m+cs+i*cellH;
+      const srnd=()=>mulberry32((seed^0xC3C3)+i*104729);
+      for(const left of [true,false]){
+        const rr2=srnd();                        // fresh identical stream per side
+        const gx=left?m+8:W-m-bb+6, gw=bb-14;
+        ctx.strokeStyle=pal.ink; ctx.lineWidth=S*0.6;
+        if(i>0){ ctx.beginPath(); ctx.moveTo(gx,cy0); ctx.lineTo(gx+gw,cy0); ctx.stroke(); }
+        const glyph=weightedPick(rr2,[
+          ['shapes',2.4],['beads',2.2],['chev',1.2],['dots',1.6],['bars',1.2],['star',0.8],
+        ]);
+        const midX=gx+gw/2, midY=cy0+cellH/2;
+        if(glyph==='shapes'){ // vertical stack of 2-3 small shapes
+          const k=2+Math.floor(rr2()*2);
+          for(let s2=0;s2<k;s2++){
+            const sy=cy0+cellH*(s2+0.5)/k, sr2=Math.min(gw*0.26,cellH/(k*2.8));
+            ctx.fillStyle=pickColor();
+            if(rr2()<0.6){
+              ctx.beginPath(); ctx.moveTo(midX,sy-sr2); ctx.lineTo(midX+sr2,sy+sr2*0.85); ctx.lineTo(midX-sr2,sy+sr2*0.85); ctx.closePath(); ctx.fill();
+            }else{
+              ctx.beginPath(); ctx.arc(midX,sy,sr2*0.9,0,TAU); ctx.fill();
+            }
+          }
+          markCount++;
+        }
+        else if(glyph==='beads') gBeadRow(ctx,rr2,pal,S,gx+gw/2-2,cy0+6,4,cellH-12,pickColor,true);
+        else if(glyph==='chev') gChevron(ctx,rr2,pal,S,midX,midY,gw*0.3);
+        else if(glyph==='dots') gDotMatrix(ctx,rr2,pal,S,gx+2,cy0+cellH*0.2,gw-4,cellH*0.6,pickColor);
+        else if(glyph==='bars') gBars(ctx,rr2,pal,S,gx,cy0+cellH*0.15,gw,cellH*0.7);
+        else gHexStar(ctx,rr2,pal,S,midX,midY,gw*0.3);
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
+/* ═══════════════════ DRAW / RESIZE ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+let rafPending=false;
+
+function fitCanvas(){
+  const H=artHeight(state.format);
+  const stage=document.querySelector('.stage');
+  const availW=stage.clientWidth-80, availH=stage.clientHeight-80;
+  const scale=Math.min(availW/ART_W,availH/H,1);
+  canvas.style.width=(ART_W*scale)+'px';
+  canvas.style.height=(H*scale)+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(ART_W*scale*dpr);
+  canvas.height=Math.round(H*scale*dpr);
+}
+
+function draw(){
+  rafPending=false;
+  const p=params();
+  const H=artHeight(p.format);
+  fitCanvas();
+  const t0=performance.now();
+  ctx.setTransform(canvas.width/ART_W,0,0,canvas.height/H,0,0);
+  render(ctx,ART_W,H,p,state.seed);
+  const ms=performance.now()-t0;
+  document.getElementById('statCells').textContent=markCount;
+  document.getElementById('statMs').textContent=ms.toFixed(1)+'ms';
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+  canvas.style.background=PALETTES[p.palette].bg;
+}
+function requestDraw(){
+  if(!rafPending){ rafPending=true; requestAnimationFrame(draw); }
+}
+
+/* ═══════════════════ EXPORT ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const H=artHeight(p.format);
+  const scale=2;                       // 2160px wide
+  const off=document.createElement('canvas');
+  off.width=ART_W*scale; off.height=H*scale;
+  const octx=off.getContext('2d');
+  octx.setTransform(scale,0,0,scale,0,0);
+  render(octx,ART_W,H,p,state.seed);
+  off.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-cosmogram-'+state.seed.toString(16).padStart(8,'0')+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(out){
+    if(['orbits','circuits','border','scatter','redgrid','age'].includes(el.id))
+      out.textContent=v+'%';
+    else if(el.id==='stroke') out.textContent=v.toFixed(1)+'px';
+    else if(el.id==='margin') out.textContent=v+'px';
+    else out.textContent=v;
+  }
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
+  syncSlider(el);
+});
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+    requestDraw();
+  });
+}
+wireSeg('segPalette','pal',v=>{ state.palette=v; });
+wireSeg('segFormat','fmt',v=>{ state.format=v; });
+
+document.getElementById('btnRandom').addEventListener('click',()=>{
+  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
+});
+document.getElementById('btnRegen').addEventListener('click',()=>{
+  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
+});
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+window.addEventListener('resize',requestDraw);
+window.addEventListener('keydown',e=>{
+  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); }
+  if(e.key==='e' && !e.target.closest('input')) exportPNG();
+});
+
+draw();
+</script>
+</body>
+</html>
