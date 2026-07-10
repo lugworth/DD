@@ -184,8 +184,24 @@ footer .fill{flex:1;border-right:0;text-align:right}
             <input type="range" id="kill" min="50" max="70" step="1" value="61">
           </div>
           <div class="param">
+            <div class="lab"><span class="name">Diffusion</span><span class="val" data-val="diffusion"></span></div>
+            <input type="range" id="diffusion" min="30" max="70" step="1" value="50">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Anisotropy</span><span class="val" data-val="aniso"></span></div>
+            <input type="range" id="aniso" min="-100" max="100" step="1" value="0">
+          </div>
+          <div class="param">
             <div class="lab"><span class="name">Morph drift</span><span class="val" data-val="morph"></span></div>
             <input type="range" id="morph" min="0" max="100" step="1" value="70">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Rim size</span><span class="val" data-val="rim"></span></div>
+            <input type="range" id="rim" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Agitation</span><span class="val" data-val="agitate"></span></div>
+            <input type="range" id="agitate" min="0" max="100" step="1" value="10">
           </div>
           <div class="param">
             <div class="lab"><span class="name">Speed</span><span class="val" data-val="speed"></span></div>
@@ -281,11 +297,13 @@ const state={
   playing:true,
   gen:0,
 };
-const sliders=['feed','kill','morph','speed','relief','gloss','light','detail'];
+const sliders=['feed','kill','diffusion','aniso','morph','rim','agitate','speed','relief','gloss','light','detail'];
 function params(){
   const g=id=>parseFloat(document.getElementById(id).value);
   return {
     feed:g('feed')/1000, kill:g('kill')/1000, morph:g('morph')/100,
+    diffusion:g('diffusion')/100, aniso:g('aniso')/100,
+    rim:g('rim')/100, agitate:g('agitate')/100,
     speed:g('speed'), relief:g('relief')/100, gloss:g('gloss')/100,
     light:g('light')*Math.PI/180, detail:g('detail')|0,
     palette:state.palette, format:state.format,
@@ -322,16 +340,20 @@ function buildMaps(p){
     return a+(b-a)*fx+(c-a)*fy+(a-b-c+d)*fx*fy;
   };
   const cx=W/2, cy=H/2, maxR=Math.min(W,H)*0.52;
+  const rimDiv=0.55+p.rim*0.9;                 // rim size shifts the regime boundary
   const Fc=p.feed, Kc=p.kill;
   const Fe=Fc-0.017*p.morph, Ke=Kc+0.0038*p.morph;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     const i=y*W+x;
     const dx=(x-cx)/maxR, dy=(y-cy)/maxR;
-    let r=Math.sqrt(dx*dx+dy*dy);
+    let r=Math.sqrt(dx*dx+dy*dy)/rimDiv;
     r=Math.min(1,Math.max(0,r+(nval(x,y)-0.5)*0.55*p.morph));
     const t=r*r*(3-2*r);                       // smoothstep
     sim.Fm[i]=Fc+(Fe-Fc)*t;
     sim.Km[i]=Kc+(Ke-Kc)*t;
+    /* kill zone at the canvas wall — the culture dies before touching the frame */
+    const e=Math.min(x,y,W-1-x,H-1-y)/(Math.min(W,H)*0.045);
+    if(e<1) sim.Km[i]+=(1-e)*0.025;
   }
 }
 
@@ -361,25 +383,44 @@ function reseed(p){
       sim.B[py*W+px]=1; sim.A[py*W+px]=0.3;
     }
   }
+  sim.agRnd=mulberry32(state.seed^0xA617);
   simCanvas.width=W; simCanvas.height=H;
   img=simCtx.createImageData(W,H);
   state.gen=0;
 }
 
-function step(iters){
+/* agitation — occasional droplets of B rain onto the field, keeping it alive */
+function agitate(p){
+  if(sim.agRnd()>p.agitate*0.4) return;
+  const {W,H,agRnd}=sim;
+  const sx=(W*(0.18+agRnd()*0.64))|0, sy=(H*(0.18+agRnd()*0.64))|0;
+  const br=1+Math.floor(agRnd()*2);
+  for(let dy=-br;dy<=br;dy++)for(let dx=-br;dx<=br;dx++){
+    if(dx*dx+dy*dy>br*br) continue;
+    const px=sx+dx, py=sy+dy;
+    if(px<1||px>=W-1||py<1||py>=H-1) continue;
+    sim.B[py*W+px]=0.9; sim.A[py*W+px]=0.4;
+  }
+}
+
+function step(iters,p){
   const {W,H,Fm,Km}=sim;
   let {A,B,A2,B2}=sim;
-  const dA=1.0, dB=0.5;
+  const dA=1.0, dB=p.diffusion;
+  /* anisotropy skews the orthogonal laplacian weights — total stays 0.4,
+     so stability is unchanged while the pattern grows a directional grain */
+  const sk=p.aniso*0.42;
+  const wx=0.2*(1+sk), wy=0.2*(1-sk);
   for(let it=0;it<iters;it++){
     for(let y=1;y<H-1;y++){
       const row=y*W;
       for(let x=1;x<W-1;x++){
         const i=row+x;
         const a=A[i], b=B[i];
-        /* 9-point laplacian: orth .2, diag .05, centre -1 */
-        const lapA=(A[i-1]+A[i+1]+A[i-W]+A[i+W])*0.2
+        /* 9-point laplacian: skewed orth, diag .05, centre -1 */
+        const lapA=(A[i-1]+A[i+1])*wx+(A[i-W]+A[i+W])*wy
                   +(A[i-W-1]+A[i-W+1]+A[i+W-1]+A[i+W+1])*0.05 - a;
-        const lapB=(B[i-1]+B[i+1]+B[i-W]+B[i+W])*0.2
+        const lapB=(B[i-1]+B[i+1])*wx+(B[i-W]+B[i+W])*wy
                   +(B[i-W-1]+B[i-W+1]+B[i+W-1]+B[i+W+1])*0.05 - b;
         const abb=a*b*b, F=Fm[i], K=Km[i];
         A2[i]=a+(dA*lapA-abb+F*(1-a));
@@ -466,7 +507,8 @@ function frame(){
   fitCanvas();
   if(state.playing){
     const t0=performance.now();
-    step(p.speed);
+    agitate(p);
+    step(p.speed,p);
     document.getElementById('statMs').textContent=(performance.now()-t0).toFixed(1)+'ms';
   }
   shade(p);
@@ -524,7 +566,9 @@ function syncSlider(el){
   const out=document.querySelector('.val[data-val="'+el.id+'"]');
   if(out){
     if(el.id==='feed'||el.id==='kill') out.textContent='.0'+String(v).padStart(2,'0');
-    else if(el.id==='morph'||el.id==='relief'||el.id==='gloss') out.textContent=v+'%';
+    else if(el.id==='diffusion') out.textContent='.'+String(v).padStart(2,'0');
+    else if(el.id==='aniso') out.textContent=(v>0?'+':'')+v+'%';
+    else if(['morph','rim','agitate','relief','gloss'].includes(el.id)) out.textContent=v+'%';
     else if(el.id==='light') out.textContent=v+'°';
     else if(el.id==='detail') out.textContent=v+'px';
     else out.textContent=v;
@@ -536,8 +580,8 @@ sliders.forEach(id=>{
     syncSlider(el);
     const p=params();
     if(id==='detail'){ reseed(p); }
-    else if(id==='feed'||id==='kill'||id==='morph'){ buildMaps(p); }
-    /* relief / gloss / light / speed apply instantly in the loop */
+    else if(id==='feed'||id==='kill'||id==='morph'||id==='rim'){ buildMaps(p); }
+    /* diffusion / aniso / agitate / relief / gloss / light / speed apply instantly in the loop */
   });
   syncSlider(el);
 });
