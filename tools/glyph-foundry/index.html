@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Glyph Foundry" subtitle="Live generative glyph specimen sheets — asemic strokes, planetary stacks, Bauhaus primitives" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — glyph foundry</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:32px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#efe9dc}
+
+.rack{width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+
+.seed-row{display:flex;gap:8px}
+.seed-read{
+  flex:1;display:flex;align-items:center;justify-content:space-between;
+  border:1px solid var(--border);padding:0 12px;height:36px;
+  font-size:12px;letter-spacing:.08em;color:var(--white-soft);background:var(--black-panel);
+}
+.seed-read .k{color:var(--white-dim);font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+.seed-read .v{color:var(--cyan)}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
+  --p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,
+input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+.seg{display:flex;border:1px solid var(--border-hi)}
+.seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
+.seg button:last-child{border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black)}
+.actions button{flex:1;height:42px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:860px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:20px;min-height:60vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Glyph Foundry</h1>
+      <div class="sub">asemic specimen engine · live parameter rack</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span>0x4F3A</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="canvas preview">
+      <span class="corner tl">FRAME ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerSeed">seed —</span>
+      <span class="corner br">4R // 273</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
+          <div class="seed-row">
+            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <button id="btnRandom" title="new random seed">⟳ Random</button>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Glyph</h2><span class="coord">S.01</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Complexity</span><span class="val" data-val="complexity"></span></div>
+            <input type="range" id="complexity" min="0" max="100" step="1" value="55">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Curvature</span><span class="val" data-val="curvature"></span></div>
+            <input type="range" id="curvature" min="0" max="100" step="1" value="45">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Diacritics</span><span class="val" data-val="diacritics"></span></div>
+            <input type="range" id="diacritics" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Solid shapes</span><span class="val" data-val="shapes"></span></div>
+            <input type="range" id="shapes" min="0" max="100" step="1" value="35">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Sheet</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Columns</span><span class="val" data-val="cols"></span></div>
+            <input type="range" id="cols" min="4" max="14" step="1" value="8">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Annotations</span><span class="val" data-val="notes"></span></div>
+            <input type="range" id="notes" min="0" max="100" step="1" value="60">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Accents</span><span class="val" data-val="accents"></span></div>
+            <input type="range" id="accents" min="0" max="100" step="1" value="40">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Jitter</span><span class="val" data-val="jitter"></span></div>
+            <input type="range" id="jitter" min="0" max="100" step="1" value="25">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Palette</span></div>
+            <div class="seg" id="segPalette" role="group" aria-label="palette">
+              <button data-pal="foundry" class="is-active">Foundry</button>
+              <button data-pal="mono">Mono</button>
+              <button data-pal="digidelic">Digidelic</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Format</span></div>
+            <div class="seg" id="segFormat" role="group" aria-label="format">
+              <button data-fmt="square" class="is-active">1:1 Square</button>
+              <button data-fmt="portrait">4:5 Portrait</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Ink weight</span><span class="val" data-val="stroke"></span></div>
+            <input type="range" id="stroke" min="0.5" max="3" step="0.1" value="1.6">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Margin</span><span class="val" data-val="margin"></span></div>
+            <input type="range" id="margin" min="0" max="90" step="1" value="30">
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnRegen">⟳ Regenerate</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>glyphgen v1.0</b></div>
+    <div class="cell">glyphs <b id="statCells">0</b></div>
+    <div class="cell">render <b id="statMs">0ms</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════ RNG ═══════════════════ */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function weightedPick(rnd,items){
+  let total=0; for(const it of items) total+=it[1];
+  let r=rnd()*total;
+  for(const it of items){ r-=it[1]; if(r<=0) return it[0]; }
+  return items[items.length-1][0];
+}
+const TAU=Math.PI*2;
+
+/* ═══════════════════ PALETTES ═══════════════════ */
+const PALETTES={
+  /* warm foundry paper — specimen-sheet ink with sparse spot color */
+  foundry:{
+    bg:'#efe9dc', ink:'#1b1916',
+    faint:'rgba(27,25,22,0.16)', label:'rgba(27,25,22,0.5)',
+    accents:['#c8402f','#2f5e9e','#d99a2b'],
+  },
+  mono:{
+    bg:'#efe9dc', ink:'#1b1916',
+    faint:'rgba(27,25,22,0.16)', label:'rgba(27,25,22,0.5)',
+    accents:['#1b1916'],
+  },
+  digidelic:{
+    bg:'#0a0a0a', ink:'rgba(255,255,255,0.88)',
+    faint:'rgba(255,255,255,0.14)', label:'rgba(255,255,255,0.45)',
+    accents:['#eaff00','#ff2d87','#00d9ff','#39ff6a'],
+  },
+};
+
+/* ═══════════════════ STATE ═══════════════════ */
+const state={
+  seed:(Math.random()*0xffffffff)>>>0,
+  palette:'foundry',
+  format:'square',
+};
+const sliders=['complexity','curvature','diacritics','shapes','cols','notes','accents','jitter','stroke','margin'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  return {
+    complexity:g('complexity')/100, curvature:g('curvature')/100,
+    diacritics:g('diacritics')/100, shapes:g('shapes')/100,
+    cols:g('cols'), notes:g('notes')/100, accents:g('accents')/100,
+    jitter:g('jitter')/100, stroke:g('stroke'), margin:g('margin'),
+    palette:state.palette, format:state.format,
+  };
+}
+
+/* ═══════════════════ GENERATOR ═══════════════════
+   Glyph grammars synthesised from web research:
+   · asemic  — 2–5 strokes walked over a node lattice, strokes share
+               nodes but avoid re-used edges; dot diacritics land near
+               free nodes (rules after inconvergent.net asemic studies)
+   · stack   — vertical combinations of circle / crescent / cross /
+               triangle, the constructive grammar of planetary and
+               alchemical symbols
+   · bauhaus — solid geometric primitives (quarter wedge, semicircle,
+               disc, star, petal ring) in the qqquad / Memphis
+               shape-sheet tradition
+   ══════════════════════════════════════════════════ */
+const ART_W=1080;
+let glyphCount=0;
+function artHeight(fmt){ return fmt==='portrait' ? 1350 : 1080; }
+
+/* ── asemic walk glyph ── */
+function drawAsemic(ctx,rnd,p,ink,x,y,s){
+  /* 3×4 node lattice inside the glyph box */
+  const NX=3,NY=4;
+  const nx=i=>x+s*(0.5+ (i-1)*0.42 );
+  const ny=j=>y+s*(0.14+j*0.24);
+  const jit=p.jitter*s*0.07;
+  const nodes=[];
+  for(let j=0;j<NY;j++)for(let i=0;i<NX;i++)
+    nodes.push([nx(i)+(rnd()-0.5)*jit*2, ny(j)+(rnd()-0.5)*jit*2, i,j]);
+  const idx=(i,j)=>j*NX+i;
+
+  const kStrokes=2+Math.round(p.complexity*3+rnd()*1.2);
+  const usedEdges=new Set();
+  const touched=new Set();
+
+  let ci=Math.floor(rnd()*NX), cj=Math.floor(rnd()*NY);
+  let steps=0, guard=0;
+  ctx.strokeStyle=ink; ctx.lineCap='round'; ctx.lineJoin='round';
+  while(steps<kStrokes&&guard++<60){
+    const di=Math.floor(rnd()*3)-1, dj=Math.floor(rnd()*3)-1;
+    if(di===0&&dj===0) continue;
+    const ti=ci+di, tj=cj+dj;
+    if(ti<0||ti>=NX||tj<0||tj>=NY) continue;
+    const a=idx(ci,cj), b=idx(ti,tj);
+    const key=Math.min(a,b)+'-'+Math.max(a,b);
+    if(usedEdges.has(key)) continue;
+    usedEdges.add(key); touched.add(a); touched.add(b);
+    const [x1,y1]=nodes[a], [x2,y2]=nodes[b];
+    ctx.beginPath(); ctx.moveTo(x1,y1);
+    if(rnd()<p.curvature){
+      const mx=(x1+x2)/2, my=(y1+y2)/2;
+      const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1;
+      const off=len*(0.22+rnd()*0.3)*(rnd()<0.5?1:-1);
+      ctx.quadraticCurveTo(mx-dy/len*off,my+dx/len*off,x2,y2);
+    }else{
+      ctx.lineTo(x2,y2);
+    }
+    ctx.stroke();
+    // occasionally hop to a fresh start node (second component)
+    if(rnd()<0.25){ ci=Math.floor(rnd()*NX); cj=Math.floor(rnd()*NY); }
+    else { ci=ti; cj=tj; }
+    steps++;
+  }
+  /* diacritics near unused nodes */
+  ctx.fillStyle=ink;
+  let marks=0;
+  for(let n=0;n<nodes.length&&marks<2;n++){
+    if(touched.has(n)) continue;
+    if(rnd()>p.diacritics*0.55) continue;
+    const [px,py]=nodes[n];
+    if(rnd()<0.7){
+      ctx.beginPath(); ctx.arc(px,py,ctx.lineWidth*1.1,0,TAU); ctx.fill();
+    }else{
+      ctx.beginPath(); ctx.moveTo(px-s*0.05,py); ctx.lineTo(px+s*0.05,py); ctx.stroke();
+    }
+    marks++;
+  }
+}
+
+/* ── planetary stack glyph: circle + crescent + cross grammar ── */
+function drawStack(ctx,rnd,p,ink,x,y,s){
+  const n=2+Math.floor(rnd()*2)+(rnd()<p.complexity*0.6?1:0);   // 2–4 elements
+  const cx=x+s/2;
+  const eh=s*0.86/n, r=Math.min(eh*0.42,s*0.2);
+  ctx.strokeStyle=ink; ctx.fillStyle=ink; ctx.lineCap='round';
+  for(let i=0;i<n;i++){
+    const cy=y+s*0.07+eh*(i+0.5);
+    const el=weightedPick(rnd,[['circle',2.4],['cross',2.2],['crescent',2.2],['tri',1.2],['dot',0.8],['bar',0.8]]);
+    ctx.beginPath();
+    if(el==='circle'){
+      ctx.arc(cx,cy,r,0,TAU);
+      if(rnd()<0.22){ ctx.fill(); } else ctx.stroke();
+    }else if(el==='cross'){
+      ctx.moveTo(cx-r,cy); ctx.lineTo(cx+r,cy);
+      ctx.moveTo(cx,cy-r); ctx.lineTo(cx,cy+r);
+      ctx.stroke();
+    }else if(el==='crescent'){
+      const up=rnd()<0.5;
+      ctx.arc(cx,cy+(up?r*0.5:-r*0.5),r,up?Math.PI:0,up?TAU:Math.PI);
+      ctx.stroke();
+    }else if(el==='tri'){
+      ctx.moveTo(cx,cy-r); ctx.lineTo(cx+r,cy+r*0.8); ctx.lineTo(cx-r,cy+r*0.8);
+      ctx.closePath();
+      if(rnd()<0.3) ctx.fill(); else ctx.stroke();
+    }else if(el==='dot'){
+      ctx.arc(cx,cy,ctx.lineWidth*1.2,0,TAU); ctx.fill();
+    }else{
+      ctx.moveTo(cx-r,cy); ctx.lineTo(cx+r,cy); ctx.stroke();
+    }
+  }
+  /* connecting spine, sometimes */
+  if(rnd()<0.35){
+    ctx.beginPath(); ctx.moveTo(cx,y+s*0.1); ctx.lineTo(cx,y+s*0.9);
+    ctx.globalAlpha=0.55; ctx.stroke(); ctx.globalAlpha=1;
+  }
+}
+
+/* ── bauhaus solid primitive ── */
+function drawBauhaus(ctx,rnd,p,ink,x,y,s){
+  const cx=x+s/2, cy=y+s/2, r=s*0.34;
+  const kind=weightedPick(rnd,[
+    ['disc',2],['ring',1.6],['semi',2.2],['wedge',2.2],['square',1.4],
+    ['diamond',1.2],['star',1.6],['petals',1.6],
+  ]);
+  ctx.strokeStyle=ink; ctx.fillStyle=ink;
+  if(kind==='disc'){
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,TAU); ctx.fill();
+  }else if(kind==='ring'){
+    ctx.lineWidth=ctx.lineWidth*2.2;
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.85,0,TAU); ctx.stroke();
+  }else if(kind==='semi'){
+    const a0=Math.floor(rnd()*4)*Math.PI/2;
+    ctx.beginPath(); ctx.arc(cx,cy,r,a0,a0+Math.PI); ctx.closePath(); ctx.fill();
+  }else if(kind==='wedge'){
+    const q=Math.floor(rnd()*4)*Math.PI/2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r*1.15,q,q+Math.PI/2); ctx.closePath(); ctx.fill();
+  }else if(kind==='square'){
+    if(rnd()<0.6) ctx.fillRect(cx-r*0.8,cy-r*0.8,r*1.6,r*1.6);
+    else ctx.strokeRect(cx-r*0.8,cy-r*0.8,r*1.6,r*1.6);
+  }else if(kind==='diamond'){
+    ctx.beginPath();
+    ctx.moveTo(cx,cy-r); ctx.lineTo(cx+r,cy); ctx.lineTo(cx,cy+r); ctx.lineTo(cx-r,cy);
+    ctx.closePath();
+    if(rnd()<0.6) ctx.fill(); else ctx.stroke();
+  }else if(kind==='star'){
+    const pts=4+Math.floor(rnd()*4), inner=r*0.42;
+    ctx.beginPath();
+    for(let i=0;i<pts*2;i++){
+      const a=-Math.PI/2+i/(pts*2)*TAU, rr=i%2?inner:r;
+      const px=cx+Math.cos(a)*rr, py=cy+Math.sin(a)*rr;
+      i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+    }
+    ctx.closePath(); ctx.fill();
+  }else{ // petal ring — flower-of-life style circle ring
+    const k=5+Math.floor(rnd()*2);
+    for(let i=0;i<k;i++){
+      const a=i/k*TAU;
+      ctx.beginPath();
+      ctx.arc(cx+Math.cos(a)*r*0.5,cy+Math.sin(a)*r*0.5,r*0.5,0,TAU);
+      ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(cx,cy,ctx.lineWidth,0,TAU); ctx.fill();
+  }
+}
+
+function render(ctx,W,H,p,seed){
+  const rnd=mulberry32(seed);
+  const pal=PALETTES[p.palette];
+  glyphCount=0;
+
+  ctx.save();
+  ctx.setLineDash([]);
+  ctx.fillStyle=pal.bg; ctx.fillRect(0,0,W,H);
+
+  const m=p.margin+30;                       // room for margin labels
+  const fx=m, fy=m, fw=W-2*m, fh=H-2*m;
+
+  /* sheet grid */
+  const cols=Math.round(p.cols);
+  const cs=fw/cols;
+  const rows=Math.max(1,Math.floor(fh/cs));
+  const gy=fy+(fh-rows*cs)/2;                 // centre the block vertically
+  glyphCount=cols*rows;
+
+  /* ── annotation furniture ── */
+  if(p.notes>0.05){
+    ctx.strokeStyle=pal.faint; ctx.lineWidth=Math.max(0.6,p.stroke*0.4);
+    /* hairline cell grid */
+    for(let c=0;c<=cols;c++){
+      ctx.beginPath(); ctx.moveTo(fx+c*cs,gy); ctx.lineTo(fx+c*cs,gy+rows*cs); ctx.stroke();
+    }
+    for(let r=0;r<=rows;r++){
+      ctx.beginPath(); ctx.moveTo(fx,gy+r*cs); ctx.lineTo(fx+fw,gy+r*cs); ctx.stroke();
+    }
+    /* margin index labels */
+    if(p.notes>0.3){
+      ctx.fillStyle=pal.label;
+      ctx.font='500 11px "Geist Mono","Red Hat Mono",monospace';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      for(let c=0;c<cols;c++)
+        ctx.fillText(String.fromCharCode(65+(c%26)),fx+c*cs+cs/2,gy-14);
+      ctx.textAlign='right';
+      for(let r=0;r<rows;r++)
+        ctx.fillText(String(r+1).padStart(2,'0'),fx-10,gy+r*cs+cs/2);
+    }
+    /* header rule + registration ticks */
+    if(p.notes>0.55){
+      ctx.strokeStyle=pal.label; ctx.lineWidth=p.stroke*0.5;
+      ctx.beginPath(); ctx.moveTo(fx,gy-26); ctx.lineTo(fx+fw,gy-26); ctx.stroke();
+      for(const tx of [fx,fx+fw*0.25,fx+fw*0.5,fx+fw*0.75,fx+fw]){
+        ctx.beginPath(); ctx.moveTo(tx,gy-26); ctx.lineTo(tx,gy-31); ctx.stroke();
+      }
+      ctx.beginPath(); ctx.moveTo(fx,gy+rows*cs+22); ctx.lineTo(fx+fw*0.3,gy+rows*cs+22); ctx.stroke();
+    }
+  }
+
+  /* ── glyph cells ── */
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const cellSeed=(seed^((r*131+c)*2654435761))>>>0;
+      const grnd=mulberry32(cellSeed);
+      const gx=fx+c*cs, gyy=gy+r*cs;
+      const inset=cs*0.2;
+      const bx=gx+inset, by=gyy+inset, bs=cs-inset*2;
+
+      /* accent treatment: colored glyph, or inverted chip */
+      let ink=pal.ink;
+      const aRoll=grnd();
+      let inverted=false;
+      if(aRoll<p.accents*0.07){
+        inverted=true;
+        const chip=pal.accents[Math.floor(grnd()*pal.accents.length)];
+        ctx.fillStyle=chip;
+        ctx.fillRect(gx+1,gyy+1,cs-2,cs-2);
+        ink=pal.bg;
+      }else if(aRoll<p.accents*0.3){
+        ink=pal.accents[Math.floor(grnd()*pal.accents.length)];
+      }
+
+      ctx.lineWidth=p.stroke*(inverted?1.15:1);
+      const grammar=weightedPick(grnd,[
+        ['asemic',3.2],
+        ['stack',1.1+p.shapes*0.4],
+        ['bauhaus',0.25+p.shapes*2.6],
+      ]);
+      if(grammar==='asemic') drawAsemic(ctx,grnd,p,ink,bx,by,bs);
+      else if(grammar==='stack') drawStack(ctx,grnd,p,ink,bx,by,bs);
+      else drawBauhaus(ctx,grnd,p,ink,bx,by,bs);
+
+      /* per-cell hex code, dense-annotation mode */
+      if(p.notes>0.75&&cs>70){
+        ctx.fillStyle=pal.label;
+        ctx.font='500 8px "Geist Mono","Red Hat Mono",monospace';
+        ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+        ctx.fillText((cellSeed%4096).toString(16).padStart(3,'0'),gx+cs-5,gyy+cs-5);
+      }
+    }
+  }
+
+  /* outer frame */
+  ctx.strokeStyle=pal.ink; ctx.lineWidth=p.stroke*0.8;
+  ctx.strokeRect(fx-8,gy-8,fw+16,rows*cs+16);
+
+  ctx.restore();
+}
+
+/* ═══════════════════ DRAW / RESIZE ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+let rafPending=false;
+
+function fitCanvas(){
+  const H=artHeight(state.format);
+  const stage=document.querySelector('.stage');
+  const availW=stage.clientWidth-80, availH=stage.clientHeight-80;
+  const scale=Math.min(availW/ART_W,availH/H,1);
+  canvas.style.width=(ART_W*scale)+'px';
+  canvas.style.height=(H*scale)+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(ART_W*scale*dpr);
+  canvas.height=Math.round(H*scale*dpr);
+}
+
+function draw(){
+  rafPending=false;
+  const p=params();
+  const H=artHeight(p.format);
+  fitCanvas();
+  const t0=performance.now();
+  ctx.setTransform(canvas.width/ART_W,0,0,canvas.height/H,0,0);
+  render(ctx,ART_W,H,p,state.seed);
+  const ms=performance.now()-t0;
+  document.getElementById('statCells').textContent=glyphCount;
+  document.getElementById('statMs').textContent=ms.toFixed(1)+'ms';
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+  canvas.style.background=PALETTES[p.palette].bg;
+}
+function requestDraw(){
+  if(!rafPending){ rafPending=true; requestAnimationFrame(draw); }
+}
+
+/* ═══════════════════ EXPORT ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const H=artHeight(p.format);
+  const scale=2;                       // 2160px wide
+  const off=document.createElement('canvas');
+  off.width=ART_W*scale; off.height=H*scale;
+  const octx=off.getContext('2d');
+  octx.setTransform(scale,0,0,scale,0,0);
+  render(octx,ART_W,H,p,state.seed);
+  off.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-glyphs-'+state.seed.toString(16).padStart(8,'0')+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(out){
+    if(['complexity','curvature','diacritics','shapes','notes','accents','jitter'].includes(el.id))
+      out.textContent=v+'%';
+    else if(el.id==='stroke') out.textContent=v.toFixed(1)+'px';
+    else if(el.id==='margin') out.textContent=v+'px';
+    else out.textContent=v;
+  }
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
+  syncSlider(el);
+});
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+    requestDraw();
+  });
+}
+wireSeg('segPalette','pal',v=>{ state.palette=v; });
+wireSeg('segFormat','fmt',v=>{ state.format=v; });
+
+document.getElementById('btnRandom').addEventListener('click',()=>{
+  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
+});
+document.getElementById('btnRegen').addEventListener('click',()=>{
+  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
+});
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+window.addEventListener('resize',requestDraw);
+window.addEventListener('keydown',e=>{
+  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); }
+  if(e.key==='e' && !e.target.closest('input')) exportPNG();
+});
+
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(requestDraw);
+draw();
+</script>
+</body>
+</html>
