@@ -28,7 +28,11 @@ Blinn-style specular bloom on ridge tops.
 |---|---|---|
 | Seed | Hex readout + `⟳ Reseed` | Deterministic starting culture and noise field |
 | Reaction | Feed rate / Kill rate | Core-regime Gray-Scott coefficients — stripes, worms, dots, mitosis |
+| | Diffusion | dB/dA diffusion ratio — low = sharp thin filaments, high = soft fat blobs |
+| | Anisotropy | Skews the Laplacian horizontally/vertically — the pattern grows a directional grain |
 | | Morph drift | How far the coefficients drift toward the dot regime at the rim |
+| | Rim size | Where the labyrinth-to-dots regime boundary sits |
+| | Agitation | Droplets of chemical B raining onto the field, keeping the culture churning |
 | | Speed | Simulation steps per animation frame |
 | Surface | Relief depth | Height exaggeration of the embossed shading |
 | | Gloss | Specular strength and tightness |
