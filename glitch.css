@@ -68,17 +68,19 @@
 .gl-slice { position: relative; }
 .gl-slice[data-gl-tear="1"]::before,
 .gl-slice[data-gl-tear="1"]::after {
-  content:''; position:absolute; left:0; right:0; top:0; pointer-events:none;
-  height: 2px; mix-blend-mode: screen; opacity:.5; will-change: transform, opacity;
+  content:''; position:absolute; left:0; right:0; pointer-events:none;
+  height: 2px; mix-blend-mode: screen; opacity:.5;
 }
 .gl-slice[data-gl-tear="1"]::before {
+  top: var(--gl-slice-top, 28%);
   background: rgba(0,217,255,0.9);
-  transform: translateX(var(--gl-slice-x, 3px)) translateY(var(--gl-slice-top, 28%));
+  transform: translateX(var(--gl-slice-x, 3px));
   box-shadow: 0 6px 0 -1px rgba(255,45,135,0.6), 0 -5px 0 -1px rgba(57,255,106,0.5);
 }
 .gl-slice[data-gl-tear="1"]::after {
+  top: var(--gl-slice-top2, 62%);
   background: rgba(255,45,135,0.8);
-  transform: translateX(var(--gl-slice-x2, -2px)) translateY(var(--gl-slice-top2, 62%));
+  transform: translateX(var(--gl-slice-x2, -2px));
   box-shadow: 0 4px 0 -1px rgba(0,217,255,0.55);
 }
 
@@ -88,17 +90,12 @@
   content:''; position:absolute; inset:0; pointer-events:none; z-index:1; opacity:.05;
   background-image: radial-gradient(circle, #fff 0.4px, transparent 0.5px);
   background-size: 2px 2px;
-  animation: gl-grain 1.2s steps(3,end) infinite; /* slower, fewer steps */
-  opacity: .04;
+  animation: gl-grain 0.6s steps(4,end) infinite;
 }
 @keyframes gl-grain {
   0%{background-position:0 0} 25%{background-position:-1px 1px}
   50%{background-position:1px -1px} 75%{background-position:-1px -1px} 100%{background-position:1px 1px}
 }
-
-/* Promote heavy animating elements to their own composite layers */
-.gl-stage::after, .gl-rgb::before, .gl-rgb::after, .gl-text, .gl-noise::after,
-.psy-aura, .psy-sun { will-change: transform, opacity, background-position; }
 
 @media (prefers-reduced-motion: reduce) {
   .gl-stage::after, .gl-rgb::before, .gl-rgb::after, .gl-text, .gl-noise::after { animation: none; }
@@ -169,6 +166,15 @@
 .tex-ascii-3 { background-image: url('assets/tex-ascii-03.png'); background-size: 620px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
 .tex-ascii-4 { background-image: url('assets/tex-ascii-04.png'); background-size: 560px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
 .tex-ascii-5 { background-image: url('assets/tex-ascii-05.png'); background-size: 620px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
+
+/* Reaction-diffusion fields + cosmogram plates + acid circuit-patch (uploads, 07-2026).
+   Organic Turing-pattern coral/mesh + sacred-geometry HUD plates + Mondrian data-blocks. */
+.tex-reaction       { background-image: url('assets/tex-reaction-green.png'); background-size: cover; background-position: center; mix-blend-mode: screen; opacity: var(--tex-op, 0.5); }
+.tex-reaction-white { background-image: url('assets/tex-reaction-white.png'); background-size: cover; background-position: center; mix-blend-mode: screen; opacity: var(--tex-op, 0.5); }
+.tex-reaction-ink   { background-image: url('assets/tex-reaction-ink.png');   background-size: cover; background-position: center; mix-blend-mode: multiply; opacity: var(--tex-op, 0.9); }
+.bg-cosmogram { background-image: url('assets/cosmogram-neon.png'); background-size: cover; background-position: center; }
+.bg-patch     { background-image: url('assets/patch-acid-1.png');   background-size: cover; background-position: center; }
+.bg-patch-2   { background-image: url('assets/patch-acid-2.png');   background-size: cover; background-position: center; }
 
 /* Night-garden infrared photography (uploads, 07-2026) — hero backdrops.
    Use as cover images behind dark scrims, not blend-textures. */
@@ -298,40 +304,3 @@
     animation: none !important;
   }
 }
-
-/* Reduced-effects mode: toggled via `body.reduced-effects` or user toggle.
-   This class lowers opacity, pauses or removes expensive filters and blend-modes,
-   and disables heavy animations to improve runtime performance. */
-body.reduced-effects .psy-hue,
-body.reduced-effects .psy-hue-s,
-body.reduced-effects .psy-sun,
-body.reduced-effects .psy-swirl,
-body.reduced-effects .psy-pinwheel,
-body.reduced-effects .psy-aura,
-body.reduced-effects .psy-rainbow,
-body.reduced-effects .psy-text,
-body.reduced-effects .psy-aberr,
-body.reduced-effects .psy-undulate,
-body.reduced-effects .psy-ribbon,
-body.reduced-effects .gl-stage::after,
-body.reduced-effects .gl-rgb::before,
-body.reduced-effects .gl-rgb::after,
-body.reduced-effects .gl-text,
-body.reduced-effects .gl-noise::after {
-  animation: none !important;
-  transition: none !important;
-}
-body.reduced-effects .tex { opacity: 0.06 !important; mix-blend-mode: normal !important; }
-body.reduced-effects .tex-psy1, body.reduced-effects .tex-psy2 { opacity: 0.02 !important; }
-body.reduced-effects .gl-stage::before, body.reduced-effects .gl-stage::after { display: none !important; }
-body.reduced-effects .psy-liquid, body.reduced-effects .psy-wave, body.reduced-effects .psy-waveXL { filter: none !important; }
-
-/* small floating toggle control */
-.effects-toggle {
-  position: fixed; right: 12px; top: 12px; z-index: 10001;
-  display:inline-flex; align-items:center; gap:8px; padding:6px 8px; border-radius:8px;
-  background: rgba(0,0,0,0.5); color: #fff; font-size:12px; border: 1px solid rgba(255,255,255,0.06);
-  cursor: pointer; backdrop-filter: blur(4px);
-}
-.effects-toggle input { width: 16px; height: 16px; }
-.effects-toggle .label { font-family: inherit; font-weight:600; letter-spacing:0.02em }

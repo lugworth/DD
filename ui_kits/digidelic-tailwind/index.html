@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Digidelic Tailwind" name="digidelic UI Kit — Tailwind" subtitle="Tailwind CDN build + usage docs — palette, buttons, cards, textures" viewport="1040x900" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic · tailwind</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+</style>
+<script>
+// ── digidelic tailwind config (inline mirror of tailwind.config.js) ──
+tailwind.config = {
+  theme: {
+    borderRadius: { none:'0', DEFAULT:'0', sm:'0', md:'0', lg:'0', xl:'0', full:'0' },
+    extend: {
+      colors: {
+        void:'#000000', soft:'#0a0a0a', panel:'#111110', raised:'#1a1a18',
+        yellow:{DEFAULT:'#eaff00',dim:'#d4e800'},
+        pink:{DEFAULT:'#ff2d87',hot:'#ff0066'},
+        green:{DEFAULT:'#39ff6a',dim:'#00d93d'},
+        lime:{DEFAULT:'#c6ff3a',dim:'#a0e600'},
+        cyan:{DEFAULT:'#00d9ff'},
+        blue:{DEFAULT:'#2d4cff',deep:'#0018cc'},
+        magenta:{DEFAULT:'#c800ff'},
+        orange:{DEFAULT:'#ff5a00'},
+        coral:{DEFAULT:'#ff6050'}, sky:{DEFAULT:'#0a84e0'}, teal:{DEFAULT:'#12b39b'},
+        night:'#150a1c', violet:'#8a3fb0', indigo:'#4653e8', blood:'#e02020',
+        ink:'#000000',
+      },
+      fontFamily: {
+        mono:['Geist Mono','Red Hat Mono','ui-monospace','monospace'],
+        display:['Space Grotesk','system-ui','sans-serif'],
+      },
+      letterSpacing:{tight:'-0.02em',wide:'0.06em',wider:'0.12em',widest:'0.22em'},
+      transitionTimingFunction:{flow:'cubic-bezier(0.22,1,0.36,1)'},
+      backgroundImage:{
+        'tex-crossgrid':"url('../../assets/tex-crossgrid.png')",
+        'tex-flower':"url('../../assets/tex-flower-duotone.png')",
+        'tex-halftone':"url('../../assets/tex-halftone-portrait.png')",
+        'tex-ascii':"url('../../assets/tex-ascii-01.png')",
+        'tex-ascii-b':"url('../../assets/tex-ascii-04.png')",
+        'photo-night':"url('../../assets/photo-night-01.png')",
+        'photo-night-b':"url('../../assets/photo-night-09.png')",
+      },
+    },
+  },
+};
+</script>
+<style type="text/tailwindcss">
+  @layer utilities {
+    /* checker motif — coral × sky */
+    .chk {
+      background-color:#ff6050;
+      background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);
+      background-size:16px 16px; background-position:0 0,8px 8px;
+    }
+    .chk-strip{ height:8px; }
+    /* texture overlay child */
+    .tex{ position:absolute; inset:0; pointer-events:none; z-index:0; background-repeat:repeat; background-position:center; }
+    .tex.crossgrid{ background-size:320px; mix-blend-mode:screen; opacity:.18; }
+    .tex.flower{ background-size:cover; background-repeat:no-repeat; mix-blend-mode:overlay; opacity:.30; }
+    .tex.halftone{ background-size:cover; background-repeat:no-repeat; background-position:top center; mix-blend-mode:screen; opacity:.22; }
+    .tex.ascii{ background-size:560px; mix-blend-mode:screen; opacity:.14; }
+    .tex.night{ background-size:cover; background-repeat:no-repeat; background-position:center; }
+    .night-scrim{ position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.8)); }
+    /* glitch rgb split for headings */
+    .gl-text{ text-shadow:.5px 0 rgba(255,45,135,.5),-.5px 0 rgba(0,217,255,.5); }
+    /* swirl / pinwheel — single-color, brand palette via currentColor */
+    .swirl{ position:absolute; pointer-events:none; border-radius:50%; opacity:.16; mix-blend-mode:screen;
+      background:repeating-radial-gradient(circle at 50% 50%,transparent 0 7px,currentColor 7px 7.6px,transparent 7.6px 15px);
+      -webkit-mask:radial-gradient(circle at 50% 50%,#000 56%,transparent 72%); mask:radial-gradient(circle at 50% 50%,#000 56%,transparent 72%); }
+    .pinwheel{ position:absolute; pointer-events:none; border-radius:50%; opacity:.13; mix-blend-mode:screen;
+      background:conic-gradient(from 0deg,currentColor 0 10deg,transparent 10deg 45deg,currentColor 45deg 55deg,transparent 55deg 90deg,currentColor 90deg 100deg,transparent 100deg 135deg);
+      -webkit-mask:radial-gradient(circle,transparent 20%,#000 22%,#000 62%,transparent 70%); mask:radial-gradient(circle,transparent 20%,#000 22%,#000 62%,transparent 70%); }
+    @keyframes spin-cw{ to{transform:rotate(360deg)} } @keyframes spin-ccw{ to{transform:rotate(-360deg)} }
+    @media (prefers-reduced-motion:no-preference){ .spin-cw{animation:spin-cw 60s linear infinite} .spin-ccw{animation:spin-ccw 90s linear infinite} }
+  }
+</style>
+<link id="gfont-Space-Grotesk" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap">
+</head>
+<body class="bg-soft text-white font-mono min-h-screen" style="background-color: rgb(22, 22, 22); font-family: &quot;Space Grotesk&quot;; font-size: 8px">
+
+<!-- top checker strip -->
+<div class="chk chk-strip w-full"></div>
+
+<div class="max-w-5xl mx-auto px-5 py-6">
+
+  <!-- header -->
+  <header class="relative overflow-hidden border border-white/12 mb-8">
+    <div class="tex night bg-photo-night absolute inset-0"></div>
+    <div class="night-scrim"></div>
+    <span class="pinwheel spin-cw text-sky" style="width:220px;height:220px;top:-70px;right:-40px"></span>
+    <span class="swirl spin-ccw text-coral" style="width:180px;height:180px;bottom:-70px;left:30%"></span>
+    <div class="relative z-10 flex items-end justify-between p-5">
+      <div>
+        <div class="font-display font-black text-4xl lowercase tracking-tight leading-none gl-text">
+          <span class="text-yellow">d</span>igi<span class="text-sky">d</span>elic
+        </div>
+        <div class="text-2xs uppercase tracking-widest text-white/50 mt-2">// tailwind build · v2.3 · night-garden</div>
+      </div>
+      <div class="hidden sm:flex items-center gap-2 text-2xs uppercase tracking-wider text-white/60">
+        <span class="w-1.5 h-1.5 bg-green inline-block"></span> sys:0x4f3a
+      </div>
+    </div>
+  </header>
+
+  <!-- palette -->
+  <section class="mb-10">
+    <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// colors · bg-{token} text-{token}</div>
+    <div class="grid grid-cols-4 sm:grid-cols-7 gap-0.5">
+      <div class="h-16 bg-yellow text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">yellow</span><span class="text-[8px]">#eaff00</span></div>
+      <div class="h-16 bg-pink text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">pink</span><span class="text-[8px]">#ff2d87</span></div>
+      <div class="h-16 bg-green text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">green</span><span class="text-[8px]">#39ff6a</span></div>
+      <div class="h-16 bg-cyan text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">cyan</span><span class="text-[8px]">#00d9ff</span></div>
+      <div class="h-16 bg-coral text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">coral</span><span class="text-[8px]">#ff6050</span></div>
+      <div class="h-16 bg-sky text-white p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">sky</span><span class="text-[8px]">#0a84e0</span></div>
+      <div class="h-16 bg-teal text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">teal</span><span class="text-[8px]">#12b39b</span></div>
+    </div>
+    <div class="text-2xs uppercase tracking-widest text-white/35 mt-4 mb-3">// night-garden layer</div>
+    <div class="grid grid-cols-4 gap-0.5">
+      <div class="h-12 bg-night text-white p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">night</span><span class="text-[8px]">#150a1c</span></div>
+      <div class="h-12 bg-violet text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">violet</span><span class="text-[8px]">#8a3fb0</span></div>
+      <div class="h-12 bg-indigo text-white p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">indigo</span><span class="text-[8px]">#4653e8</span></div>
+      <div class="h-12 bg-blood text-white p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">blood</span><span class="text-[8px]">#e02020</span></div>
+    </div>
+  </section>
+
+  <!-- buttons -->
+  <section class="mb-10">
+    <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// buttons</div>
+    <div class="flex flex-wrap gap-2 items-center">
+      <button class="h-8 px-4 bg-yellow text-ink text-xs font-bold uppercase tracking-wider transition-transform duration-100 ease-flow hover:-translate-y-0.5">initialize</button>
+      <button class="h-8 px-4 bg-coral text-ink text-xs font-bold uppercase tracking-wider transition-transform duration-100 ease-flow hover:-translate-y-0.5">notify</button>
+      <button class="h-8 px-4 bg-teal text-ink text-xs font-bold uppercase tracking-wider transition-transform duration-100 ease-flow hover:-translate-y-0.5">sync</button>
+      <button class="h-8 px-4 bg-transparent border border-yellow text-yellow text-xs font-bold uppercase tracking-wider transition-colors hover:bg-yellow hover:text-ink">run</button>
+      <button class="h-8 px-4 bg-transparent border border-pink-hot text-pink-hot text-xs font-bold uppercase tracking-wider">abort</button>
+      <button class="h-8 px-4 chk text-white text-xs font-bold uppercase tracking-wider" style="text-shadow:0 0 4px #000,0 1px 2px #000">▦ engage</button>
+    </div>
+  </section>
+
+  <!-- cards · color-block positive/negative space -->
+  <section class="mb-10">
+    <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// node cards · positive (solid block) vs negative (void)</div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      <!-- POSITIVE: solid coral block, data on black inset -->
+      <div class="bg-coral border border-coral">
+        <div class="px-2.5 py-2 flex items-center justify-between">
+          <span class="font-display font-black text-lg uppercase tracking-tight text-ink leading-none">NODE-047</span>
+          <span class="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-ink text-coral">critical</span>
+        </div>
+        <div class="bg-ink mx-1 mb-1 p-2">
+          <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 mb-2">
+            <div class="flex justify-between border-b border-white/10 pb-0.5"><span class="text-[8px] uppercase tracking-wide text-white/40">class</span><span class="text-[9px] text-white/80">relay</span></div>
+            <div class="flex justify-between border-b border-white/10 pb-0.5"><span class="text-[8px] uppercase tracking-wide text-white/40">load</span><span class="text-[9px] text-coral">98%</span></div>
+            <div class="flex justify-between border-b border-white/10 pb-0.5"><span class="text-[8px] uppercase tracking-wide text-white/40">signal</span><span class="text-[9px] text-white/80">22%</span></div>
+            <div class="flex justify-between border-b border-white/10 pb-0.5"><span class="text-[8px] uppercase tracking-wide text-white/40">up</span><span class="text-[9px] text-white/80">002:17</span></div>
+          </div>
+          <div class="h-1 bg-white/10"><div class="h-full bg-coral" style="width:98%"></div></div>
+        </div>
+      </div>
+      <!-- POSITIVE: solid green block -->
+      <div class="bg-green border border-green">
+        <div class="px-2.5 py-2 flex items-center justify-between">
+          <span class="font-display font-black text-lg uppercase tracking-tight text-ink leading-none">NODE-088</span>
+          <span class="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-ink text-green">running</span>
+        </div>
+        <div class="bg-ink mx-1 mb-1 p-2">
+          <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 mb-2">
+            <div class="flex justify-between border-b border-white/10 pb-0.5"><span class="text-[8px] uppercase tracking-wide text-white/40">class</span><span class="text-[9px] text-white/80">term</span></div>
+            <div class="flex justify-between border-b border-white/10 pb-0.5"><span class="text-[8px] uppercase tracking-wide text-white/40">load</span><span class="text-[9px] text-green">64%</span></div>
+            <div class="flex justify-between border-b border-white/10 pb-0.5"><span class="text-[8px] uppercase tracking-wide text-white/40">signal</span><span class="text-[9px] text-white/80">88%</span></div>
+            <div class="flex justify-between border-b border-white/10 pb-0.5"><span class="text-[8px] uppercase tracking-wide text-white/40">up</span><span class="text-[9px] text-white/80">847:23</span></div>
+          </div>
+          <div class="h-1 bg-white/10"><div class="h-full bg-green" style="width:64%"></div></div>
+        </div>
+      </div>
+      <!-- NEGATIVE: black void, color only as top rule + big load number -->
+      <div class="bg-void border border-white/12 border-t-2 border-t-cyan p-2.5">
+        <div class="flex items-baseline justify-between mb-3">
+          <span class="font-display font-black text-lg uppercase tracking-tight leading-none">NODE-112</span>
+          <span class="text-[8px] font-bold uppercase tracking-widest text-cyan">▸ scanning</span>
+        </div>
+        <div class="flex items-end justify-between">
+          <div class="text-[9px] text-white/40 leading-relaxed">beacon<br>412:08</div>
+          <div class="text-right">
+            <div class="text-[8px] uppercase tracking-wider text-white/40">load</div>
+            <div class="font-display font-black text-2xl leading-none">31<span class="text-[11px] text-white/40">%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-2xs uppercase tracking-widest text-white/30 mt-3">// texture-backed panels</div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+      <div class="relative overflow-hidden border border-white/12 bg-panel p-3 min-h-[92px] flex items-end">
+        <div class="tex ascii bg-tex-ascii"></div>
+        <span class="relative z-10 text-[9px] uppercase tracking-widest text-white/60">ascii data-texture</span>
+      </div>
+      <div class="relative overflow-hidden border border-white/12 bg-panel p-3 min-h-[92px] flex items-end">
+        <div class="tex flower bg-tex-flower"></div>
+        <span class="relative z-10 text-[9px] uppercase tracking-widest text-white/70">flower duotone</span>
+      </div>
+      <div class="relative overflow-hidden border border-white/12 p-3 min-h-[92px] flex items-end">
+        <div class="tex night bg-photo-night-b absolute inset-0"></div>
+        <div class="night-scrim"></div>
+        <span class="relative z-10 text-[9px] uppercase tracking-widest text-coral">night-garden photo</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- badges -->
+  <section class="mb-10">
+    <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// status badges</div>
+    <div class="flex flex-wrap gap-2">
+      <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest border border-green text-green"><span class="w-1 h-1 bg-current"></span>nominal</span>
+      <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest border border-yellow text-yellow"><span class="w-1 h-1 bg-current"></span>warning</span>
+      <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest border border-pink-hot text-pink-hot"><span class="w-1 h-1 bg-current"></span>critical</span>
+      <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest border border-cyan text-cyan"><span class="w-1 h-1 bg-current"></span>scanning</span>
+      <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest bg-coral text-ink">active</span>
+    </div>
+  </section>
+
+  <!-- full-bleed night-garden feature banner -->
+  <section class="mb-10">
+    <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// feature banner · night-garden photo + display type</div>
+    <div class="relative overflow-hidden border border-white/12 min-h-[220px] flex flex-col justify-between p-6">
+      <div class="tex night bg-photo-night-b absolute inset-0"></div>
+      <div class="night-scrim"></div>
+      <span class="pinwheel spin-cw text-violet" style="width:260px;height:260px;top:-90px;right:-60px"></span>
+      <span class="swirl spin-ccw text-blood" style="width:200px;height:200px;bottom:-80px;left:24%"></span>
+      <div class="relative z-10 flex items-start justify-between">
+        <span class="text-2xs uppercase tracking-widest text-white/70">// sector A1.2 — infrared sweep</span>
+        <span class="text-2xs uppercase tracking-widest text-blood">▶ live</span>
+      </div>
+      <div class="relative z-10">
+        <h2 class="font-display font-black text-5xl uppercase tracking-tight leading-[0.9] gl-text">Signal<br><span class="text-coral">Bloom</span></h2>
+        <div class="flex gap-2 mt-4 flex-wrap">
+          <span class="inline-flex items-center gap-1.5 h-6 px-2.5 text-[9px] font-bold uppercase tracking-widest bg-blood text-white">infrared</span>
+          <span class="inline-flex items-center gap-1.5 h-6 px-2.5 text-[9px] font-bold uppercase tracking-widest bg-violet text-ink">dusk</span>
+          <span class="inline-flex items-center gap-1.5 h-6 px-2.5 text-[9px] font-bold uppercase tracking-widest bg-indigo text-white">foliage</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- night-garden photo gallery strip -->
+  <section class="mb-10">
+    <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// backdrop library · .bg-photo-night-*</div>
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-1">
+      <div class="relative aspect-[3/4] overflow-hidden border border-white/10"><div class="tex night absolute inset-0" style="background-image:url('../../assets/photo-night-02.png')"></div><div class="night-scrim"></div><span class="absolute left-1.5 bottom-1.5 z-10 text-[7px] uppercase tracking-widest text-white/70">n-02</span></div>
+      <div class="relative aspect-[3/4] overflow-hidden border border-white/10"><div class="tex night absolute inset-0" style="background-image:url('../../assets/photo-night-03.png')"></div><div class="night-scrim"></div><span class="absolute left-1.5 bottom-1.5 z-10 text-[7px] uppercase tracking-widest text-white/70">n-03</span></div>
+      <div class="relative aspect-[3/4] overflow-hidden border border-white/10"><div class="tex night absolute inset-0" style="background-image:url('../../assets/photo-night-04.png')"></div><div class="night-scrim"></div><span class="absolute left-1.5 bottom-1.5 z-10 text-[7px] uppercase tracking-widest text-white/70">n-04</span></div>
+      <div class="relative aspect-[3/4] overflow-hidden border border-white/10"><div class="tex night absolute inset-0" style="background-image:url('../../assets/photo-night-05.png')"></div><div class="night-scrim"></div><span class="absolute left-1.5 bottom-1.5 z-10 text-[7px] uppercase tracking-widest text-white/70">n-05</span></div>
+      <div class="relative aspect-[3/4] overflow-hidden border border-white/10"><div class="tex night absolute inset-0" style="background-image:url('../../assets/photo-night-06.png')"></div><div class="night-scrim"></div><span class="absolute left-1.5 bottom-1.5 z-10 text-[7px] uppercase tracking-widest text-white/70">n-06</span></div>
+      <div class="relative aspect-[3/4] overflow-hidden border border-white/10"><div class="tex night absolute inset-0" style="background-image:url('../../assets/photo-night-07.jpeg')"></div><div class="night-scrim"></div><span class="absolute left-1.5 bottom-1.5 z-10 text-[7px] uppercase tracking-widest text-white/70">n-07</span></div>
+    </div>
+  </section>
+
+  <!-- ASCII texture library -->
+  <section class="mb-10">
+    <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// ascii data-textures · .tex.ascii (screen blend)</div>
+    <div class="grid grid-cols-5 gap-1">
+      <div class="relative h-20 overflow-hidden border border-white/10 bg-void"><div class="tex absolute inset-0" style="background-image:url('../../assets/tex-ascii-01.png');background-size:340px;mix-blend-mode:screen;opacity:.7"></div></div>
+      <div class="relative h-20 overflow-hidden border border-white/10 bg-void"><div class="tex absolute inset-0" style="background-image:url('../../assets/tex-ascii-02.png');background-size:340px;mix-blend-mode:screen;opacity:.7"></div></div>
+      <div class="relative h-20 overflow-hidden border border-white/10 bg-void"><div class="tex absolute inset-0" style="background-image:url('../../assets/tex-ascii-03.png');background-size:340px;mix-blend-mode:screen;opacity:.7"></div></div>
+      <div class="relative h-20 overflow-hidden border border-white/10 bg-void"><div class="tex absolute inset-0" style="background-image:url('../../assets/tex-ascii-04.png');background-size:340px;mix-blend-mode:screen;opacity:.7"></div></div>
+      <div class="relative h-20 overflow-hidden border border-white/10 bg-void"><div class="tex absolute inset-0" style="background-image:url('../../assets/tex-ascii-05.png');background-size:340px;mix-blend-mode:screen;opacity:.7"></div></div>
+    </div>
+  </section>
+
+  <!-- usage note -->
+  <section class="border border-white/12 p-4">
+      <div class="text-2xs uppercase tracking-widest text-white/35 mb-2">// how to use</div>
+      <p class="font-display text-white/70 text-sm leading-relaxed max-w-2xl">
+      Copy <code class="text-green bg-void px-1 border border-white/12">tailwind.config.js</code> into your project, or paste its
+      <code class="text-green bg-void px-1 border border-white/12">theme.extend</code> block. Tokens map to standard Tailwind utilities:
+      <code class="text-coral bg-void px-1 border border-white/12">bg-coral</code>,
+      <code class="text-sky bg-void px-1 border border-white/12">text-sky</code>,
+      <code class="text-blood bg-void px-1 border border-white/12">border-blood</code>,
+      <code class="text-yellow bg-void px-1 border border-white/12">font-display</code>.
+      Radius is globally reset to 0. Color-blocking is the core move: loud states become <span class="text-coral">solid color blocks</span> with a black data inset; calm states stay <span class="text-cyan">black void</span> with a single color rule. Motif + texture classes (<code class="text-white bg-void px-1 border border-white/12">.chk</code>,
+      <code class="text-white bg-void px-1 border border-white/12">.tex.night</code>,
+      <code class="text-white bg-void px-1 border border-white/12">.swirl</code>) live in the
+      <code class="text-white bg-void px-1 border border-white/12">@layer utilities</code> block.
+    </p>
+  </section>
+
+</div>
+</body>
+</html>
