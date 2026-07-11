@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Digidelic" name="digidelic UI Kit" subtitle="Interactive node grid dashboard — mission control interface" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — sys:0x4F3A</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Red+Hat+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; overflow: hidden; }
+body { font-family: 'Geist Mono','Geist Mono','Red Hat Mono',monospace; background: #080808; color: #e8e6d8; }
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: #0d0d0b; }
+::-webkit-scrollbar-thumb { background: #2a2a26; }
+
+/* global scanline */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.1) 1px, rgba(0,0,0,0.1) 2px);
+  pointer-events: none;
+  z-index: 9999;
+}
+/* global film grain — drifts slowly over everything */
+body::before {
+  content:'';
+  position: fixed; inset:-50%;
+  background-image:url('../../assets/tex-ascii-02.png');
+  background-size:620px;
+  opacity:0.06; mix-blend-mode:screen;
+  pointer-events:none; z-index:9998;
+  animation:grain-drift 8s steps(6) infinite;
+}
+@keyframes grain-drift{
+  0%{transform:translate(0,0)}    16%{transform:translate(-12px,6px)}
+  33%{transform:translate(8px,-10px)} 50%{transform:translate(-6px,-4px)}
+  66%{transform:translate(10px,8px)}  83%{transform:translate(-8px,10px)}
+  100%{transform:translate(0,0)}
+}
+
+/* ── TEXTURE OVERLAY LAYERS ── */
+.tex-host{position:relative;}
+.tex{position:absolute; inset:0; pointer-events:none; background-repeat:repeat; background-position:center;}
+.tex-cross   { background-image:url('../../assets/tex-crossgrid.png');        background-size:300px; mix-blend-mode:screen;  opacity:.10; }
+.tex-cross-fine{background-image:url('../../assets/tex-crossgrid.png');        background-size:150px; mix-blend-mode:screen;  opacity:.08; }
+.tex-halftone{ background-image:url('../../assets/tex-halftone-portrait.png'); background-size:cover; background-repeat:no-repeat; mix-blend-mode:screen; opacity:.55; }
+.tex-flower  { background-image:url('../../assets/tex-flower-duotone.png');    background-size:cover; background-repeat:no-repeat; mix-blend-mode:overlay; opacity:.7; }
+.tex-flower-screen{background-image:url('../../assets/tex-flower-duotone.png');background-size:cover; background-repeat:no-repeat; mix-blend-mode:screen; opacity:.32; }
+/* ASCII data-textures + night-garden photos (07-2026 refs) */
+.tex-ascii   { background-image:url('../../assets/tex-ascii-01.png'); background-size:560px; mix-blend-mode:screen; opacity:.14; }
+.tex-ascii-3 { background-image:url('../../assets/tex-ascii-03.png'); background-size:560px; mix-blend-mode:screen; opacity:.14; }
+.tex-ascii-b { background-image:url('../../assets/tex-ascii-04.png'); background-size:560px; mix-blend-mode:screen; opacity:.12; }
+/* generative plates (07-2026 refs) */
+.tex-reaction   { background-image:url('../../assets/tex-reaction-green.png'); background-size:cover; background-position:center; mix-blend-mode:screen; opacity:.4; }
+.bg-cosmogram   { background-image:url('../../assets/cosmogram-neon.png'); background-size:cover; background-position:center; }
+.bg-patch       { background-image:url('../../assets/patch-acid-1.png'); background-size:cover; background-position:center; }
+/* colorful source ASCII (uploads, 07-2026) — richer, brighter cells */
+.tex-ascii-dense    { background-image:url('../../assets/tex-ascii-dense.png'); background-size:520px; mix-blend-mode:screen; opacity:.16; }
+.tex-ascii-portrait { background-image:url('../../assets/tex-ascii-portrait.png'); background-size:cover; background-position:center; mix-blend-mode:screen; }
+.bg-night    { background-image:url('../../assets/photo-night-01.png'); background-size:cover; background-position:center; }
+.bg-night-b  { background-image:url('../../assets/photo-night-09.png'); background-size:cover; background-position:center; }
+.night-scrim { position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.8)); }
+
+/* ── SWIRL / SPIRAL PATTERNS ── */
+@keyframes spin-cw  { to{transform:rotate(360deg)} }
+@keyframes spin-ccw { to{transform:rotate(-360deg)} }
+/* concentric repeating-radial swirl, drawn with conic+radial mix */
+.swirl{
+  position:absolute; pointer-events:none; border-radius:50%;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, transparent 0 6px, currentColor 6px 6.6px, transparent 6.6px 13px);
+  -webkit-mask:radial-gradient(circle at 50% 50%, #000 60%, transparent 72%);
+          mask:radial-gradient(circle at 50% 50%, #000 60%, transparent 72%);
+  opacity:.5;
+}
+/* true spiral via conic gradient pinwheel */
+.pinwheel{
+  position:absolute; pointer-events:none; border-radius:50%;
+  background:conic-gradient(from 0deg, currentColor 0 8deg, transparent 8deg 30deg,
+            currentColor 30deg 38deg, transparent 38deg 60deg,
+            currentColor 60deg 68deg, transparent 68deg 90deg,
+            currentColor 90deg 98deg, transparent 98deg 120deg);
+  -webkit-mask:radial-gradient(circle, transparent 18%, #000 20%, #000 64%, transparent 70%);
+          mask:radial-gradient(circle, transparent 18%, #000 20%, #000 64%, transparent 70%);
+  opacity:.35;
+}
+/* full-bleed faint swirl field behind main content */
+.swirl-field{
+  position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0;
+}
+.swirl-field .s{position:absolute; mix-blend-mode:screen;}
+
+/* ── PSYCHEDELIA (restrained · brand palette only · no hue-shift) ── */
+/* single-color soft swirl — color set per instance via currentColor */
+.swirl{
+  position:absolute; pointer-events:none; border-radius:50%;
+  background:repeating-radial-gradient(circle at 50% 50%, transparent 0 7px, currentColor 7px 7.6px, transparent 7.6px 15px);
+  -webkit-mask:radial-gradient(circle at 50% 50%, #000 56%, transparent 72%);
+          mask:radial-gradient(circle at 50% 50%, #000 56%, transparent 72%);
+  opacity:.16; mix-blend-mode:screen;
+}
+.pinwheel{
+  position:absolute; pointer-events:none; border-radius:50%;
+  background:conic-gradient(from 0deg, currentColor 0 10deg, transparent 10deg 45deg,
+            currentColor 45deg 55deg, transparent 55deg 90deg,
+            currentColor 90deg 100deg, transparent 100deg 135deg);
+  -webkit-mask:radial-gradient(circle, transparent 20%, #000 22%, #000 62%, transparent 70%);
+          mask:radial-gradient(circle, transparent 20%, #000 22%, #000 62%, transparent 70%);
+  opacity:.12; mix-blend-mode:screen;
+}
+/* chromatic-aberration pulse for headers (brand pink + cyan) */
+@keyframes aberr{ 0%,100%{text-shadow:-1px 0 #ff2d87, 1px 0 #00d9ff} 50%{text-shadow:-2px 0 #ff2d87, 2px 0 #00d9ff} }
+.psy-aberr{ animation:aberr 2.4s ease-in-out infinite; }
+
+/* liquid warp — applied via SVG turbulence filter */
+.psy-liquid{ filter:url(#psyGoo); }
+.psy-wave{ filter:url(#psyWave); }
+.psy-wave-xl{ filter:url(#psyWaveXL); }
+@keyframes psy-breathe{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.swirl-field{ animation:psy-breathe 18s ease-in-out infinite; }
+
+/* soft single-color aura streak — color set per instance, stays blurred */
+@keyframes aura-drift{ 0%,100%{transform:translateX(-50%) skewX(-8deg) scaleY(1)} 33%{transform:translateX(-46%) skewX(6deg) scaleY(1.06)} 66%{transform:translateX(-54%) skewX(-10deg) scaleY(.97)} }
+.aura{
+  position:absolute; top:-12%; left:50%; width:30%; height:124%;
+  transform:translateX(-50%); pointer-events:none;
+  background:linear-gradient(180deg, transparent 0%, currentColor 50%, transparent 100%);
+  color:#00d9ff; filter:blur(24px); mix-blend-mode:screen; opacity:.32;
+  animation:aura-drift 9s ease-in-out infinite;
+}
+.aura-thin{ width:12%; filter:blur(13px); opacity:.4; }
+
+@keyframes blink     { 0%,49%{opacity:1}50%,100%{opacity:0} }
+@keyframes ticker-run{ 0%{transform:translateX(0)}100%{transform:translateX(-50%)} }
+@keyframes glitch-h  { 0%,100%{transform:none;clip-path:none} 20%{transform:translate(-2px);clip-path:polygon(0 25%,100% 25%,100% 40%,0 40%)} 22%{transform:none;clip-path:none} 60%{transform:translate(2px);clip-path:polygon(0 65%,100% 65%,100% 78%,0 78%)} 62%{transform:none;clip-path:none} }
+@keyframes pulse-y   { 0%,100%{border-color:#f5d000}50%{border-color:#e8c200} }
+@keyframes slide-in  { from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none} }
+@keyframes view-fade { from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none} }
+
+/* ── MOTION TOKENS (mirrors colors_and_type.css) ── */
+:root{
+  --d-fast:100ms; --d-base:160ms; --d-slow:260ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+button,input{font-family:inherit}
+
+/* ── FLUID INTERACTION STATES ── */
+.node-card{transition:transform var(--d-base) var(--e-flow), box-shadow var(--d-base) var(--e-flow), background var(--d-base) var(--e-flow), border-color var(--d-fast) var(--e-snap);}
+.node-card:hover{transform:translateY(-2px); box-shadow:0 6px 0 -2px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.28);}
+.node-card:active{transform:translateY(0);}
+
+.nav-tab{transition:color var(--d-fast) var(--e-snap), background var(--d-fast) var(--e-snap), border-color var(--d-fast) var(--e-snap);}
+.nav-tab:hover{color:#fff !important; background:rgba(255,255,255,.05);}
+
+.side-item{transition:background var(--d-fast) var(--e-snap), border-color var(--d-fast) var(--e-snap), padding-left var(--d-base) var(--e-flow);}
+.side-item:hover{background:#111110;}
+.side-item:not(.is-active):hover{padding-left:14px;}
+
+.term-btn{transition:background var(--d-fast) var(--e-snap), color var(--d-fast) var(--e-snap), border-color var(--d-fast) var(--e-snap);}
+.term-btn:hover{background:rgba(255,255,255,.07);}
+.term-btn.y:hover{background:#eaff00; color:#000 !important; border-color:#eaff00 !important;}
+
+.filter-dot{transition:transform var(--d-base) var(--e-flow), opacity var(--d-fast) var(--e-snap), box-shadow var(--d-fast) var(--e-snap); cursor:pointer;}
+.filter-dot:hover{transform:scale(1.6); opacity:1 !important;}
+
+.term-input{transition:none;}
+.term-row{transition:border-color var(--d-fast) var(--e-snap), box-shadow var(--d-fast) var(--e-snap);}
+.term-row:focus-within{border-top-color:rgba(234,255,0,.5) !important; box-shadow:inset 0 1px 0 0 rgba(234,255,0,.25);}
+
+.close-x{transition:color var(--d-fast) var(--e-snap), transform var(--d-base) var(--e-flow);}
+.close-x:hover{color:#ff6050 !important; transform:rotate(90deg);}
+
+.cta-btn{transition:transform var(--d-base) var(--e-flow), box-shadow var(--d-base) var(--e-flow), background var(--d-fast) var(--e-snap);}
+.cta-btn:hover{transform:translateY(-1px); box-shadow:0 0 0 1px rgba(255,255,255,.3);}
+.cta-btn:active{transform:translateY(0);}
+
+.sector-card{transition:transform var(--d-base) var(--e-flow), box-shadow var(--d-base) var(--e-flow);}
+.sector-card:hover{transform:translateY(-2px); box-shadow:0 0 0 1px rgba(255,255,255,.22);}
+
+.view-fade{animation:view-fade var(--d-slow) var(--e-flow) both;}
+.wordmark{cursor:default;}
+.wordmark:hover .wm-d2{animation:glitch-h 600ms steps(2,end);}
+
+a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid #eaff00; outline-offset:1px;}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+}
+
+/* ── MOBILE ── */
+@keyframes drawer-in { from{transform:translateX(-100%)} to{transform:translateX(0)} }
+@keyframes sheet-up  { from{transform:translateY(100%)} to{transform:translateY(0)} }
+@keyframes fade-in   { from{opacity:0} to{opacity:1} }
+.scrim{animation:fade-in 160ms linear both;}
+.drawer{animation:drawer-in 220ms var(--e-flow) both;}
+.sheet{animation:sheet-up 240ms var(--e-flow) both;}
+/* touch: no hover-lift jank on touch devices, keep tap feedback */
+@media (hover:none){
+  .node-card:active{transform:scale(.99); box-shadow:0 0 0 1px rgba(255,255,255,.28);}
+  .node-card:hover{transform:none; box-shadow:none;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<!-- psychedelic liquid-warp filter -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="psyGoo">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="3" seed="7" result="noise">
+        <animate attributeName="baseFrequency" dur="14s" values="0.008 0.014;0.018 0.006;0.008 0.014" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="34" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" dur="9s" values="22;46;22" repeatCount="indefinite"/>
+      </feDisplacementMap>
+    </filter>
+    <filter id="psyWave">
+      <feTurbulence type="turbulence" baseFrequency="0.002 0.02" numOctaves="3" seed="3" result="w">
+        <animate attributeName="baseFrequency" dur="9s" values="0.002 0.02;0.008 0.05;0.002 0.02" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="w" scale="70" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" dur="7s" values="40;88;40" repeatCount="indefinite"/>
+      </feDisplacementMap>
+    </filter>
+    <filter id="psyWaveXL">
+      <feTurbulence type="turbulence" baseFrequency="0.0015 0.012" numOctaves="2" seed="9" result="wx">
+        <animate attributeName="baseFrequency" dur="13s" values="0.0015 0.012;0.005 0.03;0.0015 0.012" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="wx" scale="120" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" dur="10s" values="70;150;70" repeatCount="indefinite"/>
+      </feDisplacementMap>
+    </filter>
+  </defs>
+</svg>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ── RESPONSIVE HOOK ───────────────────────────────────────────────
+function useIsMobile(bp=720) {
+  const [m, setM] = useState(typeof window!=='undefined' && window.innerWidth < bp);
+  useEffect(()=>{
+    const on = ()=>setM(window.innerWidth < bp);
+    window.addEventListener('resize', on);
+    return ()=>window.removeEventListener('resize', on);
+  },[bp]);
+  return m;
+}
+
+// ── TOKENS ────────────────────────────────────────────────────────
+const C = {
+  void:    '#000000',
+  base:    '#0a0a0a',
+  surface: '#111110',
+  raised:  '#1a1a18',
+  overlay: '#252521',
+  border:  'rgba(255,255,255,0.12)',
+  borderMid: 'rgba(255,255,255,0.18)',
+  borderHi:  'rgba(255,255,255,0.25)',
+  fg1:  '#ffffff',
+  fg2:  'rgba(255,255,255,0.86)',
+  fg3:  'rgba(255,255,255,0.55)',
+  fg4:  'rgba(255,255,255,0.42)',
+  yellow: '#eaff00',
+  yellowDim: '#d4e800',
+  pink:   '#ff2d87',
+  pinkDim:'#ff0066',
+  green:  '#39ff6a',
+  lime:   '#c6ff3a',
+  limeDim:'#a0e600',
+  orange: '#ff5a00',
+  cyan:   '#00d9ff',
+  red:    '#ff6050',
+  coral:  '#ff6050',
+  blue:   '#2d4cff',
+  sky:    '#0a84e0',
+  teal:   '#12b39b',
+  magenta: '#c800ff',
+};
+
+// ── DATA ──────────────────────────────────────────────────────────
+const SECTORS = [
+  { id:'A1',  label:'Sector A1',  nodes:12 },
+  { id:'B6',  label:'Sector B6',  nodes:8  },
+  { id:'X06', label:'Sector X06', nodes:5  },
+  { id:'D9',  label:'Sector D9',  nodes:9  },
+  { id:'4R',  label:'Sector 4R',  nodes:3  },
+];
+const CLASSES  = ['RELAY','TERMINAL','BEACON','VECTOR','SENTINEL','BRIDGE'];
+const STATUSES = [
+  { id:'nominal',  label:'NOMINAL',  color:C.green,  bg:'rgba(57,255,106,.08)' },
+  { id:'running',  label:'RUNNING',  color:C.yellow, bg:'rgba(234,255,0,.08)'  },
+  { id:'scanning', label:'SCANNING', color:C.cyan,   bg:'rgba(0,217,255,.07)'  },
+  { id:'warning',  label:'WARNING',  color:C.orange, bg:'rgba(255,90,0,.1)'    },
+  { id:'critical', label:'CRITICAL', color:C.pinkDim,bg:'rgba(255,0,102,.09)'  },
+  { id:'offline',  label:'OFFLINE',  color:C.fg4,    bg:'transparent'          },
+];
+
+function seededRng(seed) {
+  let s = seed;
+  return () => { s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/4294967296; };
+}
+const rng = seededRng(0xD161DE);
+function pickStatus() {
+  const w=[38,18,14,12,8,10]; let r=rng()*100,c=0;
+  for(let i=0;i<STATUSES.length;i++){c+=w[i];if(r<c)return STATUSES[i];}
+  return STATUSES[0];
+}
+const ALL_NODES = [];
+let ni=1;
+for(const sec of SECTORS) {
+  for(let i=0;i<sec.nodes;i++){
+    const id=String(ni).padStart(3,'0'), st=pickStatus();
+    const h=Math.floor(rng()*1200), m=Math.floor(rng()*60), s2=Math.floor(rng()*60);
+    ALL_NODES.push({
+      id, num:ni, sector:sec.id,
+      class: CLASSES[Math.floor(rng()*CLASSES.length)],
+      status: st,
+      uptime: st.id==='offline'?'000:00:00':`${String(h).padStart(3,'0')}:${String(m).padStart(2,'0')}:${String(s2).padStart(2,'0')}`,
+      signal: st.id==='offline'?0:Math.floor(rng()*100),
+      load:   st.id==='offline'?0:Math.floor(rng()*100),
+      loc:`${(rng()*90-45).toFixed(1)}N`,
+      hex:`0x${Math.floor(rng()*0xFFFF).toString(16).toUpperCase().padStart(4,'0')}`,
+    });
+    ni++;
+  }
+}
+
+// ── SHARED COMPONENTS ─────────────────────────────────────────────
+
+function Badge({status, size='sm'}) {
+  const h = size==='sm' ? 16 : 20, fs = size==='sm' ? 8 : 9;
+  return (
+    <div style={{
+      display:'inline-flex', alignItems:'center', gap:4,
+      height:h, padding:'0 6px', border:`1px solid ${status.color}`,
+      background:status.bg, fontSize:fs, letterSpacing:'0.14em',
+      textTransform:'uppercase', color:status.color, fontWeight:700, flexShrink:0,
+    }}>
+      <div style={{width:4,height:4,background:status.color}}/>
+      {status.label}
+    </div>
+  );
+}
+
+function Bar({val, color=C.yellow, height=4, width=60}) {
+  return (
+    <div style={{height, width, background:C.border, flexShrink:0}}>
+      <div style={{height:'100%', width:`${val}%`, background:color, transition:'width 300ms'}}/>
+    </div>
+  );
+}
+
+// ── TOP BAR ───────────────────────────────────────────────────────
+function TopBar({activeSector, sysTime, view, setView, mobile, onMenu}) {
+  const counts = {
+    ok:   ALL_NODES.filter(n=>n.status.id==='nominal').length,
+    warn: ALL_NODES.filter(n=>['warning','running'].includes(n.status.id)).length,
+    err:  ALL_NODES.filter(n=>n.status.id==='critical').length,
+    dead: ALL_NODES.filter(n=>n.status.id==='offline').length,
+  };
+  return (
+    <div style={{
+      height: mobile?52:40, background:C.base, borderBottom:`1px solid ${C.border}`,
+      display:'flex', alignItems:'center', padding: mobile?'0 8px':'0 14px', gap:0, flexShrink:0,
+    }}>
+      {mobile && (
+        <div onClick={onMenu} aria-label="menu" style={{
+          width:44, height:44, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+          gap:4, cursor:'pointer', flexShrink:0, marginRight:2,
+        }}>
+          <div style={{width:18,height:2,background:C.yellow}}/>
+          <div style={{width:18,height:2,background:C.yellow}}/>
+          <div style={{width:18,height:2,background:C.yellow}}/>
+        </div>
+      )}
+      {/* Wordmark */}
+      <div className="wordmark" style={{
+        fontFamily:"'Space Grotesk', sans-serif", fontWeight:900,
+        fontSize:mobile?20:24, textTransform:'lowercase', letterSpacing:'-0.01em',
+        color:C.fg1, marginRight: mobile?'auto':20, flexShrink:0, position:'relative',
+      }}>
+        <span style={{color:C.yellow}}>d</span>igi<span className="wm-d2" style={{color:C.sky, display:'inline-block'}}>d</span>elic
+      </div>
+
+      {/* Nav tabs — desktop only; mobile uses bottom bar */}
+      {!mobile && (
+        <div className="tex-host" title="ENV: BLOOM" style={{width:30, height:22, marginRight:14, border:`1px solid ${C.border}`, overflow:'hidden', flexShrink:0, position:'relative'}}>
+          <div className="tex tex-flower" style={{opacity:.95}}/>
+          <span className="pinwheel" style={{width:34,height:34, top:-6, left:-2, color:'#fff', mixBlendMode:'overlay', animation:'spin-cw 30s linear infinite'}}/>
+        </div>
+      )}
+      {!mobile && [['GRID','grid'],['TERMINAL','term'],['SECTORS','sectors']].map(([label,id]) => (
+        <div key={id} className="nav-tab" onClick={()=>setView(id)} style={{
+          height:40, padding:'0 12px', display:'flex', alignItems:'center',
+          fontSize:9, textTransform:'uppercase', letterSpacing:'0.16em',
+          color: view===id ? C.yellow : C.fg4,
+          borderBottom: view===id ? `2px solid ${C.yellow}` : '2px solid transparent',
+          cursor:'pointer', flexShrink:0,
+        }}>{label}</div>
+      ))}
+
+      {mobile ? (
+        <div style={{display:'flex', alignItems:'center', gap:8, flexShrink:0}}>
+          <div style={{display:'flex', alignItems:'center', gap:3}}>
+            <div style={{width:5,height:5,background:C.red}}/>
+            <span style={{fontSize:11, color:C.red, fontWeight:700}}>{counts.err}</span>
+          </div>
+          <span style={{fontSize:9, color:C.fg4, letterSpacing:'0.06em'}}>{sysTime}</span>
+        </div>
+      ) : (
+      <div style={{marginLeft:'auto', display:'flex', alignItems:'center', gap:16}}>
+        {[[counts.ok,C.lime,'OK'],[counts.warn,C.orange,'WRN'],[counts.err,C.red,'ERR'],[counts.dead,C.fg4,'DED']].map(([v,color,lbl])=>(
+          <div key={lbl} style={{display:'flex', alignItems:'center', gap:4}}>
+            <div style={{width:5,height:5,background:color}}/>
+            <span style={{fontSize:8, color, letterSpacing:'0.12em'}}>{lbl}</span>
+            <span style={{fontSize:10, color, fontWeight:700}}>{v}</span>
+          </div>
+        ))}
+        <div style={{marginLeft:12, fontSize:9, color:C.fg4, letterSpacing:'0.1em'}}>{sysTime}</div>
+      </div>
+      )}
+    </div>
+  );
+}
+
+// ── SIDE NAV ──────────────────────────────────────────────────────
+function SideNav({activeSector, setActiveSector, mobile, onClose}) {
+  const sectors = [{id:'ALL',label:'All Nodes',count:ALL_NODES.length}, ...SECTORS.map(s=>({...s,count:s.nodes}))];
+  const list = (
+    <div style={{
+      width: mobile?'78%':156, maxWidth:300, background:C.base,
+      borderRight:`1px solid ${C.border}`,
+      display:'flex', flexDirection:'column', flexShrink:0,
+      overflowY:'auto', height:'100%',
+    }} className={mobile?'drawer':undefined}>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:`1px solid ${C.border}`}}>
+        <div style={{padding: mobile?'12px 14px':'8px 10px 5px', fontSize: mobile?10:8, textTransform:'uppercase', letterSpacing:'0.2em', color:C.fg4}}>
+          // SECTORS
+        </div>
+        {mobile && <div className="close-x" onClick={onClose} style={{width:44,height:44,display:'flex',alignItems:'center',justifyContent:'center',color:C.fg4,fontSize:14,cursor:'pointer'}}>✕</div>}
+      </div>
+      {sectors.map(s=>{
+        const isActive = activeSector===s.id;
+        const errs = s.id==='ALL' ? ALL_NODES.filter(n=>n.status.id==='critical').length
+          : ALL_NODES.filter(n=>n.sector===s.id&&n.status.id==='critical').length;
+        const warns = s.id==='ALL' ? ALL_NODES.filter(n=>n.status.id==='warning').length
+          : ALL_NODES.filter(n=>n.sector===s.id&&n.status.id==='warning').length;
+        return (
+          <div key={s.id} className={`side-item${isActive?' is-active':''}`} onClick={()=>setActiveSector(s.id)} style={{
+            padding: mobile?'12px 14px':'8px 10px', cursor:'pointer',
+            minHeight: mobile?48:'auto',
+            background: isActive ? C.yellow : 'transparent',
+            borderBottom:`1px solid ${C.void}`,
+          }}>
+            <div style={{fontSize: mobile?13:11, fontWeight:isActive?900:400, fontFamily:isActive?"'Space Grotesk', sans-serif":'inherit', textTransform:'uppercase', letterSpacing: isActive?'-0.01em':'0.1em', color:isActive?'#000':C.fg2, marginBottom:2}}>{s.label || s.id}</div>
+            <div style={{display:'flex', gap:5, alignItems:'center'}}>
+              <span style={{fontSize: mobile?9:8, color:isActive?'rgba(0,0,0,.6)':C.fg4, letterSpacing:'0.1em'}}>{s.count} nodes</span>
+              {errs>0 && <span style={{fontSize: mobile?9:8, color:isActive?'#000':C.red, fontWeight:700}}>▶ {errs} err</span>}
+              {warns>0 && !errs && <span style={{fontSize: mobile?9:8, color:isActive?'#000':C.orange, fontWeight:700}}>▶ {warns}</span>}
+            </div>
+          </div>
+        );
+      })}
+      <div style={{marginTop:'auto', padding:'10px', borderTop:`1px solid ${C.border}`}}>
+        <div style={{fontSize:8, color:C.fg4, letterSpacing:'0.08em', lineHeight:1.7}}>
+          BUILD 0x0044<br/>SESSION: AUTH<br/>UPTIME: 847H
+        </div>
+      </div>
+    </div>
+  );
+  if (!mobile) return list;
+  return (
+    <div className="scrim" onClick={onClose} style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:200, display:'flex'}}>
+      <div onClick={e=>e.stopPropagation()} style={{display:'flex', height:'100%'}}>{list}</div>
+    </div>
+  );
+}
+
+// ── NODE CARD ─────────────────────────────────────────────────────
+function NodeCard({node, selected, onClick}) {
+  const sc = node.status.color;
+  const offline = node.status.id==='offline';
+  const loadColor = node.load>80 ? C.red : node.load>60 ? C.orange : C.lime;
+  // POSITIVE SPACE = loud states render as solid color blocks (figure).
+  // NEGATIVE SPACE = calm states stay black void with only a color rule (ground).
+  const positive = selected || ['critical','warning','running'].includes(node.status.id);
+  const ink = '#000';
+
+  if (!positive) {
+    // ── NEGATIVE: void card, color enters only as a hairline + small mark ──
+    return (
+      <div className="node-card" onClick={onClick} style={{
+        background: C.void,
+        border:`1px solid ${C.border}`,
+        borderTop:`2px solid ${offline ? C.fg4 : sc}`,
+        padding:'9px 11px 10px', cursor:'pointer',
+      }}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:10}}>
+          <div style={{
+            fontFamily:"'Space Grotesk', sans-serif", fontWeight:900, fontSize:17,
+            textTransform:'uppercase', letterSpacing:'-0.01em', color:C.fg1,
+          }}>NODE-{node.id}</div>
+          <span style={{fontSize:8, fontWeight:700, letterSpacing:'0.16em', textTransform:'uppercase', color: offline?C.fg4:sc}}>
+            {offline?'○':'▸'} {node.status.label}
+          </span>
+        </div>
+        {/* generous negative space, only two facts */}
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end'}}>
+          <div style={{fontSize:9, color:C.fg4, letterSpacing:'0.06em', lineHeight:1.7}}>
+            {node.class}<br/>{node.uptime}
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:8, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.12em'}}>LOAD</div>
+            <div style={{fontFamily:"'Space Grotesk', sans-serif", fontWeight:900, fontSize:22, color: offline?C.fg4:C.fg1, lineHeight:1}}>{node.load}<span style={{fontSize:11, color:C.fg4}}>%</span></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── POSITIVE: full solid color block, black ink (WILLB/Clov) ──
+  return (
+    <div className="node-card" onClick={onClick} style={{
+      background: sc,
+      border:`1px solid ${sc}`,
+      cursor:'pointer',
+      animation: selected ? 'pulse-y 2s linear infinite' : 'none',
+    }}>
+      <div style={{padding:'7px 10px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <div style={{
+          fontFamily:"'Space Grotesk', sans-serif", fontWeight:900, fontSize:18,
+          textTransform:'uppercase', letterSpacing:'-0.01em', lineHeight:1, color:ink,
+        }}>NODE-{node.id}</div>
+        <div style={{fontSize:8, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', padding:'2px 5px', background:ink, color:sc}}>{node.status.label}</div>
+      </div>
+      {/* data sits on a black inset — negative space punched into the color block */}
+      <div style={{background:ink, margin:'0 4px 4px', padding:'7px 8px'}}>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 8px', marginBottom:7}}>
+          {[['CLASS',node.class],['UPTIME',node.uptime],['SIGNAL',`${node.signal}%`],['LOC',node.loc]].map(([k,v])=>(
+            <div key={k} style={{display:'flex', justifyContent:'space-between', borderBottom:`1px solid rgba(255,255,255,.1)`, paddingBottom:2}}>
+              <span style={{fontSize:8, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.1em'}}>{k}</span>
+              <span style={{fontSize:9, color:k==='SIGNAL'&&node.signal<30?C.red:C.fg2, letterSpacing:'0.04em'}}>{v}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{display:'flex', alignItems:'center', gap:6}}>
+          <span style={{fontSize:8, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.1em', width:24}}>LOAD</span>
+          <Bar val={node.load} color={sc} height={4} width={undefined}/>
+          <span style={{fontSize:8, color:sc, fontWeight:700, width:26, textAlign:'right'}}>{node.load}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── DETAIL PANEL ──────────────────────────────────────────────────
+function DetailPanel({node, onClose, mobile}) {
+  if (!node) {
+    if (mobile) return null;
+    return (
+    <div className="tex-host" style={{
+      width:220, background:C.base, borderLeft:`1px solid ${C.border}`,
+      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+      flexShrink:0, overflow:'hidden',
+    }}>
+      {/* night-garden infrared photo fills the empty inspector */}
+      <div className="tex bg-night" style={{backgroundSize:'cover', opacity:1, mixBlendMode:'normal'}}/>
+      <div className="night-scrim"/>
+      {/* cosmogram HUD plate — sigil standby, digidelic signature */}
+      <div className="tex bg-cosmogram" style={{opacity:.6, mixBlendMode:'screen'}}/>
+      <div style={{position:'relative', zIndex:2, fontSize:9, color:'#fff', textTransform:'uppercase', letterSpacing:'0.18em', textAlign:'center', lineHeight:2, textShadow:'0 1px 4px #000, 0 0 10px #000'}}>
+        // STANDBY<br/>SELECT A NODE
+      </div>
+    </div>
+    );
+  }
+
+  const panel = (
+    <div className={`tex-host ${mobile?'sheet':''}`} style={{
+      width: mobile?'100%':220, background:C.base,
+      borderLeft: mobile?'none':`1px solid ${C.border}`,
+      borderTop: mobile?`1px solid ${C.yellow}`:'none',
+      display:'flex', flexDirection:'column', flexShrink:0, overflow:'hidden',
+      animation: mobile?undefined:'slide-in 150ms ease-out',
+      maxHeight: mobile?'82vh':'none', height: mobile?'auto':'100%',
+    }}>
+      {/* faint flower-duotone wash behind the inspector */}
+      <div className="tex tex-flower-screen" style={{opacity:.12}}/>
+      {mobile && <div style={{display:'flex', justifyContent:'center', padding:'8px 0 4px', position:'relative', zIndex:2}}><div style={{width:40,height:4,background:C.borderHi}}/></div>}
+      <div style={{position:'relative', zIndex:2, background:node.status.color, padding:mobile?'12px 14px':'10px 12px', display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+        <div>
+          <div style={{fontFamily:"'Space Grotesk', sans-serif", fontWeight:900, fontSize:mobile?28:24, textTransform:'uppercase', letterSpacing:'-0.01em', lineHeight:.9, color:'#000'}}>NODE-{node.id}</div>
+          <div style={{display:'inline-block', marginTop:6, fontSize:8, fontWeight:700, letterSpacing:'0.14em', textTransform:'uppercase', padding:'2px 6px', background:'#000', color:node.status.color}}>{node.status.label}</div>
+        </div>
+        <div className="close-x" onClick={onClose} style={{width:mobile?40:'auto', height:mobile?40:'auto', display:'flex', alignItems:'center', justifyContent:'center', fontSize:mobile?16:13, color:'#000', cursor:'pointer', padding:2}}>✕</div>
+      </div>
+
+      <div style={{position:'relative', zIndex:2, flex:1, overflowY:'auto', padding:'8px 12px'}}>
+        {[['NODE ID',`NODE-${node.id}`],['HEX',node.hex],['CLASS',node.class],['SECTOR',node.sector],['LOCATION',node.loc],['UPTIME',node.uptime],['SIGNAL',`${node.signal}%`],['LOAD',`${node.load}%`],['STATUS',node.status.label]].map(([k,v])=>(
+          <div key={k} style={{display:'flex', justifyContent:'space-between', padding:mobile?'7px 0':'4px 0', borderBottom:`1px solid ${C.void}`, alignItems:'flex-start'}}>
+            <span style={{fontSize:mobile?9:8, textTransform:'uppercase', letterSpacing:'0.14em', color:C.fg4, paddingTop:1}}>{k}</span>
+            <span style={{fontSize:mobile?12:10, color:k==='STATUS'?node.status.color:C.fg2, letterSpacing:'0.04em', textAlign:'right', maxWidth:mobile?'60%':130}}>{v}</span>
+          </div>
+        ))}
+
+        <div style={{marginTop:12}}>
+          <div style={{fontSize:8, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.14em', marginBottom:4}}>LOAD</div>
+          <div style={{height:mobile?7:5, background:C.void}}>
+            <div style={{height:'100%', width:`${node.load}%`, background:node.load>80?C.red:node.load>60?C.orange:C.lime}}/>
+          </div>
+        </div>
+        <div style={{marginTop:8}}>
+          <div style={{fontSize:8, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.14em', marginBottom:4}}>SIGNAL</div>
+          <div style={{height:mobile?7:5, background:C.void}}>
+            <div style={{height:'100%', width:`${node.signal}%`, background:C.cyan}}/>
+          </div>
+        </div>
+      </div>
+
+      <div style={{position:'relative', zIndex:2, padding:'8px 12px', borderTop:`1px solid ${C.border}`, display:'flex', gap:6, paddingBottom:mobile?'max(8px, env(safe-area-inset-bottom))':8}}>
+        <button className="term-btn y" onClick={()=>{}} style={{flex:1,height:mobile?44:26,background:'transparent',border:`1px solid ${C.yellow}`,color:C.yellow,fontFamily:"'Geist Mono','Geist Mono','Red Hat Mono',monospace",fontSize:mobile?10:8,textTransform:'uppercase',letterSpacing:'0.14em',cursor:'pointer'}}>PING</button>
+        <button className="term-btn" onClick={()=>{}} style={{flex:1,height:mobile?44:26,background:'transparent',border:`1px solid ${C.borderMid}`,color:C.fg2,fontFamily:"'Geist Mono','Geist Mono','Red Hat Mono',monospace",fontSize:mobile?10:8,textTransform:'uppercase',letterSpacing:'0.14em',cursor:'pointer'}}>LOG</button>
+      </div>
+    </div>
+  );
+
+  if (!mobile) return panel;
+  return (
+    <div className="scrim" onClick={onClose} style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:200, display:'flex', flexDirection:'column', justifyContent:'flex-end'}}>
+      <div onClick={e=>e.stopPropagation()}>{panel}</div>
+    </div>
+  );
+}
+
+// ── TERMINAL ──────────────────────────────────────────────────────
+const BOOT = [
+  {t:0,   text:'SYS_INIT — build 0x0044', c:C.fg4},
+  {t:200, text:'loading sector map... ████████ done', c:C.fg4},
+  {t:500, text:'▶ session authenticated [LOC: 44.2N]', c:C.lime},
+  {t:800, text:`scanning ${ALL_NODES.length} nodes across ${SECTORS.length} sectors`, c:C.cyan},
+  {t:1100,text:`▶ WARNING: ${ALL_NODES.filter(n=>n.status.id==='critical').length} nodes critical`, c:C.orange},
+  {t:1400,text:'nominal — awaiting input', c:C.fg1},
+];
+
+function TerminalPanel({selectedNode}) {
+  const [lines, setLines] = useState([]);
+  const [input, setInput] = useState('');
+  const [hist, setHist] = useState([]), [hi, setHi] = useState(-1);
+  const endRef = useRef();
+
+  useEffect(()=>{
+    const ts = BOOT.map(l=>setTimeout(()=>setLines(p=>[...p,{text:l.text,c:l.c}]),l.t));
+    return ()=>ts.forEach(clearTimeout);
+  },[]);
+
+  useEffect(()=>{
+    if(selectedNode) setLines(p=>[...p,
+      {text:`>> inspect node-${selectedNode.id}`, c:C.yellow},
+      {text:`${selectedNode.class} | ${selectedNode.sector} | ${selectedNode.status.label}`, c:selectedNode.status.color},
+      {text:`uptime:${selectedNode.uptime} signal:${selectedNode.signal}% load:${selectedNode.load}%`, c:C.fg2},
+    ]);
+  },[selectedNode]);
+
+  useEffect(()=>{ endRef.current?.scrollIntoView({block:'end'}); },[lines]);
+
+  function run(cmd) {
+    const c=cmd.trim().toLowerCase();
+    setLines(p=>[...p,{text:`$ ${cmd}`,c:C.fg1}]);
+    setHist(h=>[cmd,...h]); setHi(-1);
+    if(!c) return;
+    if(c==='help') setLines(p=>[...p,{text:'help | clear | status | nodes | ping [id]',c:C.fg4}]);
+    else if(c==='clear') setLines([]);
+    else if(c==='status') setLines(p=>[...p,{text:`total:${ALL_NODES.length} ok:${ALL_NODES.filter(n=>n.status.id==='nominal').length} err:${ALL_NODES.filter(n=>n.status.id==='critical').length}`,c:C.fg2}]);
+    else if(c==='nodes') setLines(p=>[...p,...ALL_NODES.slice(0,6).map(n=>({text:`node-${n.id} [${n.sector}] ${n.status.label}`,c:n.status.color})),{text:`...+${ALL_NODES.length-6} more`,c:C.fg4}]);
+    else if(c.startsWith('ping')) {
+      const id=c.split(' ')[1]; const n=ALL_NODES.find(x=>x.id===String(parseInt(id)||0).padStart(3,'0'));
+      setLines(p=>[...p, n ? {text:`▶ node-${n.id} ${n.signal>0?`${Math.floor(Math.random()*80+10)}ms`:'TIMEOUT'}`,c:n.signal>0?C.lime:C.red} : {text:'ERR: node not found',c:C.red}]);
+    }
+    else setLines(p=>[...p,{text:`ERR_UNKNOWN: ${cmd}`,c:C.red}]);
+  }
+
+  function onKeyDown(e) {
+    if(e.key==='Enter'){run(input);setInput('');}
+    else if(e.key==='ArrowUp'){const i=Math.min(hi+1,hist.length-1);setHi(i);setInput(hist[i]||'');e.preventDefault();}
+    else if(e.key==='ArrowDown'){const i=Math.max(hi-1,-1);setHi(i);setInput(i>=0?hist[i]:'');e.preventDefault();}
+  }
+
+  return (
+    <div className="tex-host" style={{height:150, background:'#090908', borderTop:`1px solid ${C.border}`, display:'flex', flexDirection:'column', flexShrink:0, overflow:'hidden'}}>
+      <div className="tex tex-ascii-dense" style={{opacity:.1}}/>
+      <div style={{position:'relative', zIndex:1, padding:'3px 10px', borderBottom:`1px solid ${C.void}`, display:'flex', justifyContent:'space-between'}}>
+        <span style={{fontSize:8, textTransform:'uppercase', letterSpacing:'0.18em', color:C.fg4}}>// TERMINAL</span>
+        <span style={{fontSize:8, color:C.fg4}}>help</span>
+      </div>
+      <div style={{position:'relative', zIndex:1, flex:1, overflowY:'auto', padding:'5px 10px', display:'flex', flexDirection:'column', gap:1}}>
+        {lines.map((l,i)=><div key={i} style={{fontSize:10, color:l.c, lineHeight:1.5, letterSpacing:'0.03em'}}>{l.text}</div>)}
+        <div ref={endRef}/>
+      </div>
+      <div className="term-row" style={{position:'relative', zIndex:1, display:'flex', alignItems:'center', padding:'0 10px', height:26, borderTop:`1px solid ${C.void}`, gap:5}}>
+        <span style={{fontSize:10, color:C.yellow, flexShrink:0}}>$</span>
+        <input className="term-input" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={onKeyDown}
+          style={{flex:1,background:'transparent',border:'none',outline:'none',fontFamily:"'Geist Mono','Geist Mono','Red Hat Mono',monospace",fontSize:10,color:C.fg1,letterSpacing:'0.04em'}}
+          placeholder="enter command..." autoComplete="off" spellCheck={false}/>
+        <div style={{width:7,height:11,background:C.fg1,animation:'blink 1s steps(1) infinite',flexShrink:0}}/>
+      </div>
+    </div>
+  );
+}
+
+// ── SECTORS VIEW ──────────────────────────────────────────────────
+function SectorsView() {
+  // rotating duotone accents so healthy sectors still read as a varied color-block grid
+  const calmRotation = [C.teal, C.sky, C.green, C.yellow, C.cyan];
+  return (
+    <div className="view-fade" style={{flex:1, overflowY:'auto', padding:16, display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))', gap:12, alignContent:'start'}}>
+      {SECTORS.map((sec,i)=>{
+        const nodes = ALL_NODES.filter(n=>n.sector===sec.id);
+        const byStatus = STATUSES.map(s=>({...s, count:nodes.filter(n=>n.status.id===s.id).length})).filter(s=>s.count>0);
+        const hasCrit = nodes.some(n=>n.status.id==='critical');
+        const hasWarn = nodes.some(n=>n.status.id==='warning');
+        // POSITIVE: troubled sectors become loud solid blocks; calm sectors carry a duotone header
+        const headColor = hasCrit ? C.red : hasWarn ? C.orange : calmRotation[i % calmRotation.length];
+        return (
+          <div key={sec.id} className="sector-card" style={{background:C.void, border:`1px solid ${headColor}`, overflow:'hidden'}}>
+            {/* SOLID COLOR HEADER BLOCK */}
+            <div style={{background:headColor, padding:'10px 12px', display:'flex', justifyContent:'space-between', alignItems:'flex-end'}}>
+              <div style={{fontFamily:"'Space Grotesk', sans-serif", fontWeight:900, fontSize:30, lineHeight:.85, letterSpacing:'-0.02em', color:'#000'}}>{sec.id}</div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontFamily:"'Space Grotesk', sans-serif", fontWeight:900, fontSize:20, lineHeight:1, color:'#000'}}>{nodes.length}</div>
+                <div style={{fontSize:7, color:'rgba(0,0,0,.6)', textTransform:'uppercase', letterSpacing:'0.18em'}}>nodes</div>
+              </div>
+            </div>
+            {/* SEGMENTED STATUS RIBBON — data rendered AS color blocks */}
+            <div style={{display:'flex', height:10, margin:'0'}}>
+              {byStatus.map(s=>(
+                <div key={s.id} title={`${s.label} ${s.count}`} style={{width:`${(s.count/nodes.length)*100}%`, background:s.color}}/>
+              ))}
+            </div>
+            {/* legend chips on black negative space */}
+            <div style={{padding:'9px 12px 11px', display:'flex', flexWrap:'wrap', gap:6}}>
+              {byStatus.map(s=>(
+                <div key={s.id} style={{display:'flex', alignItems:'center', gap:5, padding:'2px 6px', background:'#000', border:`1px solid ${s.color}`}}>
+                  <div style={{width:5,height:5,background:s.color}}/>
+                  <span style={{fontSize:8, color:s.color, fontWeight:700, letterSpacing:'0.1em'}}>{s.count}</span>
+                  <span style={{fontSize:8, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.1em'}}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────
+function App() {
+  const mobile = useIsMobile();
+  const [sector, setSector] = useState('ALL');
+  const [selected, setSelected] = useState(null);
+  const [view, setView] = useState('grid');
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [sysTime, setSysTime] = useState('847:23:11');
+  const [drawer, setDrawer] = useState(false);
+
+  useEffect(()=>{
+    let s=847*3600+23*60+11;
+    const t=setInterval(()=>{
+      s++;
+      const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+      setSysTime(`${String(h).padStart(3,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`);
+    },1000);
+    return()=>clearInterval(t);
+  },[]);
+
+  const bySector = sector==='ALL' ? ALL_NODES : ALL_NODES.filter(n=>n.sector===sector);
+  const visibleNodes = statusFilter ? bySector.filter(n=>n.status.id===statusFilter) : bySector;
+
+  return (
+    <div style={{height:'100%', display:'flex', flexDirection:'column'}}>
+      {/* Brand accent strip — coral × sky checker (zine motif) */}
+      <div style={{
+        height:12, flexShrink:0,
+        backgroundColor:C.coral,
+        backgroundImage:`linear-gradient(45deg, ${C.sky} 25%, transparent 25%, transparent 75%, ${C.sky} 75%), linear-gradient(45deg, ${C.sky} 25%, transparent 25%, transparent 75%, ${C.sky} 75%)`,
+        backgroundSize:'12px 12px', backgroundPosition:'0 0, 6px 6px',
+      }}/>
+      <TopBar activeSector={sector} sysTime={sysTime} view={view} setView={setView} mobile={mobile} onMenu={()=>setDrawer(true)}/>
+      <div style={{flex:1, display:'flex', overflow:'hidden'}}>
+        {mobile
+          ? (drawer && <SideNav mobile activeSector={sector} setActiveSector={s=>{setSector(s);setSelected(null);setStatusFilter(null);setDrawer(false);}} onClose={()=>setDrawer(false)}/>)
+          : <SideNav activeSector={sector} setActiveSector={s=>{setSector(s);setSelected(null);setStatusFilter(null);}}/>
+        }
+
+        {/* Main area */}
+        <div style={{flex:1, display:'flex', flexDirection:'column', overflow:'hidden', position:'relative'}}>
+          {/* subtle swirl field behind content — brand colors, no hue-shift */}
+          <div className="swirl-field" aria-hidden="true">
+            <span className="tex tex-ascii-dense" style={{opacity:.14, position:'absolute'}}/>
+          </div>
+          {view==='sectors' ? <div style={{flex:1, display:'flex', position:'relative', zIndex:1, overflow:'hidden'}}><SectorsView/></div> : view==='term' ? (
+            <div className="view-fade" style={{flex:1, overflowY:'auto', padding:16, position:'relative', zIndex:1}}>
+              <div style={{fontSize:10, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.2em', marginBottom:8}}>// FULL TERMINAL</div>
+              <TerminalPanel selectedNode={selected}/>
+            </div>
+          ) : (
+            <>
+              {/* Grid header — functional status filter */}
+              <div style={{padding:'5px 12px', borderBottom:`1px solid ${C.border}`, display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0, position:'relative', zIndex:1, background:C.base}}>
+                <span onClick={()=>setStatusFilter(null)} style={{fontSize:8, color:statusFilter?C.yellow:C.fg4, textTransform:'uppercase', letterSpacing:'0.18em', cursor:statusFilter?'pointer':'default', transition:'color 100ms linear'}}>
+                  // {visibleNodes.length} NODES{statusFilter?`  ·  ${statusFilter} ✕`:''}
+                </span>
+                <div style={{display:'flex', gap:11, alignItems:'center'}}>
+                  {[['nominal',C.lime],['running',C.yellow],['warning',C.orange],['critical',C.red],['offline',C.fg4]].map(([id,c])=>{
+                    const on = statusFilter===id;
+                    return <div key={id} className="filter-dot" title={id} onClick={()=>setStatusFilter(on?null:id)}
+                      style={{width:7,height:7,background:c, opacity:on?1:0.5, transform:on?'scale(1.5)':'none', boxShadow:on?`0 0 0 1px ${c}`:'none'}}/>;
+                  })}
+                </div>
+              </div>
+              {/* Grid */}
+              <div className="view-fade" style={{flex:1, overflowY:'auto', padding:mobile?10:14, display:'grid', gridTemplateColumns: mobile?'1fr':'repeat(auto-fill,minmax(200px,1fr))', gap:mobile?8:10, alignContent:'start', position:'relative', zIndex:1}}>
+                {visibleNodes.length===0 ? (
+                  <div style={{gridColumn:'1/-1', padding:'40px 0', textAlign:'center', fontSize:10, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.2em'}}>
+                    — no nodes match <span style={{color:C.yellow}}>{statusFilter}</span> —
+                  </div>
+                ) : visibleNodes.map(n=>(
+                  <NodeCard key={n.id} node={n}
+                    selected={selected?.id===n.id}
+                    onClick={()=>setSelected(p=>p?.id===n.id?null:n)}/>
+                ))}
+              </div>
+              <div style={{position:'relative', zIndex:1}}><TerminalPanel selectedNode={selected}/></div>
+            </>
+          )}
+        </div>
+
+        <DetailPanel node={selected} onClose={()=>setSelected(null)} mobile={mobile}/>
+      </div>
+
+      {/* Mobile bottom tab bar */}
+      {mobile && (
+        <div style={{display:'flex', flexShrink:0, background:C.base, borderTop:`1px solid ${C.border}`}}>
+          {[['GRID','grid','■'],['TERMINAL','term','▶'],['SECTORS','sectors','▦']].map(([label,id,gly])=>{
+            const on = view===id;
+            return (
+              <div key={id} onClick={()=>setView(id)} style={{
+                flex:1, height:54, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3,
+                color: on?C.green:C.fg4, borderRight:`1px solid ${C.void}`, cursor:'pointer',
+                borderTop: on?`2px solid ${C.green}`:'2px solid transparent',
+              }}>
+                <span style={{fontSize:15, lineHeight:1}}>{gly}</span>
+                <span style={{fontSize:8, letterSpacing:'0.14em', textTransform:'uppercase'}}>{label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Ticker footer — sky strip */}
+      <div style={{
+        height:22, flexShrink:0, background:C.sky, color:'#fff',
+        display:'flex', alignItems:'center', overflow:'hidden', whiteSpace:'nowrap',
+        fontSize:10, letterSpacing:'0.14em', textTransform:'lowercase',
+      }}>
+        <div style={{display:'inline-block', animation:'ticker-run 24s linear infinite', textShadow:'0 1px 3px rgba(0,0,0,.5)'}}>
+          {'::/// digidelic sys:0x4f3a /// session authenticated /// 847 nodes online /// june 2nd 2026 '.repeat(2)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

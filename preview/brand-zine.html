@@ -8,7 +8,7 @@ body{background:#000;padding:0;font-family:'Geist Mono',monospace;color:#fff}
 
 /* masthead checker banner */
 .masthead{--chk:34px;background-color:#ff6050;
-  background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);
+  background-image:linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%),linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%);
   background-size:calc(var(--chk)*2) calc(var(--chk)*2);background-position:0 0,var(--chk) var(--chk);
   padding:14px 18px;display:flex;align-items:center;gap:16px}
 .masthead h1{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:46px;line-height:.9;letter-spacing:-0.02em;color:#fff;text-transform:lowercase;-webkit-text-stroke:2px #000;text-shadow:3px 3px 0 #000}
@@ -30,7 +30,7 @@ body{background:#000;padding:0;font-family:'Geist Mono',monospace;color:#fff}
 .marble{aspect-ratio:1;background:repeating-radial-gradient(circle at 42% 46%,#ff6050 0 3px,#fff 3px 9px,#ff6050 9px 11px,#fff 11px 18px);border:1px solid rgba(255,255,255,0.2)}
 
 /* checker chip small */
-.chip-checker{--chk:9px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:calc(var(--chk)*2) calc(var(--chk)*2);background-position:0 0,var(--chk) var(--chk);height:48px;border:1px solid rgba(255,255,255,0.2)}
+.chip-checker{--chk:9px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%),linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%);background-size:calc(var(--chk)*2) calc(var(--chk)*2);background-position:0 0,var(--chk) var(--chk);height:48px;border:1px solid rgba(255,255,255,0.2)}
 
 /* periwinkle panel */
 .peri{background:#0a84e0;color:#fff;padding:10px 12px;border:1px solid rgba(255,255,255,0.15)}
@@ -42,14 +42,25 @@ body{background:#000;padding:0;font-family:'Geist Mono',monospace;color:#fff}
 .spiro-demo::after{content:'';position:absolute;inset:-20%;background:repeating-radial-gradient(ellipse 52% 38% at 50% 50%,transparent 0 6px,#c6ff3a 6px 6.7px,transparent 6.7px 13px);opacity:.85;mix-blend-mode:screen}
 
 /* ticker */
-.ticker{background:#0a84e0;color:#fff;font-size:11px;letter-spacing:0.14em;text-transform:lowercase;white-space:nowrap;overflow:hidden;padding:6px 0}
+.ticker{background:#2d4cff;color:#eaff00;font-size:11px;letter-spacing:0.14em;text-transform:lowercase;white-space:nowrap;overflow:hidden;padding:6px 0;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+
+/* today's system — blue↔yellow motion + ascii bloom */
+@keyframes by-pan{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.by-strip{height:10px;background:linear-gradient(90deg,#2d4cff,#0a84e0,#eaff00,#0a84e0,#2d4cff);background-size:300% 100%;animation:by-pan 5s linear infinite}
+@media(prefers-reduced-motion:reduce){.by-strip{animation:none}}
+.ascii-bloom{position:relative;height:96px;border:1px solid rgba(255,255,255,0.2);overflow:hidden;background:#05060f}
+.ascii-bloom .ax{position:absolute;inset:0;background:url('../assets/tex-ascii-dense.png') center/cover;mix-blend-mode:screen;opacity:.6}
+.ascii-bloom .gl{position:absolute;inset:0;background:rgba(45,76,255,.22)}
+.ascii-bloom .tx{position:absolute;left:0;bottom:0;z-index:1;padding:8px 10px;font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:20px;text-transform:uppercase;color:#fff;letter-spacing:-.01em;line-height:.95}
+.ascii-bloom .tx b{color:#eaff00}
+.ascii-bloom .co{position:absolute;top:7px;right:8px;z-index:1;font-size:8px;color:#00d9ff;letter-spacing:.14em;border:1px solid #00d9ff;padding:1px 5px}
 .ticker .run{display:inline-block;animation:run 22s linear infinite}
 @keyframes run{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 @media(prefers-reduced-motion:reduce){.ticker .run{animation:none}}
 
 /* ── checker motif (coral × blue) ── */
-.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
-.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%),linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%),linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
 </style>
 <link rel="stylesheet" href="../glitch.css">
 </head><body class="gl-stage">
@@ -59,6 +70,7 @@ body{background:#000;padding:0;font-family:'Geist Mono',monospace;color:#fff}
   <span class="slashes">////</span>
   <h1>n.02</h1>
 </div>
+<div class="by-strip"></div>
 
 <div class="body">
   <div class="cell">
@@ -76,8 +88,8 @@ body{background:#000;padding:0;font-family:'Geist Mono',monospace;color:#fff}
     <div class="chip-checker"></div>
     <span class="lab">// periwinkle panel</span>
     <div class="peri"><div class="h">rare poultry</div><div class="m">sector b6 · live</div></div>
-    <span class="lab">// spirograph overlay</span>
-    <div class="spiro-demo"></div>
+    <span class="lab">// ascii bloom</span>
+    <div class="ascii-bloom"><div class="ax"></div><div class="gl"></div><span class="co">0x4F3A</span><span class="tx">node<br/><b>online</b></span></div>
   </div>
 </div>
 

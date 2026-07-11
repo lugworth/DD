@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Generative Plates" subtitle="Reaction-diffusion fields, cosmogram HUD plates, acid circuit-patch" viewport="760x560" -->
+<html><head><meta charset="UTF-8"><style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#2d4cff;--sky:#0a84e0;--yellow:#eaff00;--cyan:#00d9ff;--pink:#ff2d87;--green:#39ff6a;--coral:#ff6050}
+body{background:#000;padding:16px;font-family:'Geist Mono',monospace;color:#fff}
+.chk-strip{height:7px;width:100%;margin-bottom:14px;background-color:var(--coral);background-image:linear-gradient(45deg,var(--blue) 25%,transparent 25%,transparent 75%,var(--blue) 75%),linear-gradient(45deg,var(--blue) 25%,transparent 25%,transparent 75%,var(--blue) 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+.cap{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:620px){.grid{grid-template-columns:1fr}}
+.tile{position:relative;height:190px;border:1px solid rgba(255,255,255,.14);overflow:hidden;background:#050505}
+.tile .fill{position:absolute;inset:0;background-size:cover;background-position:center}
+.tag{position:absolute;top:8px;left:8px;z-index:2;font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:2px 6px}
+.cap2{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;padding:8px 9px;background:linear-gradient(0deg,rgba(0,0,0,.85),rgba(0,0,0,0));}
+.cap2 .t{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.cap2 .c{font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.55);text-transform:uppercase}
+.scan{position:absolute;inset:0;z-index:1;background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.18) 1px,rgba(0,0,0,.18) 2px);pointer-events:none}
+
+/* in-context demo: cosmogram behind a HUD header */
+.demo{position:relative;height:150px;border:1px solid rgba(255,255,255,.14);overflow:hidden;background:#04060f;display:flex;flex-direction:column;justify-content:space-between;padding:14px}
+.demo .fill{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.6}
+.demo .glow{position:absolute;inset:0;background:rgba(45,76,255,.18)}
+.demo .top{position:relative;z-index:2;display:flex;justify-content:space-between;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan)}
+.demo h1{position:relative;z-index:2;font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:34px;text-transform:uppercase;letter-spacing:-.01em;line-height:.95}
+.demo h1 .y{color:var(--yellow)}
+.demo .sub{position:relative;z-index:2;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.note{border:1px solid rgba(255,255,255,.12);padding:10px 11px}
+.note h4{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:5px}
+.note p{font-size:9px;line-height:1.55;color:rgba(255,255,255,.6);letter-spacing:.02em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+</style>
+<link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+
+<div class="cap">// generative fields — reaction-diffusion (Turing patterns) + sacred-geometry plates + acid circuit-patch</div>
+<div class="grid">
+  <div class="tile"><div class="fill tex-reaction" style="opacity:1;mix-blend-mode:normal"></div><div class="scan"></div><span class="tag" style="background:var(--green);color:#000">RD / 01</span><div class="cap2"><span class="t" style="color:var(--green)">REACTION · MESH</span><span class="c">A1.2</span></div></div>
+  <div class="tile"><div class="fill tex-reaction-white" style="opacity:1;mix-blend-mode:normal"></div><div class="scan"></div><span class="tag" style="background:#fff;color:#000">RD / 02</span><div class="cap2"><span class="t">REACTION · GHOST</span><span class="c">B6</span></div></div>
+  <div class="tile" style="background:#efece0"><div class="fill tex-reaction-ink" style="opacity:1;mix-blend-mode:normal"></div><span class="tag" style="background:#111;color:#efece0">RD / 03</span><div class="cap2" style="background:linear-gradient(0deg,rgba(239,236,224,.9),transparent)"><span class="t" style="color:#111">REACTION · INK</span><span class="c" style="color:rgba(0,0,0,.5)">RISO</span></div></div>
+  <div class="tile"><div class="fill bg-cosmogram"></div><span class="tag" style="background:var(--pink);color:#000">SIGIL</span><div class="cap2"><span class="t" style="color:var(--cyan)">COSMOGRAM · HUD</span><span class="c">0x4F3A</span></div></div>
+  <div class="tile"><div class="fill bg-patch"></div><span class="tag" style="background:var(--yellow);color:#000">PATCH</span><div class="cap2"><span class="t" style="color:var(--yellow)">CIRCUIT-PATCH</span><span class="c">D9</span></div></div>
+  <div class="tile"><div class="fill bg-patch-2"></div><span class="tag" style="background:var(--blue);color:#fff">PATCH</span><div class="cap2"><span class="t" style="color:var(--blue)">CIRCUIT-PATCH · B</span><span class="c">X06</span></div></div>
+</div>
+
+<div class="cap">// in context — as ambient plate behind a HUD header, + reference notes</div>
+<div class="two">
+  <div class="demo">
+    <div class="fill bg-cosmogram"></div><div class="glow"></div><div class="scan"></div>
+    <div class="top"><span>SIGIL LOCK</span><span>▶ LIVE</span></div>
+    <h1>NODE<br/><span class="y">ONLINE</span></h1>
+    <div class="sub">// cosmogram plate · screen blend</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div class="note"><h4 style="color:var(--green)">// REACTION-DIFFUSION</h4><p>Gray-Scott Turing fields — organic coral/mesh growth. Use full-bleed as hero fields (green/ghost) or ink-on-cream for riso/zine surfaces. Screen-blend the neon variants over black.</p></div>
+    <div class="note"><h4 style="color:var(--cyan)">// COSMOGRAM PLATE</h4><p>Sacred-geometry HUD — orbital rings, eye/hex glyph frame, CMYK node stacks. Hero backdrop behind glitch type or empty-state filler.</p></div>
+    <div class="note"><h4 style="color:var(--yellow)">// ACID CIRCUIT-PATCH</h4><p>Mondrian data-blocks — neon fills, nested wire-frames, dashed guides. Section dividers, loading states, dense decorative panels.</p></div>
+  </div>
+</div>
+
+<script src="../glitch.js"></script>
+</body></html>

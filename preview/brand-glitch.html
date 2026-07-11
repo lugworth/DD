@@ -1,35 +1,118 @@
 <!DOCTYPE html>
-<!-- @dsCard group="Brand" name="Glitch Compositions" subtitle="RGB split headline + hero block" viewport="700x240" -->
+<!-- @dsCard group="Brand" name="Glitch Compositions" subtitle="Blue × yellow signal system — RGB split, motion heroes, tickers" viewport="740x600" -->
 <html><head><meta charset="UTF-8"><style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#000;padding:16px;font-family:'Geist Mono','Geist Mono','Red Hat Mono',monospace;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
+:root{--blue:#2d4cff;--sky:#0a84e0;--yellow:#eaff00;--cyan:#00d9ff;--pink:#ff2d87;--coral:#ff6050}
+body{background:#000;padding:16px;font-family:'Geist Mono','Red Hat Mono',monospace;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;max-width:740px}
 .item{display:flex;flex-direction:column}
 .label{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:5px}
+
 /* chromatic abberation headline */
 .ch{position:relative;display:inline-block;font-family:'Space Grotesk', sans-serif;font-weight:900;font-size:48px;text-transform:uppercase;color:#fff;line-height:1;letter-spacing:0.02em;padding:12px 16px;border:1px solid rgba(255,255,255,0.15);background:#000}
 .ch::before,.ch::after{content:attr(data-t);position:absolute;top:12px;left:16px;pointer-events:none}
-.ch::before{color:#ff2d87;transform:translate(-2px,0);clip-path:polygon(0 20%,100% 20%,100% 45%,0 45%)}
-.ch::after{color:#00d9ff;transform:translate(2px,0);clip-path:polygon(0 55%,100% 55%,100% 80%,0 80%)}
+.ch::before{color:var(--pink);transform:translate(-2px,0);clip-path:polygon(0 20%,100% 20%,100% 45%,0 45%)}
+.ch::after{color:var(--cyan);transform:translate(2px,0);clip-path:polygon(0 55%,100% 55%,100% 80%,0 80%)}
+
 /* hero block with blob */
-.hero{position:relative;width:300px;height:180px;background:#2d4cff;border:1px solid rgba(255,255,255,0.1);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:14px}
+.hero{position:relative;width:300px;height:180px;background:var(--blue);border:1px solid rgba(255,255,255,0.1);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:14px}
 .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:invert(1);mix-blend-mode:screen;opacity:0.35}
 .hero .top{position:relative;z-index:1;display:flex;justify-content:space-between;font-size:9px;letter-spacing:0.2em;color:#fff;text-transform:uppercase}
 .hero h1{position:relative;z-index:1;font-family:'Space Grotesk', sans-serif;font-weight:900;font-size:56px;text-transform:uppercase;color:#fff;line-height:1;letter-spacing:-0.01em}
-.hero h1 .y{color:#eaff00}
-.hero .sub{position:relative;z-index:1;font-size:10px;letter-spacing:0.2em;color:#eaff00;text-transform:uppercase}
+.hero h1 .y{color:var(--yellow)}
+.hero .sub{position:relative;z-index:1;font-size:10px;letter-spacing:0.2em;color:var(--yellow);text-transform:uppercase}
+
 /* scanline overlay */
 .sl{position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,0.2) 1px,rgba(0,0,0,0.2) 2px);pointer-events:none;z-index:2}
 
 /* ── checker motif (coral × blue) ── */
-.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
-.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:6px;background-color:var(--coral);background-image:linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%),linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+
+/* ── NEW: blue↔yellow panning gradient (motion) ── */
+@keyframes by-pan{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.by-bar{background:linear-gradient(90deg,var(--blue),var(--sky),var(--yellow),var(--sky),var(--blue));background-size:300% 100%;animation:by-pan 5s linear infinite}
+.by-text{background:linear-gradient(90deg,var(--yellow),var(--cyan),var(--sky),var(--cyan),var(--yellow));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:by-pan 6s linear infinite}
+
+/* ── NEW: second hero — ascii-dense + blue/yellow ── */
+.hero2{position:relative;width:300px;height:180px;background:#05060f;border:1px solid rgba(255,255,255,0.1);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:14px}
+.hero2 .ascii{position:absolute;inset:0;background-image:url('../assets/tex-ascii-dense.png');background-size:cover;background-position:center;mix-blend-mode:screen;opacity:.5}
+.hero2 .glow{position:absolute;inset:0;background:rgba(45,76,255,.28)}
+.hero2 .top{position:relative;z-index:1;display:flex;justify-content:space-between;font-size:9px;letter-spacing:0.2em;color:var(--cyan);text-transform:uppercase}
+.hero2 h1{position:relative;z-index:1;font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:44px;text-transform:uppercase;color:#fff;line-height:.95;letter-spacing:-0.01em}
+.hero2 h1 .y{color:var(--yellow)}
+.hero2 .sub{position:relative;z-index:1;font-size:9px;letter-spacing:0.24em;color:rgba(255,255,255,.6);text-transform:uppercase}
+
+/* ── NEW: yellow-on-blue marquee ticker ── */
+.tick{position:relative;width:100%;height:30px;background:var(--blue);overflow:hidden;display:flex;align-items:center;border:1px solid rgba(255,255,255,.1)}
+.tick .run{display:inline-block;white-space:nowrap;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--yellow);animation:by-marq 16s linear infinite;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+@keyframes by-marq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tick .cap{position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;padding:0 10px;background:var(--yellow);color:#000;font-size:9px;font-weight:700;letter-spacing:.16em;z-index:2}
+
+/* ── NEW: glitch tile — yellow code on blue, micro-slice ── */
+.tile{position:relative;width:172px;height:110px;background:var(--blue);border:1px solid rgba(255,255,255,.12);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:11px}
+.tile .k{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.tile .code{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:34px;color:var(--yellow);line-height:1;letter-spacing:.01em}
+.tile .foot{display:flex;justify-content:space-between;align-items:center;font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:#fff}
+.tile .dot{width:6px;height:6px;background:var(--yellow);border-radius:50%;box-shadow:0 0 0 3px rgba(234,255,0,.25)}
+
+/* ── NEW: status chip row ── */
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;font-size:8px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;border:1px solid}
+.chip .s{width:5px;height:5px}
+.chip.b{border-color:var(--blue);color:var(--sky);background:rgba(45,76,255,.12)}.chip.b .s{background:var(--sky)}
+.chip.y{border-color:var(--yellow);color:var(--yellow);background:rgba(234,255,0,.1)}.chip.y .s{background:var(--yellow)}
+.chip.c{border-color:var(--cyan);color:var(--cyan);background:rgba(0,217,255,.1)}.chip.c .s{background:var(--cyan)}
+.chip.solid{background:var(--yellow);color:#000;border-color:var(--yellow)}.chip.solid .s{background:#000}
+
+/* ── NEW: signal bars readout ── */
+.readout{width:172px;height:110px;background:#05060f;border:1px solid rgba(255,255,255,.12);padding:11px;display:flex;flex-direction:column;gap:7px}
+.readout .rk{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.readout .row{display:flex;align-items:center;gap:6px}
+.readout .row span{font-size:8px;color:rgba(255,255,255,.55);width:26px;letter-spacing:.1em}
+.readout .track{flex:1;height:5px;background:rgba(255,255,255,.08)}
+.readout .fill{height:100%}
 </style>  <link rel="stylesheet" href="../glitch.css">
 </head><body class="gl-stage">
+
 <div class="chk-strip"></div>
-<div class="item"><div class="label">// RGB SPLIT HEADLINE</div><div class="ch" data-t="SIGNAL">SIGNAL</div></div>
-<div class="item"><div class="label">// HERO COMPOSITION</div><div class="hero"><img src="../assets/glitch-blob.gif" alt=""/><div class="sl"></div><div class="top"><span>SECTOR A1.2</span><span>▶ LIVE</span></div><h1>RUN<br/><span class="y">SEQUENCE</span></h1><div class="sub">// 273 · X.06 · B6</div></div></div>
+
+<div class="item"><div class="label">// RGB SPLIT HEADLINE</div><div class="ch gl-text" data-t="SIGNAL">SIGNAL</div></div>
+
+<div class="item"><div class="label">// STATUS CHIPS</div>
+  <div class="chips" style="max-width:172px">
+    <div class="chip b"><span class="s"></span>ONLINE</div>
+    <div class="chip y"><span class="s"></span>SYNC</div>
+    <div class="chip c"><span class="s"></span>SCAN</div>
+    <div class="chip solid"><span class="s"></span>0x4F3A</div>
+    <div class="chip b"><span class="s"></span>847 NODES</div>
+  </div>
+</div>
+
+<div class="item"><div class="label">// HERO — RUN SEQUENCE</div><div class="hero"><img src="../assets/glitch-blob.gif" alt=""/><div class="sl"></div><div class="top"><span>SECTOR A1.2</span><span>▶ LIVE</span></div><h1>RUN<br/><span class="y">SEQUENCE</span></h1><div class="sub">// 273 · X.06 · B6</div></div></div>
+
+<div class="item"><div class="label">// HERO — DATA BLOOM</div><div class="hero2"><div class="ascii"></div><div class="glow"></div><div class="sl"></div><div class="top"><span>ENV: BLOOM</span><span>0x4F3A</span></div><h1>NODE<br/><span class="y">ONLINE</span></h1><div class="sub">// 847 nodes · 5 sectors · auth</div></div></div>
+
+<div class="item" style="flex-basis:100%"><div class="label">// MARQUEE TICKER</div>
+  <div class="tick"><span class="cap">SYS</span><span class="run">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::/// session authenticated /// 847 nodes online /// sector A1.2 nominal /// signal locked /// ::/// session authenticated /// 847 nodes online /// sector A1.2 nominal /// signal locked ///</span></div>
+</div>
+
+<div class="item"><div class="label">// CODE TILE — MICRO-SLICE</div><div class="tile gl-slice"><div class="k">// build hash</div><div class="code">0x0044</div><div class="foot"><span>▶ authenticated</span><span class="dot"></span></div></div></div>
+
+<div class="item"><div class="label">// SIGNAL READOUT</div>
+  <div class="readout">
+    <div class="rk">// telemetry</div>
+    <div class="row"><span>SIG</span><div class="track"><div class="fill by-bar" style="width:78%"></div></div></div>
+    <div class="row"><span>LOAD</span><div class="track"><div class="fill" style="width:53%;background:var(--yellow)"></div></div></div>
+    <div class="row"><span>NET</span><div class="track"><div class="fill" style="width:91%;background:var(--sky)"></div></div></div>
+    <div class="row"><span>PWR</span><div class="track"><div class="fill" style="width:44%;background:var(--cyan)"></div></div></div>
+  </div>
+</div>
+
+<div class="item" style="flex-basis:100%"><div class="label">// PANNING WORDMARK</div>
+  <div style="font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:40px;text-transform:uppercase;letter-spacing:-.01em" class="by-text">DIGIDELIC · SYS 0x4F3A · NODE GRID</div>
+</div>
+
 <script src="../glitch.js"></script>
 </body></html>

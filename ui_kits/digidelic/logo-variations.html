@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="design_doc_mode" content="canvas">
+<title>digidelic — logo variations</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Red+Hat+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0b;font-family:'Geist Mono','Red Hat Mono',monospace;color:#e8e6d8}
+:root{
+  --yellow:#eaff00; --pink:#ff2d87; --pinkDim:#ff0066; --sky:#0a84e0; --cyan:#00d9ff;
+  --coral:#ff6050; --green:#39ff6a; --lime:#c6ff3a; --blue:#2d4cff; --magenta:#c800ff;
+}
+.frame{position:absolute; background:#080808; border:1px solid rgba(255,255,255,.12); overflow:hidden;}
+.frame .cap{position:absolute; top:8px; left:10px; font-size:8px; letter-spacing:.18em; text-transform:uppercase; color:rgba(255,255,255,.4);}
+.badge{position:absolute; top:6px; right:8px; font-size:8px; font-weight:700; letter-spacing:.1em; color:#000; background:var(--yellow); padding:2px 5px;}
+.stage{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;}
+.wm{font-family:'Space Grotesk',sans-serif; font-weight:700; text-transform:lowercase; letter-spacing:-.02em; line-height:1;}
+
+/* scanline overlay per frame */
+.frame::after{content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.14) 1px,rgba(0,0,0,.14) 2px);}
+
+/* 1a baseline duotone */
+.v-base{font-size:52px; color:#fff;}
+.v-base .a{color:var(--yellow);} .v-base .b{color:var(--sky);}
+
+/* 1b glitch chromatic */
+@keyframes aberr{0%,100%{text-shadow:-2px 0 var(--pink),2px 0 var(--cyan)}50%{text-shadow:-3px 0 var(--pink),3px 0 var(--cyan)}}
+.v-glitch{font-size:52px; color:#fff; animation:aberr 2.4s ease-in-out infinite;}
+
+/* 1c checker knockout */
+.v-checker{font-size:56px; font-weight:700;
+  background-color:var(--coral);
+  background-image:linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%),linear-gradient(45deg,var(--sky) 25%,transparent 25%,transparent 75%,var(--sky) 75%);
+  background-size:14px 14px; background-position:0 0,7px 7px;
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;}
+
+/* 1d solid block on yellow */
+.v-block{background:var(--yellow);}
+.v-block .wm{font-size:50px; color:#000; font-weight:700;}
+
+/* 1e mono bracket lockup */
+.v-mono{font-family:'Geist Mono',monospace; font-size:34px; font-weight:700; letter-spacing:.02em; color:#fff; text-transform:lowercase;}
+.v-mono .br{color:var(--yellow);} .v-mono .dot{color:var(--pink);}
+
+/* 1f pill badge */
+.v-pill{display:inline-flex; align-items:center; gap:9px; background:var(--yellow); padding:12px 22px; border-radius:999px;}
+.v-pill .dot{width:12px;height:12px;border-radius:50%;background:#000;}
+.v-pill .txt{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:34px; color:#000; text-transform:lowercase; letter-spacing:-.02em;}
+
+/* 1g stacked all-caps */
+.v-stack{text-align:center; font-family:'Space Grotesk',sans-serif; font-weight:700; text-transform:uppercase; line-height:.82; letter-spacing:-.02em;}
+.v-stack .l1{font-size:40px; color:#fff;} .v-stack .l2{font-size:40px; color:var(--yellow);}
+
+/* 1h monogram tile */
+.v-mono-tile{display:flex; gap:8px; align-items:center;}
+.v-tile{width:78px;height:78px;background:var(--yellow);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:56px;color:#000;}
+.v-mono-tile .side{font-family:'Geist Mono',monospace;font-size:11px;line-height:1.5;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.14em;}
+.v-mono-tile .side b{color:var(--cyan);font-weight:400;}
+
+/* 1i outline / stroke */
+.v-outline{font-size:52px; color:transparent; -webkit-text-stroke:1.5px var(--lime); font-weight:700;}
+.v-outline .a{-webkit-text-stroke-color:var(--yellow);} .v-outline .b{-webkit-text-stroke-color:var(--cyan);}
+
+/* 1j sys code lockup */
+.v-sys{text-align:center;}
+.v-sys .top{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:38px;color:#fff;text-transform:lowercase;letter-spacing:-.02em;line-height:1;}
+.v-sys .top .a{color:var(--yellow);} .v-sys .top .b{color:var(--sky);}
+.v-sys .bot{margin-top:8px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:.34em;color:var(--pink);text-transform:uppercase;}
+
+/* 1k inverted / light bg */
+.v-light{background:#e8e6d8;}
+.v-light .wm{font-size:50px;color:#080808;font-weight:700;}
+.v-light .a{color:var(--pinkDim);} .v-light .b{color:var(--blue);}
+
+/* 1l ascii dot-matrix wordmark */
+.v-ascii{position:absolute; inset:0; background-image:url('../../assets/tex-ascii-dense.png'); background-size:cover; background-position:center;}
+.v-ascii-mask{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:#080808; mix-blend-mode:multiply;}
+.v-ascii-mask .wm{font-size:56px; color:#fff; font-weight:700;}
+</style>
+</head>
+<body>
+
+<!-- 1a -->
+<div class="frame" style="left:60px; top:60px; width:380px; height:200px;">
+  <div class="cap">// baseline duotone</div><div class="badge">1a</div>
+  <div class="stage"><div class="wm v-base"><span class="a">d</span>igi<span class="b">d</span>elic</div></div>
+</div>
+
+<!-- 1b -->
+<div class="frame" style="left:480px; top:60px; width:380px; height:200px;">
+  <div class="cap">// glitch chromatic</div><div class="badge">1b</div>
+  <div class="stage"><div class="wm v-glitch">digidelic</div></div>
+</div>
+
+<!-- 1c -->
+<div class="frame" style="left:900px; top:60px; width:380px; height:200px;">
+  <div class="cap">// checker knockout</div><div class="badge">1c</div>
+  <div class="stage"><div class="wm v-checker">digidelic</div></div>
+</div>
+
+<!-- 1d -->
+<div class="frame v-block" style="left:60px; top:300px; width:380px; height:200px;">
+  <div class="cap" style="color:rgba(0,0,0,.5)">// solid block</div><div class="badge" style="background:#000;color:var(--yellow)">1d</div>
+  <div class="stage"><div class="wm">digidelic</div></div>
+</div>
+
+<!-- 1e -->
+<div class="frame" style="left:480px; top:300px; width:380px; height:200px;">
+  <div class="cap">// mono bracket</div><div class="badge">1e</div>
+  <div class="stage"><div class="v-mono"><span class="br">[</span>digidelic<span class="dot">.</span>sys<span class="br">]</span></div></div>
+</div>
+
+<!-- 1f -->
+<div class="frame" style="left:900px; top:300px; width:380px; height:200px;">
+  <div class="cap">// pill badge</div><div class="badge">1f</div>
+  <div class="stage"><div class="v-pill"><span class="dot"></span><span class="txt">digidelic</span></div></div>
+</div>
+
+<!-- 1g -->
+<div class="frame" style="left:60px; top:540px; width:380px; height:200px;">
+  <div class="cap">// stacked caps</div><div class="badge">1g</div>
+  <div class="stage"><div class="v-stack"><div class="l1">DIGI</div><div class="l2">DELIC</div></div></div>
+</div>
+
+<!-- 1h -->
+<div class="frame" style="left:480px; top:540px; width:380px; height:200px;">
+  <div class="cap">// monogram lockup</div><div class="badge">1h</div>
+  <div class="stage"><div class="v-mono-tile"><div class="v-tile">d</div><div class="side">DIGIDELIC<br><b>sys:0x4F3A</b><br>node grid</div></div></div>
+</div>
+
+<!-- 1i -->
+<div class="frame" style="left:900px; top:540px; width:380px; height:200px;">
+  <div class="cap">// outline stroke</div><div class="badge">1i</div>
+  <div class="stage"><div class="wm v-outline"><span class="a">d</span>igi<span class="b">d</span>elic</div></div>
+</div>
+
+<!-- 1j -->
+<div class="frame" style="left:60px; top:780px; width:380px; height:200px;">
+  <div class="cap">// sys code lockup</div><div class="badge">1j</div>
+  <div class="stage"><div class="v-sys"><div class="top"><span class="a">d</span>igi<span class="b">d</span>elic</div><div class="bot">mission control · 0x4F3A</div></div></div>
+</div>
+
+<!-- 1k -->
+<div class="frame v-light" style="left:480px; top:780px; width:380px; height:200px;">
+  <div class="cap" style="color:rgba(0,0,0,.45)">// inverted / light</div><div class="badge" style="background:#080808;color:var(--yellow)">1k</div>
+  <div class="stage"><div class="wm"><span class="a">d</span>igi<span class="b">d</span>elic</div></div>
+</div>
+
+<!-- 1l -->
+<div class="frame" style="left:900px; top:780px; width:380px; height:200px;">
+  <div class="cap" style="z-index:3">// ascii dot-matrix</div><div class="badge" style="z-index:3">1l</div>
+  <div class="v-ascii"></div>
+  <div class="v-ascii-mask"><div class="wm">digidelic</div></div>
+</div>
+
+</body>
+</html>
