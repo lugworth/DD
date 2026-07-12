@@ -175,3 +175,22 @@ ui_kits/
 ---
 
 *v2.0 — 2026. Will refine as more source assets arrive.*
+
+## Standalone builds
+
+Every preview, UI-kit, and tool page references local fonts/images with
+relative paths, so a copied HTML file breaks outside the repo. `dist/`
+contains **standalone single-file builds** of all of them — every local
+stylesheet, script, font, and image is inlined (oversized opaque images
+are downscaled + re-encoded to JPEG; transparent textures stay PNG; CSS
+rules a page never fetches are pruned). Open them from anywhere.
+
+Regenerate with:
+
+```
+node tools/build-standalone.mjs                      # all pages
+node tools/build-standalone.mjs preview/foo.html     # one page
+```
+
+Image recompression needs `playwright-core` + Chromium available;
+without them assets are inlined verbatim (bigger files, same fidelity).
