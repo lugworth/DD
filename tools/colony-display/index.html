@@ -216,6 +216,10 @@ footer .fill{flex:1;border-right:0;text-align:right}
             <div class="lab"><span class="name">Dot size</span><span class="val" data-val="dotsize"></span></div>
             <input type="range" id="dotsize" min="40" max="100" step="1" value="75">
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">Ripple power</span><span class="val" data-val="ripples"></span></div>
+            <input type="range" id="ripples" min="0" max="100" step="1" value="65">
+          </div>
         </div>
 
         <div class="sect">
@@ -297,7 +301,7 @@ const state={
   sound:false,
   gen:0,
 };
-const sliders=['density','vitality','decay','tempo','grid','diffusion','glow','dotsize'];
+const sliders=['density','vitality','decay','tempo','grid','diffusion','glow','dotsize','ripples'];
 function params(){
   const g=id=>parseFloat(document.getElementById(id).value);
   return {
@@ -305,13 +309,15 @@ function params(){
     decay:g('decay')/100, tempo:g('tempo'),
     grid:g('grid')|0, diffusion:g('diffusion')/100,
     glow:g('glow')/100, dotsize:g('dotsize')/100,
+    ripples:g('ripples')/100,
     palette:state.palette,
   };
 }
 
 /* ═══════════════════ SIMULATION — Life + phosphor + vitality ═══════════════════ */
-const sim={ N:0, alive:null, next:null, energy:null, heat:null, rnd:null, births:0 };
-const ripples=[];                      // {x,y,t0} in cell coords
+const sim={ N:0, alive:null, next:null, energy:null, heat:null, rnd:null, births:0,
+            u:null, v:null };          // u/v: pond wave height + velocity fields
+const flashes=[];                      // {x,y,t0} soft glow at fresh pokes
 
 function reseed(p){
   const N=p.grid;
@@ -320,6 +326,8 @@ function reseed(p){
   sim.next=new Uint8Array(N*N);
   sim.energy=new Float32Array(N*N);
   sim.heat=new Float32Array(N*N);
+  sim.u=new Float32Array(N*N);
+  sim.v=new Float32Array(N*N);
   sim.rnd=mulberry32(state.seed);
   /* clustered soup: several blobs rather than uniform static */
   const blobs=8+Math.floor(sim.rnd()*8);
@@ -331,8 +339,48 @@ function reseed(p){
         sim.alive[y*N+x]=1;
     }
   }
-  ripples.length=0;
+  flashes.length=0;
   state.gen=0;
+}
+
+/* ── pond wave field ─────────────────────────────────────────
+   classic height/velocity ripple sim; clamped edges reflect the
+   waves back like pond walls. Runs every frame, independent of
+   the life tempo, so the surface always answers a touch. */
+function pokeWave(cx,cy,r,amp){
+  const {N,u}=sim;
+  const x0=Math.max(0,Math.floor(cx-r)), x1=Math.min(N-1,Math.ceil(cx+r));
+  const y0=Math.max(0,Math.floor(cy-r)), y1=Math.min(N-1,Math.ceil(cy+r));
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    const dx=x-cx, dy=y-cy, d2=(dx*dx+dy*dy)/(r*r);
+    if(d2>1) continue;
+    u[y*N+x]+=amp*Math.exp(-d2*3);          // smooth gaussian plunge
+  }
+}
+function waveStep(p){
+  const {N,u,v,alive,energy,heat}=sim;
+  const k=0.24, damp=0.986;
+  for(let sub=0;sub<2;sub++){
+    for(let y=0;y<N;y++){
+      const y0=y*N, ym=Math.max(0,y-1)*N, yp=Math.min(N-1,y+1)*N;
+      for(let x=0;x<N;x++){
+        const xm=Math.max(0,x-1), xp=Math.min(N-1,x+1);
+        const i=y0+x;
+        v[i]=(v[i]+((u[y0+xm]+u[y0+xp]+u[ym+x]+u[yp+x])*0.25-u[i])*k)*damp;
+      }
+    }
+    for(let i=0;i<u.length;i++) u[i]=(u[i]+v[i])*0.9995;
+  }
+  /* the passing wavefront stirs the colony — sputter births on crests */
+  const stir=p.ripples*0.05;
+  if(stir>0){
+    for(let i=0;i<u.length;i++){
+      if(u[i]>0.4&&!alive[i]&&sim.rnd()<stir){
+        alive[i]=1; energy[i]=1;
+        if(heat[i]<0.3) heat[i]=0.3;         // stirred cells warm faintly
+      }
+    }
+  }
 }
 
 function stampBlob(cx,cy,r,touch){
@@ -424,23 +472,29 @@ function mix(c1,c2,t){
   return [c1[0]+(c2[0]-c1[0])*t, c1[1]+(c2[1]-c1[1])*t, c1[2]+(c2[2]-c1[2])*t];
 }
 function drawDots(g,size,p,pal){
-  /* paints the dot matrix into an s×s context */
-  const {N,energy,heat}=sim;
+  /* paints the dot matrix into an s×s context; the wave field lifts
+     brightness and swells the dots as crests roll through */
+  const {N,energy,heat,u}=sim;
   const cs=size/N;
   g.clearRect(0,0,size,size);
   const r=cs*p.dotsize*0.5;
+  const wGain=p.ripples*1.3;
   for(let y=0;y<N;y++){
     for(let x=0;x<N;x++){
       const i=y*N+x;
-      const e=energy[i];
+      const w=u[i];
+      const lift=w>0?w*wGain:0;
+      let e=energy[i]+lift;
       if(e<0.03) continue;
+      if(e>1.2) e=1.2;
       let col;
-      if(e>0.985) col=mix(pal.bright,pal.hot,Math.min(1,(e-0.985)*40));
+      if(e>0.985) col=mix(pal.bright,pal.hot,Math.min(1,(e-0.985)*5));
       else col=mix(pal.dim,pal.bright,e);
       const h=heat[i];
       if(h>0.02) col=mix(col,pal.touch,Math.min(1,h*1.4));
-      g.fillStyle=`rgb(${col[0]|0},${col[1]|0},${col[2]|0})`;
-      const rr=r*(0.55+0.45*e);
+      g.fillStyle=`rgb(${Math.min(255,col[0])|0},${Math.min(255,col[1])|0},${Math.min(255,col[2])|0})`;
+      const rr=r*(0.55+0.45*Math.min(1,e))*(1+Math.max(-0.3,w)*0.55);
+      if(rr<=0) continue;
       g.beginPath();
       g.arc((x+0.5)*cs,(y+0.5)*cs,rr,0,TAU);
       g.fill();
@@ -471,21 +525,23 @@ function render(g,size,p,tNow){
   g.globalCompositeOperation='source-over';
   g.globalAlpha=1;
 
-  /* touch ripples — expanding rings in the touch colour */
+  /* poke flashes — a soft touch-coloured bloom at the plunge point;
+     the wave field itself carries the expanding rings */
   const cs=size/sim.N;
   const tc=pal.touch;
-  for(let i=ripples.length-1;i>=0;i--){
-    const rp=ripples[i], age=(tNow-rp.t0)/1000;
-    if(age>1.3){ ripples.splice(i,1); continue; }
-    const a=1-age/1.3;
-    g.strokeStyle=`rgba(${tc[0]},${tc[1]},${tc[2]},${(a*0.9).toFixed(3)})`;
-    for(const f of [1,0.62,0.3]){
-      g.lineWidth=Math.max(1,(2.4-age)*f*(size/540));
-      g.beginPath();
-      g.arc(rp.x*cs,rp.y*cs,age*size*0.16*f+cs*1.5,0,TAU);
-      g.stroke();
-    }
+  g.globalCompositeOperation='lighter';
+  for(let i=flashes.length-1;i>=0;i--){
+    const fl=flashes[i], age=(tNow-fl.t0)/1000;
+    if(age>0.6){ flashes.splice(i,1); continue; }
+    const a=(1-age/0.6)*0.55;
+    const fr=cs*(4+age*22);
+    const grd=g.createRadialGradient(fl.x*cs,fl.y*cs,0,fl.x*cs,fl.y*cs,fr);
+    grd.addColorStop(0,`rgba(${tc[0]},${tc[1]},${tc[2]},${a.toFixed(3)})`);
+    grd.addColorStop(1,`rgba(${tc[0]},${tc[1]},${tc[2]},0)`);
+    g.fillStyle=grd;
+    g.beginPath(); g.arc(fl.x*cs,fl.y*cs,fr,0,TAU); g.fill();
   }
+  g.globalCompositeOperation='source-over';
 
   /* glass sheen + vignette, like a little LCD under workshop light */
   const sheen=g.createLinearGradient(0,0,size,size);
@@ -509,6 +565,7 @@ function frame(tNow){
     let guard=0;
     while(acc>=interval&&guard++<4){ step(p); acc-=interval; }
   }
+  waveStep(p);                          // the pond always answers, even paused
   render(ctx,canvas.width,p,tNow);
   document.getElementById('statGen').textContent=state.gen;
   let alive=0; for(let i=0;i<sim.alive.length;i++) alive+=sim.alive[i];
@@ -523,22 +580,26 @@ function canvasCell(ev){
   const y=(ev.clientY-rect.top)/rect.height*sim.N;
   return [x,y];
 }
-let touching=false, lastStamp=0;
+let touching=false, lastStamp=0, lastFlash=0;
 canvas.addEventListener('pointerdown',ev=>{
   touching=true;
+  const p=params();
   const [x,y]=canvasCell(ev);
-  stampBlob(x,y,3+Math.floor(sim.rnd()*3),true);
-  ripples.push({x,y,t0:performance.now()});
-  if(state.sound) audioTick(params());
+  stampBlob(x,y,4+Math.floor(sim.rnd()*3),true);
+  pokeWave(x,y,sim.N*0.06,1.4+p.ripples*2.4);   // deep plunge → big round waves
+  flashes.push({x,y,t0:performance.now()});
+  if(state.sound) audioTick(p);
 });
 canvas.addEventListener('pointermove',ev=>{
   if(!touching) return;
   const now=performance.now();
-  if(now-lastStamp<50) return;
+  if(now-lastStamp<28) return;
   lastStamp=now;
+  const p=params();
   const [x,y]=canvasCell(ev);
-  stampBlob(x,y,2,true);
-  if(now-lastStamp>240) ripples.push({x,y,t0:now});
+  stampBlob(x,y,2+Math.floor(sim.rnd()*2),true);
+  pokeWave(x,y,sim.N*0.035,(0.5+p.ripples*0.9)); // dragging drags a wake
+  if(now-lastFlash>160){ lastFlash=now; flashes.push({x,y,t0:now}); }
 });
 window.addEventListener('pointerup',()=>{ touching=false; });
 
@@ -586,7 +647,7 @@ function syncSlider(el){
   el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
   const out=document.querySelector('.val[data-val="'+el.id+'"]');
   if(out){
-    if(['density','vitality','decay','diffusion','glow','dotsize'].includes(el.id)) out.textContent=v+'%';
+    if(['density','vitality','decay','diffusion','glow','dotsize','ripples'].includes(el.id)) out.textContent=v+'%';
     else if(el.id==='tempo') out.textContent=v+'hz';
     else if(el.id==='grid') out.textContent=v+'²';
     else out.textContent=v;
