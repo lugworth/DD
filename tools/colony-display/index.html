@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Colony Display" subtitle="Live dot-matrix life colonies with touch splash — phosphor A/V device emulation" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — colony display</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:32px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#04100e;cursor:crosshair;touch-action:none}
+.stage .hint{
+  position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+  color:var(--white-dim);font-size:10px;letter-spacing:.2em;text-transform:uppercase;pointer-events:none;
+}
+
+.rack{width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+
+.seed-row{display:flex;gap:8px}
+.seed-read{
+  flex:1;display:flex;align-items:center;justify-content:space-between;
+  border:1px solid var(--border);padding:0 12px;height:36px;
+  font-size:12px;letter-spacing:.08em;color:var(--white-soft);background:var(--black-panel);
+}
+.seed-read .k{color:var(--white-dim);font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+.seed-read .v{color:var(--cyan)}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+button.is-rec{background:var(--pink);border-color:var(--pink);color:var(--black)}
+button:disabled{opacity:.5;cursor:default}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
+  --p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,
+input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+.seg{display:flex;border:1px solid var(--border-hi)}
+.seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
+.seg button:last-child{border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black);flex-wrap:wrap}
+.actions button{flex:1;height:42px;min-width:86px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:860px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:20px;min-height:60vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Colony Display</h1>
+      <div class="sub">life-matrix a/v screen · live parameter rack</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span>0x4F3A</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="canvas preview">
+      <span class="corner tl">FRAME ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerSeed">seed —</span>
+      <span class="corner br">4R // 273</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+      <span class="hint">touch the screen ▶ splash a colony</span>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
+          <div class="seed-row">
+            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <button id="btnRandom" title="new random culture">⟳ Reseed</button>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Colony</h2><span class="coord">S.01</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Soup density</span><span class="val" data-val="density"></span></div>
+            <input type="range" id="density" min="0" max="100" step="1" value="45">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Vitality</span><span class="val" data-val="vitality"></span></div>
+            <input type="range" id="vitality" min="0" max="100" step="1" value="35">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Phosphor decay</span><span class="val" data-val="decay"></span></div>
+            <input type="range" id="decay" min="0" max="100" step="1" value="55">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Tempo</span><span class="val" data-val="tempo"></span></div>
+            <input type="range" id="tempo" min="2" max="30" step="1" value="12">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Screen</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Grid</span><span class="val" data-val="grid"></span></div>
+            <input type="range" id="grid" min="48" max="160" step="8" value="96">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Diffusion</span><span class="val" data-val="diffusion"></span></div>
+            <input type="range" id="diffusion" min="0" max="100" step="1" value="15">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Glow</span><span class="val" data-val="glow"></span></div>
+            <input type="range" id="glow" min="0" max="100" step="1" value="60">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Dot size</span><span class="val" data-val="dotsize"></span></div>
+            <input type="range" id="dotsize" min="40" max="100" step="1" value="75">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Palette</span></div>
+            <div class="seg" id="segPalette" role="group" aria-label="palette">
+              <button data-pal="phosphor" class="is-active">Phosphor</button>
+              <button data-pal="amber">Amber</button>
+              <button data-pal="digidelic">Digidelic</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Sound</span></div>
+            <div class="seg" id="segSound" role="group" aria-label="sound">
+              <button data-snd="off" class="is-active">Off</button>
+              <button data-snd="on">On</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnPlay">❚❚ Pause</button>
+        <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>colonygen v1.0</b></div>
+    <div class="cell">gen <b id="statGen">0</b></div>
+    <div class="cell">alive <b id="statAlive">0</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════ RNG ═══════════════════ */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+const TAU=Math.PI*2;
+
+/* ═══════════════════ PALETTES ═══════════════════
+   dot colour ramps run dim → bright → hot with energy */
+const PALETTES={
+  phosphor:{
+    bg:'#04100e', glass:'rgba(60,160,140,0.05)',
+    dim:[10,63,51], bright:[52,242,161], hot:[184,255,224],
+    touch:[255,210,63],
+  },
+  amber:{
+    bg:'#100a03', glass:'rgba(190,140,60,0.05)',
+    dim:[74,44,5], bright:[255,181,46], hot:[255,233,176],
+    touch:[74,217,255],
+  },
+  digidelic:{
+    bg:'#0a0a0a', glass:'rgba(234,255,0,0.04)',
+    dim:[40,44,8], bright:[234,255,0], hot:[255,255,210],
+    touch:[255,45,135],
+  },
+};
+
+/* ═══════════════════ STATE ═══════════════════ */
+const state={
+  seed:(Math.random()*0xffffffff)>>>0,
+  palette:'phosphor',
+  playing:true,
+  sound:false,
+  gen:0,
+};
+const sliders=['density','vitality','decay','tempo','grid','diffusion','glow','dotsize'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  return {
+    density:g('density')/100, vitality:g('vitality')/100,
+    decay:g('decay')/100, tempo:g('tempo'),
+    grid:g('grid')|0, diffusion:g('diffusion')/100,
+    glow:g('glow')/100, dotsize:g('dotsize')/100,
+    palette:state.palette,
+  };
+}
+
+/* ═══════════════════ SIMULATION — Life + phosphor + vitality ═══════════════════ */
+const sim={ N:0, alive:null, next:null, energy:null, heat:null, rnd:null, births:0 };
+const ripples=[];                      // {x,y,t0} in cell coords
+
+function reseed(p){
+  const N=p.grid;
+  sim.N=N;
+  sim.alive=new Uint8Array(N*N);
+  sim.next=new Uint8Array(N*N);
+  sim.energy=new Float32Array(N*N);
+  sim.heat=new Float32Array(N*N);
+  sim.rnd=mulberry32(state.seed);
+  /* clustered soup: several blobs rather than uniform static */
+  const blobs=8+Math.floor(sim.rnd()*8);
+  for(let b=0;b<blobs;b++){
+    const cx=sim.rnd()*N, cy=sim.rnd()*N, r=N*(0.06+sim.rnd()*0.16);
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+      const dx=x-cx, dy=y-cy;
+      if(dx*dx+dy*dy<r*r && sim.rnd()<p.density)
+        sim.alive[y*N+x]=1;
+    }
+  }
+  ripples.length=0;
+  state.gen=0;
+}
+
+function stampBlob(cx,cy,r,touch){
+  const {N,rnd}=sim;
+  for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+    if(dx*dx+dy*dy>r*r) continue;
+    const x=Math.round(cx+dx), y=Math.round(cy+dy);
+    if(x<0||x>=N||y<0||y>=N) continue;
+    if(rnd()<0.55){ sim.alive[y*N+x]=1; sim.energy[y*N+x]=1; }
+    if(touch) sim.heat[y*N+x]=1;
+  }
+}
+
+function step(p){
+  const {N,alive,next}=sim;
+  sim.births=0;
+  for(let y=0;y<N;y++){
+    const ym=((y-1+N)%N)*N, y0=y*N, yp=((y+1)%N)*N;
+    for(let x=0;x<N;x++){
+      const xm=(x-1+N)%N, xp=(x+1)%N;
+      const n=alive[ym+xm]+alive[ym+x]+alive[ym+xp]
+             +alive[y0+xm]           +alive[y0+xp]
+             +alive[yp+xm]+alive[yp+x]+alive[yp+xp];
+      const a=alive[y0+x];
+      const born=!a&&n===3, survive=a&&(n===2||n===3);
+      next[y0+x]=(born||survive)?1:0;
+      if(born) sim.births++;
+    }
+  }
+  sim.next=sim.alive; sim.alive=next;
+  /* phosphor: lit cells snap to 1, dead cells decay */
+  const decayF=0.55+p.decay*0.42;
+  const {energy,heat}=sim;
+  for(let i=0;i<energy.length;i++){
+    energy[i]=sim.alive[i]?1:energy[i]*decayF;
+    heat[i]*=0.86;
+  }
+  /* vitality: spontaneous colony sparks keep the screen alive */
+  if(sim.rnd()<p.vitality*0.55)
+    stampBlob(sim.rnd()*N,sim.rnd()*N,2+Math.floor(sim.rnd()*3),false);
+  state.gen++;
+  if(state.sound) audioTick(p);
+}
+
+/* ═══════════════════ AUDIO — tiny colony synth ═══════════════════ */
+let audio=null;
+function audioTick(p){
+  try{
+    if(!audio){
+      const ctx=new (window.AudioContext||window.webkitAudioContext)();
+      const gain=ctx.createGain(); gain.gain.value=0.12;
+      const filt=ctx.createBiquadFilter(); filt.type='lowpass';
+      filt.connect(gain); gain.connect(ctx.destination);
+      audio={ctx,filt,scale:[0,3,5,7,10,12,15,17]};
+    }
+    const {ctx,filt,scale}=audio;
+    if(ctx.state==='suspended') ctx.resume();
+    filt.frequency.value=300+sim.births*40;
+    if(sim.births===0) return;
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    const note=scale[(sim.births+state.gen)%scale.length];
+    o.type='square';
+    o.frequency.value=110*Math.pow(2,note/12+1);
+    g.gain.setValueAtTime(0.5,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.09);
+    o.connect(g); g.connect(filt);
+    o.start(); o.stop(ctx.currentTime+0.1);
+  }catch{ /* no audio in this environment */ }
+}
+
+/* ═══════════════════ RENDER ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+const ART=1080;
+const layer=document.createElement('canvas');    // crisp dot pass
+const lctx=layer.getContext('2d');
+
+function fitCanvas(){
+  const stage=document.querySelector('.stage');
+  const avail=Math.min(stage.clientWidth-80,stage.clientHeight-80,ART);
+  canvas.style.width=avail+'px';
+  canvas.style.height=avail+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const bs=Math.round(avail*dpr);
+  if(canvas.width!==bs){ canvas.width=canvas.height=bs; }
+}
+
+function mix(c1,c2,t){
+  return [c1[0]+(c2[0]-c1[0])*t, c1[1]+(c2[1]-c1[1])*t, c1[2]+(c2[2]-c1[2])*t];
+}
+function drawDots(g,size,p,pal){
+  /* paints the dot matrix into an s×s context */
+  const {N,energy,heat}=sim;
+  const cs=size/N;
+  g.clearRect(0,0,size,size);
+  const r=cs*p.dotsize*0.5;
+  for(let y=0;y<N;y++){
+    for(let x=0;x<N;x++){
+      const i=y*N+x;
+      const e=energy[i];
+      if(e<0.03) continue;
+      let col;
+      if(e>0.985) col=mix(pal.bright,pal.hot,Math.min(1,(e-0.985)*40));
+      else col=mix(pal.dim,pal.bright,e);
+      const h=heat[i];
+      if(h>0.02) col=mix(col,pal.touch,Math.min(1,h*1.4));
+      g.fillStyle=`rgb(${col[0]|0},${col[1]|0},${col[2]|0})`;
+      const rr=r*(0.55+0.45*e);
+      g.beginPath();
+      g.arc((x+0.5)*cs,(y+0.5)*cs,rr,0,TAU);
+      g.fill();
+    }
+  }
+}
+
+function render(g,size,p,tNow){
+  const pal=PALETTES[p.palette];
+  g.save();
+  g.clearRect(0,0,size,size);
+  g.fillStyle=pal.bg; g.fillRect(0,0,size,size);
+
+  if(layer.width!==size){ layer.width=layer.height=size; }
+  drawDots(lctx,size,p,pal);
+
+  /* crisp pass fades out as diffusion rises; blurred pass grows */
+  const dif=p.diffusion;
+  if(dif<0.98){
+    g.globalAlpha=1-dif*0.85;
+    g.drawImage(layer,0,0);
+  }
+  g.globalAlpha=Math.min(1,0.25+p.glow*0.8+dif*0.6);
+  g.globalCompositeOperation='lighter';
+  g.filter=`blur(${(2+p.glow*8+dif*26)*(size/1080)}px)`;
+  g.drawImage(layer,0,0);
+  g.filter='none';
+  g.globalCompositeOperation='source-over';
+  g.globalAlpha=1;
+
+  /* touch ripples — expanding rings in the touch colour */
+  const cs=size/sim.N;
+  const tc=pal.touch;
+  for(let i=ripples.length-1;i>=0;i--){
+    const rp=ripples[i], age=(tNow-rp.t0)/1000;
+    if(age>1.3){ ripples.splice(i,1); continue; }
+    const a=1-age/1.3;
+    g.strokeStyle=`rgba(${tc[0]},${tc[1]},${tc[2]},${(a*0.9).toFixed(3)})`;
+    for(const f of [1,0.62,0.3]){
+      g.lineWidth=Math.max(1,(2.4-age)*f*(size/540));
+      g.beginPath();
+      g.arc(rp.x*cs,rp.y*cs,age*size*0.16*f+cs*1.5,0,TAU);
+      g.stroke();
+    }
+  }
+
+  /* glass sheen + vignette, like a little LCD under workshop light */
+  const sheen=g.createLinearGradient(0,0,size,size);
+  sheen.addColorStop(0,pal.glass); sheen.addColorStop(0.45,'rgba(0,0,0,0)');
+  g.fillStyle=sheen; g.fillRect(0,0,size,size);
+  const vig=g.createRadialGradient(size/2,size/2,size*0.42,size/2,size/2,size*0.74);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.5)');
+  g.fillStyle=vig; g.fillRect(0,0,size,size);
+  g.restore();
+}
+
+/* ═══════════════════ LOOP ═══════════════════ */
+let acc=0, lastT=performance.now();
+function frame(tNow){
+  const p=params();
+  fitCanvas();
+  const dt=Math.min(100,tNow-lastT); lastT=tNow;
+  if(state.playing){
+    acc+=dt;
+    const interval=1000/p.tempo;
+    let guard=0;
+    while(acc>=interval&&guard++<4){ step(p); acc-=interval; }
+  }
+  render(ctx,canvas.width,p,tNow);
+  document.getElementById('statGen').textContent=state.gen;
+  let alive=0; for(let i=0;i<sim.alive.length;i++) alive+=sim.alive[i];
+  document.getElementById('statAlive').textContent=alive;
+  requestAnimationFrame(frame);
+}
+
+/* ═══════════════════ TOUCH ═══════════════════ */
+function canvasCell(ev){
+  const rect=canvas.getBoundingClientRect();
+  const x=(ev.clientX-rect.left)/rect.width*sim.N;
+  const y=(ev.clientY-rect.top)/rect.height*sim.N;
+  return [x,y];
+}
+let touching=false, lastStamp=0;
+canvas.addEventListener('pointerdown',ev=>{
+  touching=true;
+  const [x,y]=canvasCell(ev);
+  stampBlob(x,y,3+Math.floor(sim.rnd()*3),true);
+  ripples.push({x,y,t0:performance.now()});
+  if(state.sound) audioTick(params());
+});
+canvas.addEventListener('pointermove',ev=>{
+  if(!touching) return;
+  const now=performance.now();
+  if(now-lastStamp<50) return;
+  lastStamp=now;
+  const [x,y]=canvasCell(ev);
+  stampBlob(x,y,2,true);
+  if(now-lastStamp>240) ripples.push({x,y,t0:now});
+});
+window.addEventListener('pointerup',()=>{ touching=false; });
+
+/* ═══════════════════ EXPORT / RECORD ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=off.height=2160;
+  render(off.getContext('2d'),2160,p,performance.now());
+  off.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-colony-'+state.seed.toString(16).padStart(8,'0')+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+let recorder=null;
+function recordClip(){
+  const btn=document.getElementById('btnRecord');
+  if(recorder) return;
+  const stream=canvas.captureStream(30);
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
+  const chunks=[];
+  recorder.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  recorder.onstop=()=>{
+    const blob=new Blob(chunks,{type:'video/webm'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-colony-'+state.seed.toString(16).padStart(8,'0')+'.webm';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    recorder=null;
+    btn.classList.remove('is-rec'); btn.disabled=false; btn.textContent='⏺ Rec 6s';
+  };
+  btn.classList.add('is-rec'); btn.disabled=true; btn.textContent='● recording';
+  recorder.start();
+  setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(out){
+    if(['density','vitality','decay','diffusion','glow','dotsize'].includes(el.id)) out.textContent=v+'%';
+    else if(el.id==='tempo') out.textContent=v+'hz';
+    else if(el.id==='grid') out.textContent=v+'²';
+    else out.textContent=v;
+  }
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{
+    syncSlider(el);
+    if(id==='grid'||id==='density') reseed(params());
+  });
+  syncSlider(el);
+});
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+  });
+}
+wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
+wireSeg('segSound','snd',v=>{
+  state.sound=v==='on';
+  if(state.sound&&audio&&audio.ctx.state==='suspended') audio.ctx.resume();
+});
+
+function newSeed(){
+  state.seed=(Math.random()*0xffffffff)>>>0;
+  reseed(params());
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+document.getElementById('btnRandom').addEventListener('click',newSeed);
+document.getElementById('btnPlay').addEventListener('click',()=>{
+  state.playing=!state.playing;
+  document.getElementById('btnPlay').textContent=state.playing?'❚❚ Pause':'▶ Play';
+});
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('btnRecord').addEventListener('click',recordClip);
+window.addEventListener('keydown',e=>{
+  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); newSeed(); }
+  if(e.key==='e' && !e.target.closest('input')) exportPNG();
+  if(e.key==='p' && !e.target.closest('input')) document.getElementById('btnPlay').click();
+});
+
+/* boot */
+reseed(params());
+{
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
