@@ -23,6 +23,14 @@ crossfades toward the fully blurred pass for the soft metaball-glow mode
 seen in the reference. Touched cells carry a heat value that tints them
 toward the splash color while it fades.
 
+Beneath the dots runs a **pond wave field** (height/velocity ripple
+simulation with reflecting edges). Every touch plunges a gaussian into it:
+big round wavefronts expand across the screen, bounce off the walls, lift
+the brightness and swell the size of the dots they roll through, and stir
+the colony — cells on a passing crest sputter to life. Dragging pulls a
+wake. The wave field steps every frame regardless of the life tempo, so
+the surface always answers immediately, even paused.
+
 ## Parameter rack
 
 | Section | Control | Effect |
@@ -36,6 +44,7 @@ toward the splash color while it fades.
 | | Diffusion | Crisp dots ↔ soft blurred glow |
 | | Glow | Bloom intensity |
 | | Dot size | Dot diameter within its cell |
+| | Ripple power | Plunge depth, wave brightness gain, and colony stirring of the pond field |
 | Style | Palette | `Phosphor` (green on teal glass) · `Amber` · `Digidelic` (electric yellow on void) |
 | | Sound | Tiny colony synth — births trigger pentatonic blips, density drives the filter |
 
