@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Circuit Matrix" subtitle="Live LED-panel circuit board — traces route themselves across a dot matrix" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — circuit matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:32px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#050505;cursor:crosshair;touch-action:none}
+.stage .hint{
+  position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+  color:var(--white-dim);font-size:10px;letter-spacing:.2em;text-transform:uppercase;pointer-events:none;
+}
+
+.rack{width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+
+.seed-row{display:flex;gap:8px}
+.seed-read{
+  flex:1;display:flex;align-items:center;justify-content:space-between;
+  border:1px solid var(--border);padding:0 12px;height:36px;
+  font-size:12px;letter-spacing:.08em;color:var(--white-soft);background:var(--black-panel);
+}
+.seed-read .k{color:var(--white-dim);font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+.seed-read .v{color:var(--cyan)}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+button.is-rec{background:var(--pink);border-color:var(--pink);color:var(--black)}
+button:disabled{opacity:.5;cursor:default}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
+  --p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,
+input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+.seg{display:flex;border:1px solid var(--border-hi)}
+.seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
+.seg button:last-child{border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black);flex-wrap:wrap}
+.actions button{flex:1;height:42px;min-width:86px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:860px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:20px;min-height:60vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Circuit Matrix</h1>
+      <div class="sub">self-routing led panel · live parameter rack</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span>0x4F3A</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="canvas preview">
+      <span class="corner tl">FRAME ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerSeed">seed —</span>
+      <span class="corner br">4R // 273</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+      <span class="hint">touch the board ▶ solder a trace</span>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
+          <div class="seed-row">
+            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <button id="btnRandom" title="wipe and re-route">⟳ Reseed</button>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Routing</h2><span class="coord">S.01</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Trace rate</span><span class="val" data-val="spawn"></span></div>
+            <input type="range" id="spawn" min="0" max="100" step="1" value="55">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Straightness</span><span class="val" data-val="straight"></span></div>
+            <input type="range" id="straight" min="0" max="100" step="1" value="70">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Pads</span><span class="val" data-val="pads"></span></div>
+            <input type="range" id="pads" min="0" max="100" step="1" value="60">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Modules</span><span class="val" data-val="modules"></span></div>
+            <input type="range" id="modules" min="0" max="100" step="1" value="45">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Turnover</span><span class="val" data-val="turnover"></span></div>
+            <input type="range" id="turnover" min="0" max="100" step="1" value="40">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Panel</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Grid</span><span class="val" data-val="grid"></span></div>
+            <input type="range" id="grid" min="48" max="128" step="8" value="80">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Glow</span><span class="val" data-val="glow"></span></div>
+            <input type="range" id="glow" min="0" max="100" step="1" value="55">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Dot size</span><span class="val" data-val="dotsize"></span></div>
+            <input type="range" id="dotsize" min="40" max="100" step="1" value="78">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Clock</span><span class="val" data-val="speed"></span></div>
+            <input type="range" id="speed" min="2" max="30" step="1" value="14">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Palette</span></div>
+            <div class="seg" id="segPalette" role="group" aria-label="palette">
+              <button data-pal="breadboard" class="is-active">Breadboard</button>
+              <button data-pal="copper">Copper</button>
+              <button data-pal="digidelic">Digidelic</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Format</span></div>
+            <div class="seg" id="segFormat" role="group" aria-label="format">
+              <button data-fmt="panel" class="is-active">2:1 Panel</button>
+              <button data-fmt="square">1:1 Square</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnPlay">❚❚ Pause</button>
+        <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>circuitgen v1.0</b></div>
+    <div class="cell">tick <b id="statTick">0</b></div>
+    <div class="cell">fill <b id="statFill">0%</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════ RNG ═══════════════════ */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function weightedPick(rnd,items){
+  let total=0; for(const it of items) total+=it[1];
+  let r=rnd()*total;
+  for(const it of items){ r-=it[1]; if(r<=0) return it[0]; }
+  return items[items.length-1][0];
+}
+const TAU=Math.PI*2;
+
+/* ═══════════════════ PALETTES — sampled from the reference panel ═══ */
+const PALETTES={
+  breadboard:{
+    bg:'#050505', unlit:'rgba(255,255,255,0.045)',
+    colors:[
+      [[255,208,40],2.6],   // yellow
+      [[255,75,58],2.4],    // coral red
+      [[87,217,163],2.0],   // mint
+      [[123,91,255],1.6],   // purple
+      [[45,110,255],1.2],   // blue
+    ],
+  },
+  copper:{
+    bg:'#0a0f06', unlit:'rgba(212,175,55,0.05)',
+    colors:[
+      [[222,178,60],2.8],   // gold
+      [[196,120,58],2.2],   // copper
+      [[168,180,190],1.6],  // tin
+      [[110,190,120],1.4],  // verdigris
+      [[240,230,180],0.8],  // solder bright
+    ],
+  },
+  digidelic:{
+    bg:'#060607', unlit:'rgba(255,255,255,0.05)',
+    colors:[
+      [[234,255,0],2.6],    // yellow
+      [[255,45,135],2.2],   // pink
+      [[0,217,255],2.0],    // cyan
+      [[57,255,106],1.6],   // green
+      [[45,76,255],1.2],    // blue
+    ],
+  },
+};
+
+/* ═══════════════════ STATE ═══════════════════ */
+const state={
+  seed:(Math.random()*0xffffffff)>>>0,
+  palette:'breadboard',
+  format:'panel',
+  playing:true,
+  tick:0,
+};
+const sliders=['spawn','straight','pads','modules','turnover','grid','glow','dotsize','speed'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  return {
+    spawn:g('spawn')/100, straight:g('straight')/100,
+    pads:g('pads')/100, modules:g('modules')/100, turnover:g('turnover')/100,
+    grid:g('grid')|0, glow:g('glow')/100, dotsize:g('dotsize')/100,
+    speed:g('speed'),
+    palette:state.palette, format:state.format,
+  };
+}
+
+/* ═══════════════════ BOARD ═══════════════════
+   occ[i]      element id + 1, or 0 when empty
+   elements    {cells:[i...], color, born, dying(t0|0), kind}
+   walkers     live routing heads extending traces               */
+const board={ W:0,H:0, occ:null, elements:[], walkers:[], rnd:null, filled:0 };
+
+function boardDims(p){
+  const W=p.grid;
+  const H=p.format==='panel'?Math.round(W/2):W;
+  return [W,H];
+}
+function reseed(p){
+  const [W,H]=boardDims(p);
+  board.W=W; board.H=H;
+  board.occ=new Int32Array(W*H);
+  board.elements=[]; board.walkers=[]; board.filled=0;
+  board.rnd=mulberry32(state.seed);
+  state.tick=0;
+}
+function pickColor(p){
+  return weightedPick(board.rnd,PALETTES[p.palette].colors);
+}
+function newElement(color,kind){
+  const el={cells:[],color,born:state.tick,dying:0,kind};
+  board.elements.push(el);
+  return el;
+}
+function claim(el,x,y){
+  const i=y*board.W+x;
+  if(board.occ[i]) return false;
+  board.occ[i]=board.elements.indexOf(el)+1;
+  el.cells.push(i);
+  board.filled++;
+  return true;
+}
+function isFree(x,y){
+  return x>=0&&y>=0&&x<board.W&&y<board.H&&!board.occ[y*board.W+x];
+}
+function areaFree(x,y,w,h,margin){
+  for(let dy=-margin;dy<h+margin;dy++)for(let dx=-margin;dx<w+margin;dx++){
+    const px=x+dx, py=y+dy;
+    if(px<0||py<0||px>=board.W||py>=board.H) { if(dx>=0&&dy>=0&&dx<w&&dy<h) return false; continue; }
+    if(board.occ[py*board.W+px]) return false;
+  }
+  return true;
+}
+function stampRect(el,x,y,w,h){
+  for(let dy=0;dy<h;dy++)for(let dx=0;dx<w;dx++) claim(el,x+dx,y+dy);
+}
+
+/* ── modules: pad banks, dot grids, linked pad pairs ── */
+function placeModule(p){
+  const {rnd,W,H}=board;
+  const kind=weightedPick(rnd,[['bank',2],['dots',1.6],['padlink',2.2],['block',1.2]]);
+  const x=1+(rnd()*(W-14))|0, y=1+(rnd()*(H-10))|0;
+  const color=pickColor(p);
+  if(kind==='bank'){                     // stacked horizontal bars
+    const n=2+(rnd()*4)|0, len=3+(rnd()*5)|0;
+    if(!areaFree(x,y,len,n*2,1)) return;
+    const el=newElement(color,'bank');
+    for(let b=0;b<n;b++) stampRect(el,x,y+b*2,len,1);
+  }else if(kind==='dots'){               // pin grid of single dots
+    const c=3+(rnd()*5)|0, r=2+(rnd()*3)|0;
+    if(!areaFree(x,y,c*2,r*2,1)) return;
+    const el=newElement(color,'dots');
+    for(let ry=0;ry<r;ry++)for(let cx=0;cx<c;cx++) claim(el,x+cx*2,y+ry*2);
+  }else if(kind==='padlink'){            // two pads joined by a thick link
+    const s=2+(rnd()*2)|0;
+    const gap=3+(rnd()*5)|0;
+    const vert=rnd()<0.5;
+    const w=vert?s:s*2+gap, h=vert?s*2+gap:s;
+    if(!areaFree(x,y,w,h,1)) return;
+    const el=newElement(color,'padlink');
+    stampRect(el,x,y,s,s);
+    if(vert){
+      stampRect(el,x,y+s+gap,s,s);
+      stampRect(el,x+((s/2)|0),y+s,1,gap);
+    }else{
+      stampRect(el,x+s+gap,y,s,s);
+      stampRect(el,x+s,y+((s/2)|0),gap,1);
+    }
+  }else{                                 // lone big block
+    const s=3+(rnd()*3)|0;
+    if(!areaFree(x,y,s,s,1)) return;
+    const el=newElement(color,'block');
+    stampRect(el,x,y,s,s);
+  }
+}
+
+/* ── walkers: traces that route themselves ── */
+const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
+function spawnWalker(p,fx,fy){
+  const {rnd,W,H}=board;
+  let x=fx??(1+(rnd()*(W-2))|0), y=fy??(1+(rnd()*(H-2))|0);
+  if(!isFree(x,y)) return;
+  const el=newElement(pickColor(p),'trace');
+  claim(el,x,y);
+  board.walkers.push({el,x,y,dir:(rnd()*4)|0,len:1,max:6+(rnd()*Math.max(W,H)*0.5)|0});
+}
+function stepWalker(w,p){
+  const {rnd}=board;
+  for(let hop=0;hop<2;hop++){            // two cells per tick — snappy routing
+    if(rnd()>=p.straight){               // corner
+      w.dir=(w.dir+(rnd()<0.5?1:3))%4;
+    }
+    const [dx,dy]=DIRS[w.dir];
+    const nx=w.x+dx, ny=w.y+dy;
+    if(!isFree(nx,ny)){
+      /* try a turn before giving up */
+      const d2=(w.dir+(rnd()<0.5?1:3))%4;
+      const nx2=w.x+DIRS[d2][0], ny2=w.y+DIRS[d2][1];
+      if(!isFree(nx2,ny2)) return false;
+      w.dir=d2;
+      w.x=nx2; w.y=ny2;
+    }else{
+      w.x=nx; w.y=ny;
+    }
+    claim(w.el,w.x,w.y);
+    if(++w.len>=w.max) return false;
+  }
+  return true;
+}
+function endWalker(w,p){
+  const {rnd}=board;
+  if(rnd()<p.pads){                      // terminate in a solder pad
+    const s=2+(rnd()*(1+p.pads*2))|0;
+    const px=Math.min(board.W-s,Math.max(0,w.x-((s/2)|0)));
+    const py=Math.min(board.H-s,Math.max(0,w.y-((s/2)|0)));
+    for(let dy=0;dy<s;dy++)for(let dx=0;dx<s;dx++){
+      const cx=px+dx, cy=py+dy;
+      if(isFree(cx,cy)) claim(w.el,cx,cy);
+    }
+  }
+}
+
+/* ── turnover: old elements dissolve to make room ── */
+function turnover(p){
+  const cap=0.30+(1-p.turnover)*0.25;
+  if(board.filled/(board.W*board.H)<=cap) return;
+  let oldest=null;
+  for(const el of board.elements)
+    if(!el.dying&&el.cells.length&&(!oldest||el.born<oldest.born)) oldest=el;
+  if(oldest) oldest.dying=performance.now();
+}
+function reapDying(){
+  const now=performance.now();
+  for(const el of board.elements){
+    if(!el.dying||!el.cells.length) continue;
+    if(now-el.dying>900){
+      for(const i of el.cells) board.occ[i]=0;
+      board.filled-=el.cells.length;
+      el.cells.length=0;
+    }
+  }
+}
+
+/* ── one board tick ── */
+function tick(p){
+  const {rnd}=board;
+  state.tick++;
+  /* advance traces */
+  for(let i=board.walkers.length-1;i>=0;i--){
+    const w=board.walkers[i];
+    if(!stepWalker(w,p)){
+      endWalker(w,p);
+      board.walkers.splice(i,1);
+    }
+  }
+  /* spawn new work */
+  const maxActive=2+Math.round(p.spawn*8);
+  if(board.walkers.length<maxActive&&rnd()<0.25+p.spawn*0.6) spawnWalker(p);
+  if(rnd()<p.modules*0.35) placeModule(p);
+  turnover(p);
+  reapDying();
+}
+
+/* ═══════════════════ RENDER — LED panel ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+const ART_W=1080;
+const layer=document.createElement('canvas');
+const lctx=layer.getContext('2d');
+
+function artHeight(fmt){ return fmt==='panel'?540:1080; }
+
+function fitCanvas(){
+  const H=artHeight(state.format);
+  const stage=document.querySelector('.stage');
+  const availW=stage.clientWidth-80, availH=stage.clientHeight-80;
+  const scale=Math.min(availW/ART_W,availH/H,1);
+  canvas.style.width=(ART_W*scale)+'px';
+  canvas.style.height=(H*scale)+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const bw=Math.round(ART_W*scale*dpr), bh=Math.round(H*scale*dpr);
+  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; }
+}
+
+function render(g,Wpx,Hpx,p,tNow){
+  const pal=PALETTES[p.palette];
+  const {W,H,occ,elements}=board;
+  const cs=Wpx/W;
+  g.fillStyle=pal.bg; g.fillRect(0,0,Wpx,Hpx);
+
+  /* unlit LEDs — the panel is a real dot matrix */
+  g.fillStyle=pal.unlit;
+  const ur=cs*0.13;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    g.beginPath(); g.arc((x+0.5)*cs,(y+0.5)*cs,ur,0,TAU); g.fill();
+  }
+
+  /* lit LEDs on the crisp layer */
+  if(layer.width!==Wpx||layer.height!==Hpx){ layer.width=Wpx; layer.height=Hpx; }
+  lctx.clearRect(0,0,Wpx,Hpx);
+  const r=cs*p.dotsize*0.5;
+  for(const el of elements){
+    if(!el.cells.length) continue;
+    let a=1;
+    if(el.dying) a=Math.max(0,1-(tNow-el.dying)/900);
+    /* fresh elements flicker in hot */
+    const age=state.tick-el.born;
+    const hot=age<3?1.35:1;
+    const [cr,cg,cb]=el.color;
+    lctx.fillStyle=`rgba(${Math.min(255,cr*hot)|0},${Math.min(255,cg*hot)|0},${Math.min(255,cb*hot)|0},${a.toFixed(3)})`;
+    for(const i of el.cells){
+      const x=i%W, y=(i/W)|0;
+      lctx.beginPath();
+      lctx.arc((x+0.5)*cs,(y+0.5)*cs,r,0,TAU);
+      lctx.fill();
+    }
+  }
+  /* routing heads burn bright */
+  lctx.fillStyle='rgba(255,255,255,0.85)';
+  for(const w of board.walkers){
+    lctx.beginPath();
+    lctx.arc((w.x+0.5)*cs,(w.y+0.5)*cs,r*0.8,0,TAU);
+    lctx.fill();
+  }
+
+  g.drawImage(layer,0,0);
+  /* bloom */
+  if(p.glow>0.02){
+    g.save();
+    g.globalCompositeOperation='lighter';
+    g.globalAlpha=Math.min(1,0.25+p.glow*0.75);
+    g.filter=`blur(${(2+p.glow*9)*(Wpx/1080)}px)`;
+    g.drawImage(layer,0,0);
+    g.restore();
+  }
+  /* vignette */
+  const vig=g.createRadialGradient(Wpx/2,Hpx/2,Math.min(Wpx,Hpx)*0.45,Wpx/2,Hpx/2,Math.max(Wpx,Hpx)*0.72);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.42)');
+  g.fillStyle=vig; g.fillRect(0,0,Wpx,Hpx);
+}
+
+/* ═══════════════════ LOOP ═══════════════════ */
+let acc=0, lastT=performance.now();
+function frame(tNow){
+  const p=params();
+  fitCanvas();
+  const dt=Math.min(100,tNow-lastT); lastT=tNow;
+  if(state.playing){
+    acc+=dt;
+    const interval=1000/p.speed;
+    let guard=0;
+    while(acc>=interval&&guard++<4){ tick(p); acc-=interval; }
+  }
+  render(ctx,canvas.width,canvas.height,p,tNow);
+  document.getElementById('statTick').textContent=state.tick;
+  document.getElementById('statFill').textContent=((board.filled/(board.W*board.H))*100).toFixed(0)+'%';
+  requestAnimationFrame(frame);
+}
+
+/* ═══════════════════ TOUCH — solder a trace where you point ═══ */
+canvas.addEventListener('pointerdown',ev=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=((ev.clientX-rect.left)/rect.width*board.W)|0;
+  const y=((ev.clientY-rect.top)/rect.height*board.H)|0;
+  const p=params();
+  for(let k=0;k<3;k++) spawnWalker(p,
+    Math.max(1,Math.min(board.W-2,x+((board.rnd()*5)|0)-2)),
+    Math.max(1,Math.min(board.H-2,y+((board.rnd()*5)|0)-2)));
+});
+
+/* ═══════════════════ EXPORT / RECORD ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const H=artHeight(p.format);
+  const off=document.createElement('canvas');
+  off.width=2160; off.height=H*2;
+  render(off.getContext('2d'),2160,H*2,p,performance.now());
+  off.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-circuit-'+state.seed.toString(16).padStart(8,'0')+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+let recorder=null;
+function recordClip(){
+  const btn=document.getElementById('btnRecord');
+  if(recorder) return;
+  const stream=canvas.captureStream(30);
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
+  const chunks=[];
+  recorder.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  recorder.onstop=()=>{
+    const blob=new Blob(chunks,{type:'video/webm'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-circuit-'+state.seed.toString(16).padStart(8,'0')+'.webm';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    recorder=null;
+    btn.classList.remove('is-rec'); btn.disabled=false; btn.textContent='⏺ Rec 6s';
+  };
+  btn.classList.add('is-rec'); btn.disabled=true; btn.textContent='● recording';
+  recorder.start();
+  setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(out){
+    if(['spawn','straight','pads','modules','turnover','glow','dotsize'].includes(el.id)) out.textContent=v+'%';
+    else if(el.id==='speed') out.textContent=v+'hz';
+    else if(el.id==='grid') out.textContent=v+'px';
+    else out.textContent=v;
+  }
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{
+    syncSlider(el);
+    if(id==='grid') reseed(params());
+  });
+  syncSlider(el);
+});
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+  });
+}
+wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
+wireSeg('segFormat','fmt',v=>{ state.format=v; reseed(params()); });
+
+function newSeed(){
+  state.seed=(Math.random()*0xffffffff)>>>0;
+  reseed(params());
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+document.getElementById('btnRandom').addEventListener('click',newSeed);
+document.getElementById('btnPlay').addEventListener('click',()=>{
+  state.playing=!state.playing;
+  document.getElementById('btnPlay').textContent=state.playing?'❚❚ Pause':'▶ Play';
+});
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('btnRecord').addEventListener('click',recordClip);
+window.addEventListener('keydown',e=>{
+  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); newSeed(); }
+  if(e.key==='e' && !e.target.closest('input')) exportPNG();
+  if(e.key==='p' && !e.target.closest('input')) document.getElementById('btnPlay').click();
+});
+
+/* boot */
+reseed(params());
+{
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
