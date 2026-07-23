@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Signal Scope" subtitle="Live phosphor vector display — dual-beam harmonograph with audible signal pair" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — signal scope</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:32px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#051208}
+
+.rack{width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+
+.seed-row{display:flex;gap:8px}
+.seed-read{
+  flex:1;display:flex;align-items:center;justify-content:space-between;
+  border:1px solid var(--border);padding:0 12px;height:36px;
+  font-size:12px;letter-spacing:.08em;color:var(--white-soft);background:var(--black-panel);
+}
+.seed-read .k{color:var(--white-dim);font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+.seed-read .v{color:var(--cyan)}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+button.is-rec{background:var(--pink);border-color:var(--pink);color:var(--black)}
+button:disabled{opacity:.5;cursor:default}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
+  --p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,
+input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+.seg{display:flex;border:1px solid var(--border-hi)}
+.seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
+.seg button:last-child{border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black);flex-wrap:wrap}
+.actions button{flex:1;height:42px;min-width:86px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:860px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:20px;min-height:60vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Signal Scope</h1>
+      <div class="sub">dual-beam vector display · live parameter rack</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span>0x4F3A</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="canvas preview">
+      <span class="corner tl">FRAME ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerSeed">seed —</span>
+      <span class="corner br" id="cornerRatio">X:Y —</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
+          <div class="seed-row">
+            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <button id="btnRandom" title="new phase constellation">⟳ Reseed</button>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Signal</h2><span class="coord">S.01</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Freq X</span><span class="val" data-val="freqx"></span></div>
+            <input type="range" id="freqx" min="1" max="12" step="1" value="3">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Freq Y</span><span class="val" data-val="freqy"></span></div>
+            <input type="range" id="freqy" min="1" max="12" step="1" value="4">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Detune</span><span class="val" data-val="detune"></span></div>
+            <input type="range" id="detune" min="-100" max="100" step="1" value="18">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Harmonics</span><span class="val" data-val="harm"></span></div>
+            <input type="range" id="harm" min="0" max="100" step="1" value="30">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">FM wobble</span><span class="val" data-val="fm"></span></div>
+            <input type="range" id="fm" min="0" max="100" step="1" value="25">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Beam</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Persistence</span><span class="val" data-val="trail"></span></div>
+            <input type="range" id="trail" min="0" max="100" step="1" value="62">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Beam width</span><span class="val" data-val="beam"></span></div>
+            <input type="range" id="beam" min="0.5" max="4" step="0.1" value="1.4">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Glow</span><span class="val" data-val="glow"></span></div>
+            <input type="range" id="glow" min="0" max="100" step="1" value="55">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Sweep speed</span><span class="val" data-val="speed"></span></div>
+            <input type="range" id="speed" min="1" max="100" step="1" value="40">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Palette</span></div>
+            <div class="seg" id="segPalette" role="group" aria-label="palette">
+              <button data-pal="scope" class="is-active">Scope</button>
+              <button data-pal="plotter">Plotter</button>
+              <button data-pal="digidelic">Digidelic</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Sound</span></div>
+            <div class="seg" id="segSound" role="group" aria-label="sound">
+              <button data-snd="off" class="is-active">Off</button>
+              <button data-snd="on">On</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnPlay">❚❚ Pause</button>
+        <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>scopegen v1.0</b></div>
+    <div class="cell">sweep <b id="statSweep">0</b></div>
+    <div class="cell">ratio <b id="statRatio">—</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════ RNG ═══════════════════ */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+const TAU=Math.PI*2;
+
+/* ═══════════════════ PALETTES ═══════════════════ */
+const PALETTES={
+  scope:{
+    bg:'#051208', grid:'rgba(80,200,140,0.10)',
+    beam1:[80,255,160], beam2:[190,255,120], head:[235,255,240],
+    fadeAlphaMin:0.008, blend:'lighter',
+  },
+  plotter:{
+    bg:'#efe9dc', grid:'rgba(30,28,22,0.10)',
+    beam1:[30,28,22], beam2:[200,64,47], head:[30,28,22],
+    fadeAlphaMin:0.004, blend:'source-over',
+  },
+  digidelic:{
+    bg:'#070708', grid:'rgba(255,255,255,0.07)',
+    beam1:[0,217,255], beam2:[255,45,135], head:[255,255,255],
+    fadeAlphaMin:0.008, blend:'lighter',
+  },
+};
+
+/* ═══════════════════ STATE ═══════════════════ */
+const state={
+  seed:(Math.random()*0xffffffff)>>>0,
+  palette:'scope',
+  playing:true,
+  sound:false,
+  theta:0, sweeps:0,
+};
+const scope={ ph:[0,0,0,0], m2x:3, m2y:5 };   // per-seed phase constellation + harmonic multipliers
+function applySeed(){
+  const rnd=mulberry32(state.seed);
+  scope.ph=[rnd()*TAU,rnd()*TAU,rnd()*TAU,rnd()*TAU];
+  scope.m2x=2+Math.floor(rnd()*4);            // harmonic partial multipliers 2–5
+  scope.m2y=2+Math.floor(rnd()*4);
+  state.theta=0; state.sweeps=0;
+  trailInitNeeded=true;
+}
+
+const sliders=['freqx','freqy','detune','harm','fm','trail','beam','glow','speed'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  return {
+    fx:g('freqx'), fy:g('freqy'), detune:g('detune')/100,
+    harm:g('harm')/100, fm:g('fm')/100,
+    trail:g('trail')/100, beam:g('beam'), glow:g('glow')/100,
+    speed:g('speed')/100, palette:state.palette,
+  };
+}
+
+/* ═══════════════════ SIGNAL ═══════════════════ */
+function signal(th,p){
+  const [p1,p2,p3,p4]=scope.ph;
+  const h=p.harm*0.6;
+  const fmx=Math.sin(th*0.037+p3)*p.fm*0.55;
+  const fmy=Math.sin(th*0.029+p4)*p.fm*0.55;
+  const fy=p.fy+p.detune*0.05;
+  const x=(Math.sin(p.fx*th+p1+fmx)+h*Math.sin(scope.m2x*p.fx*th*0.5+p3))/(1+h);
+  const y=(Math.sin(fy*th+p2+fmy)+h*Math.sin(scope.m2y*fy*th*0.5+p4))/(1+h);
+  return [x,y];
+}
+
+/* ═══════════════════ RENDER ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+const ART=1080;
+const trail=document.createElement('canvas');   // persistent phosphor surface
+const tctx=trail.getContext('2d');
+let trailInitNeeded=true;
+
+function fitCanvas(){
+  const stage=document.querySelector('.stage');
+  const avail=Math.min(stage.clientWidth-80,stage.clientHeight-80,ART);
+  canvas.style.width=avail+'px';
+  canvas.style.height=avail+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const bs=Math.round(avail*dpr);
+  if(canvas.width!==bs){
+    canvas.width=canvas.height=bs;
+    trail.width=trail.height=bs;
+    trailInitNeeded=true;
+  }
+}
+
+function beamStyle(c,a){ return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+
+function drawBeams(g,size,p,pal,thetaFrom,steps,dth){
+  /* advance the beams and lay phosphor onto the trail surface */
+  g.globalCompositeOperation=pal.blend;
+  g.lineCap='round'; g.lineJoin='round';
+  const cx=size/2, cy=size/2, R=size*0.42;
+  for(const [beam,phase] of [[pal.beam1,0],[pal.beam2,Math.PI/2]]){
+    g.strokeStyle=beamStyle(beam,0.5);
+    g.lineWidth=p.beam*(size/1080);
+    g.beginPath();
+    let th=thetaFrom;
+    let [x0,y0]=signal(th+phase,p);
+    g.moveTo(cx+x0*R,cy+y0*R);
+    for(let s2=0;s2<steps;s2++){
+      th+=dth;
+      const [x,y]=signal(th+phase,p);
+      g.lineTo(cx+x*R,cy+y*R);
+    }
+    g.stroke();
+  }
+  g.globalCompositeOperation='source-over';
+}
+
+function drawGraticule(g,size,pal){
+  g.strokeStyle=pal.grid; g.lineWidth=Math.max(1,size/1080);
+  const step=size/10;
+  for(let i=1;i<10;i++){
+    g.beginPath(); g.moveTo(i*step,0); g.lineTo(i*step,size); g.stroke();
+    g.beginPath(); g.moveTo(0,i*step); g.lineTo(size,i*step); g.stroke();
+  }
+  g.beginPath(); g.arc(size/2,size/2,size*0.42,0,TAU); g.stroke();
+  g.beginPath(); g.moveTo(size/2-8,size/2); g.lineTo(size/2+8,size/2);
+  g.moveTo(size/2,size/2-8); g.lineTo(size/2,size/2+8); g.stroke();
+}
+
+function render(g,size,p,tNow){
+  const pal=PALETTES[p.palette];
+  g.fillStyle=pal.bg; g.fillRect(0,0,size,size);
+  drawGraticule(g,size,pal);
+  g.drawImage(trail,0,0,size,size);
+  /* glow pass */
+  if(p.glow>0.02&&pal.blend==='lighter'){
+    g.save();
+    g.globalCompositeOperation='lighter';
+    g.globalAlpha=Math.min(1,p.glow*(0.85+0.15*Math.sin(tNow*0.0011)));
+    g.filter=`blur(${(3+p.glow*10)*(size/1080)}px)`;
+    g.drawImage(trail,0,0,size,size);
+    g.restore();
+  }
+  /* beam heads */
+  const cx=size/2, cy=size/2, R=size*0.42;
+  const pals=[[PALETTES[p.palette].beam1,0],[PALETTES[p.palette].beam2,Math.PI/2]];
+  for(const [beam,phase] of pals){
+    const [x,y]=signal(state.theta+phase,p);
+    const grd=g.createRadialGradient(cx+x*R,cy+y*R,0,cx+x*R,cy+y*R,size*0.012);
+    grd.addColorStop(0,beamStyle(pal.head,0.9));
+    grd.addColorStop(0.4,beamStyle(beam,0.7));
+    grd.addColorStop(1,beamStyle(beam,0));
+    g.fillStyle=grd;
+    g.beginPath(); g.arc(cx+x*R,cy+y*R,size*0.012,0,TAU); g.fill();
+  }
+  /* vignette */
+  const vig=g.createRadialGradient(size/2,size/2,size*0.4,size/2,size/2,size*0.75);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.45)');
+  g.fillStyle=vig; g.fillRect(0,0,size,size);
+}
+
+/* ═══════════════════ AUDIO — the plotted pair, audible ═══════════════════ */
+let audio=null;
+function audioSync(p){
+  try{
+    if(!state.sound){
+      if(audio){ audio.g.gain.value=0; }
+      return;
+    }
+    if(!audio){
+      const actx=new (window.AudioContext||window.webkitAudioContext)();
+      const g=actx.createGain(); g.gain.value=0;
+      const o1=actx.createOscillator(), o2=actx.createOscillator();
+      const p1=actx.createStereoPanner(), p2=actx.createStereoPanner();
+      p1.pan.value=-0.6; p2.pan.value=0.6;
+      o1.type='sine'; o2.type='sine';
+      o1.connect(p1); p1.connect(g);
+      o2.connect(p2); p2.connect(g);
+      g.connect(actx.destination);
+      o1.start(); o2.start();
+      audio={actx,g,o1,o2};
+    }
+    if(audio.actx.state==='suspended') audio.actx.resume();
+    audio.g.gain.value=0.05;
+    audio.o1.frequency.value=55*p.fx;
+    audio.o2.frequency.value=55*(p.fy+p.detune*0.05);
+  }catch{ /* no audio here */ }
+}
+
+/* ═══════════════════ LOOP ═══════════════════ */
+let lastT=performance.now();
+function frame(tNow){
+  const p=params();
+  fitCanvas();
+  const size=canvas.width;
+  if(trailInitNeeded){
+    tctx.clearRect(0,0,size,size);
+    trailInitNeeded=false;
+  }
+  const dt=Math.min(80,tNow-lastT); lastT=tNow;
+  if(state.playing){
+    /* fade the phosphor — persistence slider sets the memory */
+    const pal=PALETTES[p.palette];
+    const fade=pal.fadeAlphaMin+Math.pow(1-p.trail,2)*0.06;
+    tctx.save();
+    tctx.globalCompositeOperation='destination-out';
+    tctx.fillStyle=`rgba(0,0,0,${fade})`;
+    tctx.fillRect(0,0,size,size);
+    tctx.restore();
+    /* advance the sweep */
+    const dth=0.0025;
+    const steps=Math.max(8,Math.round((10+p.speed*150)*dt/16.7));
+    drawBeams(tctx,size,p,pal,state.theta,steps,dth);
+    state.theta+=steps*dth;
+    state.sweeps=(state.theta/TAU)|0;
+  }
+  render(ctx,size,p,tNow);
+  audioSync(p);
+  document.getElementById('statSweep').textContent=state.sweeps;
+  const ratio=p.fx+':'+(p.detune?p.fy+'~':p.fy);
+  document.getElementById('statRatio').textContent=ratio;
+  document.getElementById('cornerRatio').textContent='X:Y '+ratio;
+  requestAnimationFrame(frame);
+}
+
+/* ═══════════════════ EXPORT / RECORD ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=off.height=2160;
+  const octx=off.getContext('2d');
+  render(octx,2160,p,performance.now());
+  off.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-scope-'+state.seed.toString(16).padStart(8,'0')+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+let recorder=null;
+function recordClip(){
+  const btn=document.getElementById('btnRecord');
+  if(recorder) return;
+  const stream=canvas.captureStream(30);
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
+  const chunks=[];
+  recorder.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  recorder.onstop=()=>{
+    const blob=new Blob(chunks,{type:'video/webm'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-scope-'+state.seed.toString(16).padStart(8,'0')+'.webm';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    recorder=null;
+    btn.classList.remove('is-rec'); btn.disabled=false; btn.textContent='⏺ Rec 6s';
+  };
+  btn.classList.add('is-rec'); btn.disabled=true; btn.textContent='● recording';
+  recorder.start();
+  setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(out){
+    if(['harm','fm','trail','glow','speed'].includes(el.id)) out.textContent=v+'%';
+    else if(el.id==='detune') out.textContent=(v>0?'+':'')+v+'¢';
+    else if(el.id==='beam') out.textContent=v.toFixed(1)+'px';
+    else out.textContent=v;
+  }
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{ syncSlider(el); });
+  syncSlider(el);
+});
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+  });
+}
+wireSeg('segPalette','pal',v=>{
+  state.palette=v;
+  canvas.style.background=PALETTES[v].bg;
+  trailInitNeeded=true;
+});
+wireSeg('segSound','snd',v=>{ state.sound=v==='on'; audioSync(params()); });
+
+function newSeed(){
+  state.seed=(Math.random()*0xffffffff)>>>0;
+  applySeed();
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+document.getElementById('btnRandom').addEventListener('click',newSeed);
+document.getElementById('btnPlay').addEventListener('click',()=>{
+  state.playing=!state.playing;
+  document.getElementById('btnPlay').textContent=state.playing?'❚❚ Pause':'▶ Play';
+});
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('btnRecord').addEventListener('click',recordClip);
+window.addEventListener('keydown',e=>{
+  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); newSeed(); }
+  if(e.key==='e' && !e.target.closest('input')) exportPNG();
+  if(e.key==='p' && !e.target.closest('input')) document.getElementById('btnPlay').click();
+});
+
+/* boot */
+applySeed();
+{
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
