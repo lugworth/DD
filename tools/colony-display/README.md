@@ -23,13 +23,17 @@ crossfades toward the fully blurred pass for the soft metaball-glow mode
 seen in the reference. Touched cells carry a heat value that tints them
 toward the splash color while it fades.
 
-Beneath the dots runs a **pond wave field** (height/velocity ripple
-simulation with reflecting edges). Every touch plunges a gaussian into it:
-big round wavefronts expand across the screen, bounce off the walls, lift
-the brightness and swell the size of the dots they roll through, and stir
-the colony — cells on a passing crest sputter to life. Dragging pulls a
-wake. The wave field steps every frame regardless of the life tempo, so
-the surface always answers immediately, even paused.
+The ripple quality lives **in the colonies themselves**. Two crossing
+slow water waves undulate the brightness and size of every lit dot, so
+colony bodies shimmer like liquid. Beneath them runs a height/velocity
+wave field excited by the life of the colonies — every cell birth drops a
+small pulse, every death a dip — so soft ripples radiate through the blobs
+as they grow and churn. Where the water is moving, the phosphor refracts
+toward a **spectral second hue** (icy blue in the green palette). Now and
+then a colony **transmits**: a spontaneous hot pulse flares and ripples
+outward on its own. A dim palette-colored **abyss** drifts slowly beneath
+the matrix, and the bloom breathes on a ~7-second heartbeat. Touch/click
+still splashes a new colony straight into the simulation.
 
 ## Parameter rack
 
@@ -44,7 +48,7 @@ the surface always answers immediately, even paused.
 | | Diffusion | Crisp dots ↔ soft blurred glow |
 | | Glow | Bloom intensity |
 | | Dot size | Dot diameter within its cell |
-| | Ripple power | Plunge depth, wave brightness gain, and colony stirring of the pond field |
+| | Undulation | Watery shimmer of the colonies: wave amplitude, ripple gain, spectral refraction |
 | Style | Palette | `Phosphor` (green on teal glass) · `Amber` · `Digidelic` (electric yellow on void) |
 | | Sound | Tiny colony synth — births trigger pentatonic blips, density drives the filter |
 
