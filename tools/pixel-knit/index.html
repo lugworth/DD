@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Pixel Knit" subtitle="Texture photo + subject video → animated pixel-knit pattern sheet" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — pixel knit</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:28px 28px 46px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#faf7f2;touch-action:none;cursor:grab}
+canvas#art.is-drag{cursor:grabbing}
+.stage .hint{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  color:var(--white-dim);font-size:10px;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;text-align:center;
+}
+
+.rack{width:352px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+.sect-note{color:var(--white-dim);font-size:9px;letter-spacing:.1em;margin-top:8px;line-height:1.6}
+
+/* ── drop slots ── */
+.slot{
+  position:relative;border:1px dashed var(--border-hi);background:var(--black-panel);
+  min-height:96px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  cursor:pointer;transition:border-color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap);
+}
+.slot:hover,.slot.is-over{border-color:var(--yellow);background:#15150f}
+.slot .ph{color:var(--white-dim);font-size:10px;letter-spacing:.16em;text-transform:uppercase;text-align:center;padding:16px;line-height:1.8}
+.slot .ph b{display:block;color:var(--white-soft);font-weight:400;margin-bottom:4px}
+.slot canvas,.slot img,.slot video{display:block;width:100%;height:100%;object-fit:cover;max-height:132px}
+.slot .badge{
+  position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:8px;
+  padding:5px 8px;background:rgba(0,0,0,.72);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--white-soft);
+}
+.slot .badge .grow{flex:1;color:var(--white-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot .badge button{height:20px;padding:0 8px;font-size:9px;letter-spacing:.1em;border-color:rgba(255,255,255,.3)}
+.slot .badge button.kill{background:var(--pink);border-color:var(--pink);color:var(--black)}
+.slot input[type=file]{display:none}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+button.is-rec{background:var(--pink);border-color:var(--pink);color:var(--black)}
+button:disabled{opacity:.5;cursor:default}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;--p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+input[type=text]{
+  width:100%;height:32px;background:var(--black-panel);border:1px solid var(--border);
+  color:var(--white-soft);font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;padding:0 10px;
+}
+input[type=text]:focus{outline:none;border-color:var(--yellow)}
+
+.checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px}
+.chk{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--white-soft)}
+.chk input{appearance:none;-webkit-appearance:none;width:14px;height:14px;border:1px solid var(--border-hi);background:var(--black-panel);cursor:pointer;flex:none}
+.chk input:checked{background:var(--yellow);border-color:var(--yellow)}
+
+.seg{display:flex;border:1px solid var(--border-hi);flex-wrap:wrap}
+.seg button{flex:1 1 40%;border:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.12em}
+.seg button:last-child{border-right:0}
+.seg.wide button{flex:1 1 100%;border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black);flex-wrap:wrap}
+.actions button{flex:1;height:42px;min-width:86px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:900px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:18px;min-height:60vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Pixel Knit</h1>
+      <div class="sub">texture × subject · pattern sheet compositor</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span id="headSize">900 × 1200 px</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="pattern sheet preview">
+      <span class="corner tl">SHEET ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerSrc">source · demo</span>
+      <span class="corner br" id="cornerGrid">—</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+      <span class="hint">upper half ▶ scroll to scale the motif · lower half ▶ drag &amp; scroll to place the texture</span>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>1 · Texture plate</h2><span class="coord">S.00</span></div>
+          <div class="slot" id="slotTex" tabindex="0" role="button" aria-label="upload texture image">
+            <div class="ph"><b>Drop / click — texture image</b>colour &amp; material source · jpg png webp</div>
+            <input type="file" id="fileTex" accept="image/*">
+          </div>
+          <div class="sect-note">Paste with ⌘/Ctrl+V too. The lower panel shows this plate full-bleed — drag it there to reframe.</div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>2 · Subject mask</h2><span class="coord">S.01</span></div>
+          <div class="slot" id="slotSub" tabindex="0" role="button" aria-label="upload subject video or image">
+            <div class="ph"><b>Drop / click — subject clip</b>mp4 webm mov · or a still image</div>
+            <input type="file" id="fileSub" accept="video/*,image/*">
+          </div>
+          <div class="sect-note">The clip is centre-cropped, binarised, and pixelated into the knit grid — it becomes the shape the texture shows through.</div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Matrix</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Grid density</span><span class="val" data-val="grid"></span></div>
+            <input type="range" id="grid" min="9" max="64" step="1" value="21">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Threshold</span><span class="val" data-val="thresh"></span></div>
+            <input type="range" id="thresh" min="1" max="254" step="1" value="150">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Stitch gap</span><span class="val" data-val="gap"></span></div>
+            <input type="range" id="gap" min="0" max="60" step="1" value="8">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Stitch round</span><span class="val" data-val="round"></span></div>
+            <input type="range" id="round" min="0" max="100" step="1" value="0">
+          </div>
+          <div class="checks">
+            <label class="chk"><input type="checkbox" id="invert"> Invert fg/bg</label>
+            <label class="chk"><input type="checkbox" id="outline"> Contour only</label>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Symmetry</h2><span class="coord">S.03</span></div>
+          <div class="seg" id="segSym" role="group" aria-label="symmetry">
+            <button data-sym="none" class="is-active">No symmetry</button>
+            <button data-sym="lr">↔ Mirror L/R</button>
+            <button data-sym="ud">↕ Mirror U/D</button>
+            <button data-sym="quad">⊞ Four-way</button>
+            <button data-sym="kaleido" style="flex:1 1 100%;border-right:0">◈ Kaleidoscope ×8</button>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Sheet</h2><span class="coord">S.04</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Motif scale</span><span class="val" data-val="scale"></span></div>
+            <input type="range" id="scale" min="20" max="100" step="1" value="62">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Texture zoom</span><span class="val" data-val="zoom"></span></div>
+            <input type="range" id="zoom" min="100" max="320" step="1" value="118">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Clip speed</span><span class="val" data-val="speed"></span></div>
+            <input type="range" id="speed" min="10" max="200" step="5" value="100">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Layout</span></div>
+            <div class="seg" id="segLayout" role="group" aria-label="layout">
+              <button data-lay="split" class="is-active">Split · 24px</button>
+              <button data-lay="bleed">Edge bleed</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Paper</span></div>
+            <div class="seg" id="segPaper" role="group" aria-label="paper">
+              <button data-paper="bone" class="is-active">Bone</button>
+              <button data-paper="void">Void</button>
+              <button data-paper="acid">Acid</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Caption</h2><span class="coord">S.05</span></div>
+          <div class="param">
+            <input type="text" id="cap1" value="Ethereal. Meadow. Flight — dancing through a floral haze">
+          </div>
+          <div class="param">
+            <input type="text" id="cap2" value="Botanical &amp; Winged Motif · Colorway: Azure, Blue, Blush &amp; Gold">
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnPlay">❚❚ Pause</button>
+        <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>knitgen v1.0</b></div>
+    <div class="cell">stitches <b id="statStitch">0</b></div>
+    <div class="cell">frame <b id="statFrame">0</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════ CONST ═══════════════════ */
+const ART_W=900, ART_H=1200;
+const TAU=Math.PI*2;
+const PAPERS={
+  bone:{ bg:'#faf7f2', dot:'rgba(30,26,20,0.16)', ink:'#1b1a17', rule:'rgba(30,26,20,0.22)' },
+  void:{ bg:'#08080a', dot:'rgba(255,255,255,0.14)', ink:'#f2f2f0', rule:'rgba(255,255,255,0.2)' },
+  acid:{ bg:'#eaff00', dot:'rgba(0,0,0,0.22)', ink:'#0a0a0a', rule:'rgba(0,0,0,0.3)' },
+};
+
+/* ═══════════════════ STATE ═══════════════════ */
+const state={
+  paper:'bone', layout:'split', sym:'none',
+  playing:true, frame:0, stitches:0,
+  tex:null,                       // {el, w, h, name}  — HTMLImageElement
+  sub:null,                       // {el, w, h, name, kind:'video'|'image'}
+  texPan:{x:0,y:0},               // normalised pan offset of the texture plate
+};
+const sliders=['grid','thresh','gap','round','scale','zoom','speed'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  return {
+    grid:g('grid')|0, thresh:g('thresh'), gap:g('gap')/100, round:g('round')/100,
+    scale:g('scale')/100, zoom:g('zoom')/100, speed:g('speed')/100,
+    invert:document.getElementById('invert').checked,
+    outline:document.getElementById('outline').checked,
+    cap1:document.getElementById('cap1').value,
+    cap2:document.getElementById('cap2').value,
+    paper:state.paper, layout:state.layout, sym:state.sym,
+  };
+}
+
+/* ═══════════════════ DEMO SOURCES ═══════════════════
+   Until something is dropped in, the tool runs on a procedural
+   flower-bed plate and a procedural flapping subject, so the sheet
+   is never blank and the controls always have something to chew on. */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+const demoTex=document.createElement('canvas');
+(function buildDemoTexture(){
+  demoTex.width=900; demoTex.height=1200;
+  const g=demoTex.getContext('2d');
+  const rnd=mulberry32(0x5EED10);
+  const bg=g.createLinearGradient(0,0,0,1200);
+  bg.addColorStop(0,'#0d1b12'); bg.addColorStop(0.55,'#132414'); bg.addColorStop(1,'#0a1410');
+  g.fillStyle=bg; g.fillRect(0,0,900,1200);
+  /* foliage */
+  for(let i=0;i<420;i++){
+    const x=rnd()*900, y=200+rnd()*1000, l=40+rnd()*160, a=(-0.5+rnd())*1.2;
+    g.strokeStyle=`hsl(${95+rnd()*40} ${30+rnd()*35}% ${12+rnd()*26}%)`;
+    g.lineWidth=1+rnd()*4;
+    g.beginPath(); g.moveTo(x,y); g.quadraticCurveTo(x+Math.sin(a)*l*0.5,y-l*0.6,x+Math.sin(a)*l,y-l); g.stroke();
+  }
+  /* blooms */
+  const petals=[['#ff3b30',9],['#ff86a8',7],['#ffd166',4],['#5b8cff',3],['#f4f1ea',3],['#c05cff',2]];
+  let total=0; for(const p of petals) total+=p[1];
+  for(let i=0;i<190;i++){
+    let r=rnd()*total, col='#ff3b30';
+    for(const p of petals){ r-=p[1]; if(r<=0){ col=p[0]; break; } }
+    const x=rnd()*900, y=120+rnd()*1080, R=10+Math.pow(rnd(),1.7)*54;
+    const n=5+((rnd()*4)|0);
+    g.save(); g.translate(x,y); g.rotate(rnd()*TAU);
+    for(let p=0;p<n;p++){
+      g.rotate(TAU/n);
+      g.fillStyle=col; g.globalAlpha=0.72+rnd()*0.28;
+      g.beginPath(); g.ellipse(R*0.55,0,R*0.55,R*0.34,0,0,TAU); g.fill();
+    }
+    g.globalAlpha=1;
+    g.fillStyle=rnd()<0.5?'#2a1d0b':'#f7e7a8';
+    g.beginPath(); g.arc(0,0,R*0.2,0,TAU); g.fill();
+    g.restore();
+  }
+  /* haze */
+  const hz=g.createRadialGradient(450,520,60,450,600,760);
+  hz.addColorStop(0,'rgba(255,220,235,0.10)'); hz.addColorStop(1,'rgba(0,0,0,0.34)');
+  g.fillStyle=hz; g.fillRect(0,0,900,1200);
+})();
+
+const demoSub=document.createElement('canvas');
+demoSub.width=demoSub.height=320;
+function drawDemoSubject(t){
+  /* a flapping moth-ish silhouette: dark subject on a white field, which is
+     exactly what the binariser expects from a cut-out clip */
+  const g=demoSub.getContext('2d');
+  g.fillStyle='#fff'; g.fillRect(0,0,320,320);
+  const flap=Math.sin(t*0.0042);
+  const cx=160, cy=162+Math.sin(t*0.0016)*9;
+  g.save(); g.translate(cx,cy); g.rotate(Math.sin(t*0.0011)*0.1);
+  g.fillStyle='#101014';
+  const spread=0.74+flap*0.24;                  // wings open and close
+  for(const s of [-1,1]){
+    g.save(); g.scale(s*spread,1);
+    g.beginPath(); g.ellipse(72,-40,70,50,-0.22,0,TAU); g.fill();   // upper wing
+    g.beginPath(); g.ellipse(52,46,50,40,0.28,0,TAU); g.fill();     // lower wing
+    g.restore();
+  }
+  g.beginPath(); g.ellipse(0,6,11,58,0,0,TAU); g.fill();     // body
+  g.beginPath(); g.arc(0,-52,14,0,TAU); g.fill();            // head
+  g.lineWidth=5; g.strokeStyle='#101014'; g.lineCap='round';
+  for(const s of [-1,1]){                                     // antennae
+    g.beginPath(); g.moveTo(s*5,-60);
+    g.quadraticCurveTo(s*32,-98,s*(54-flap*12),-106);
+    g.stroke();
+  }
+  g.restore();
+}
+
+/* ═══════════════════ MASK PIPELINE ═══════════════════ */
+const sampler=document.createElement('canvas');       // subject frame → N×N
+const sctx=sampler.getContext('2d',{willReadFrequently:true});
+
+function subjectSource(t){
+  if(state.sub){
+    const s=state.sub;
+    const w=s.kind==='video'?(s.el.videoWidth||s.w):s.el.naturalWidth||s.w;
+    const h=s.kind==='video'?(s.el.videoHeight||s.h):s.el.naturalHeight||s.h;
+    if(w&&h) return {el:s.el,w,h};
+  }
+  drawDemoSubject(t);
+  return {el:demoSub,w:320,h:320};
+}
+
+/* centre-crop "cover" of the source into an N×N buffer, then threshold */
+function buildMask(p,t){
+  const N=p.grid;
+  if(sampler.width!==N){ sampler.width=sampler.height=N; }
+  const src=subjectSource(t);
+  sctx.imageSmoothingEnabled=true;
+  sctx.fillStyle='#fff'; sctx.fillRect(0,0,N,N);
+  const side=Math.min(src.w,src.h);
+  try{
+    sctx.drawImage(src.el,(src.w-side)/2,(src.h-side)/2,side,side,0,0,N,N);
+  }catch{ /* video not ready yet — keep the blank field */ }
+  const d=sctx.getImageData(0,0,N,N).data;
+  let mask=new Uint8Array(N*N);
+  for(let i=0,px=0;i<mask.length;i++,px+=4){
+    const lum=0.2126*d[px]+0.7152*d[px+1]+0.0722*d[px+2];
+    const alpha=d[px+3];
+    let on=alpha>24&&lum<p.thresh;                 // dark-on-light subject
+    if(p.invert) on=!on;
+    mask[i]=on?1:0;
+  }
+  if(p.sym!=='none') mask=applySymmetry(mask,N,p.sym);
+  if(p.outline) mask=extractContour(mask,N);
+  return mask;
+}
+
+function applySymmetry(src,N,mode){
+  const out=new Uint8Array(N*N);
+  const at=(x,y)=>src[Math.max(0,Math.min(N-1,y|0))*N+Math.max(0,Math.min(N-1,x|0))];
+  const c=(N-1)/2, W=Math.PI/4;
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    let v=0;
+    const mx=N-1-x, my=N-1-y;
+    if(mode==='lr') v=at(Math.min(x,mx),y);
+    else if(mode==='ud') v=at(x,Math.min(y,my));
+    else if(mode==='quad') v=at(Math.min(x,mx),Math.min(y,my));
+    else if(mode==='kaleido'){
+      /* fold the angle around the centre into one 45° wedge and read the
+         subject back out of it — eight rotations of the same slice */
+      const dx=x-c, dy=y-c, r=Math.hypot(dx,dy);
+      let a=Math.atan2(dy,dx)%(Math.PI/2);
+      if(a<0) a+=Math.PI/2;
+      if(a>W) a=Math.PI/2-a;
+      v=at(c+r*Math.cos(a),c+r*Math.sin(a));
+    }
+    out[y*N+x]=v;
+  }
+  return out;
+}
+
+function extractContour(src,N){
+  const out=new Uint8Array(N*N);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const i=y*N+x;
+    if(!src[i]) continue;
+    const edge=
+      x===0||y===0||x===N-1||y===N-1||
+      !src[i-1]||!src[i+1]||!src[i-N]||!src[i+N];
+    if(edge) out[i]=1;
+  }
+  return out;
+}
+
+/* ═══════════════════ TEXTURE PLATE ═══════════════════ */
+const plate=document.createElement('canvas');         // texture, sheet-sized, panned/zoomed
+const pctx=plate.getContext('2d');
+function paintPlate(W,H,p){
+  if(plate.width!==W||plate.height!==H){ plate.width=W; plate.height=H; }
+  const src=state.tex?state.tex.el:demoTex;
+  const sw=state.tex?(src.naturalWidth||src.width):demoTex.width;
+  const sh=state.tex?(src.naturalHeight||src.height):demoTex.height;
+  pctx.fillStyle='#000'; pctx.fillRect(0,0,W,H);
+  const cover=Math.max(W/sw,H/sh)*p.zoom;
+  const dw=sw*cover, dh=sh*cover;
+  const dx=(W-dw)/2+state.texPan.x*W, dy=(H-dh)/2+state.texPan.y*H;
+  pctx.drawImage(src,dx,dy,dw,dh);
+}
+
+/* ═══════════════════ SHEET RENDER ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+
+function fitCanvas(){
+  const stage=document.querySelector('.stage');
+  const scale=Math.min((stage.clientWidth-70)/ART_W,(stage.clientHeight-92)/ART_H,1);
+  canvas.style.width=(ART_W*scale)+'px';
+  canvas.style.height=(ART_H*scale)+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const bw=Math.round(ART_W*scale*dpr), bh=Math.round(ART_H*scale*dpr);
+  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; }
+}
+
+function stitchPath(g,x,y,s,p){
+  const inset=s*p.gap*0.5;
+  const w=s-inset*2;
+  if(w<=0) return false;
+  const r=Math.min(w/2,w*p.round*0.5);
+  g.beginPath();
+  if(r<=0.5) g.rect(x+inset,y+inset,w,w);
+  else g.roundRect(x+inset,y+inset,w,w,r);
+  return true;
+}
+
+/* draws the motif into a box: cells either window through to the plate
+   (mode 'texture') or knock out solid (mode 'solid').
+   srcBox is where on the plate the colour is read from — the upper motif
+   reads from the lower panel's footprint, so both halves agree on colour. */
+function drawMotif(g,mask,N,box,p,mode,solidColor,srcBox){
+  const s=box.w/N;
+  const src=srcBox||box, ss=src.w/N;
+  const inset=s*p.gap*0.5, sInset=ss*p.gap*0.5;
+  let count=0;
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    if(!mask[y*N+x]) continue;
+    count++;
+    const px=box.x+x*s, py=box.y+y*s;
+    if(!stitchPath(g,px,py,s,p)) continue;
+    if(mode==='solid'){
+      g.fillStyle=solidColor;
+      g.fill();
+    }else{
+      g.save(); g.clip();
+      g.drawImage(plate,
+        src.x+x*ss+sInset, src.y+y*ss+sInset, ss-sInset*2, ss-sInset*2,
+        px+inset, py+inset, s-inset*2, s-inset*2);
+      g.restore();
+    }
+  }
+  return count;
+}
+
+function drawDotField(g,rect,N,pal){
+  const s=rect.w/N;
+  g.fillStyle=pal.dot;
+  for(let y=0;y<Math.ceil(rect.h/s);y++)for(let x=0;x<N;x++){
+    g.beginPath();
+    g.arc(rect.x+(x+0.5)*s,rect.y+(y+0.5)*s,Math.max(0.6,s*0.035),0,TAU);
+    g.fill();
+  }
+}
+
+/* words spread edge-to-edge, the way a spec sheet sets a caption line */
+function drawJustified(g,text,x,y,w,size,pal){
+  const words=(text||'').trim().split(/\s+/).filter(Boolean);
+  if(!words.length) return;
+  g.fillStyle=pal.ink;
+  g.font=`500 ${size}px 'Geist Mono','Red Hat Mono',monospace`;
+  g.textBaseline='alphabetic';
+  if(words.length===1){ g.textAlign='center'; g.fillText(words[0],x+w/2,y); g.textAlign='left'; return; }
+  let total=0; const widths=words.map(t=>{ const m=g.measureText(t).width; total+=m; return m; });
+  const gap=Math.max(4,(w-total)/(words.length-1));
+  let cx=x;
+  for(let i=0;i<words.length;i++){
+    g.fillText(words[i],cx,y);
+    cx+=widths[i]+gap;
+  }
+}
+
+function render(g,W,H,p,t){
+  const pal=PAPERS[p.paper];
+  const k=W/ART_W;                                   // everything below is authored at 900×1200
+  const mask=buildMask(p,t);
+  const N=p.grid;
+  paintPlate(W,H,p);
+
+  g.fillStyle=pal.bg; g.fillRect(0,0,W,H);
+
+  const pad=p.layout==='split'?24*k:0;
+  const capBand=88*k;
+  const half=(H-capBand-pad*2)/2;
+  const topRect={x:pad,y:pad,w:W-pad*2,h:half};
+  const botRect={x:pad,y:pad+half+capBand,w:W-pad*2,h:half};
+
+  const side=Math.min(topRect.w,topRect.h)*p.scale;
+  const topBox={x:topRect.x+(topRect.w-side)/2,y:topRect.y+(topRect.h-side)/2,w:side,h:side};
+  const botBox={x:botRect.x+(botRect.w-side)/2,y:botRect.y+(botRect.h-side)/2,w:side,h:side};
+
+  /* ── upper: paper + dot field + texture-filled motif ── */
+  g.save();
+  g.beginPath(); g.rect(topRect.x,topRect.y,topRect.w,topRect.h); g.clip();
+  g.fillStyle=pal.bg; g.fillRect(topRect.x,topRect.y,topRect.w,topRect.h);
+  drawDotField(g,topRect,Math.max(12,N),pal);
+  state.stitches=drawMotif(g,mask,N,topBox,p,'texture',null,botBox);
+  g.restore();
+
+  /* ── caption band ── */
+  const capY=pad+half;
+  drawJustified(g,p.cap1,topRect.x+6*k,capY+34*k,topRect.w-12*k,13*k,pal);
+  drawJustified(g,p.cap2,topRect.x+6*k,capY+62*k,topRect.w-12*k,13*k,pal);
+  g.strokeStyle=pal.rule; g.lineWidth=Math.max(1,k);
+  g.beginPath(); g.moveTo(topRect.x,capY+74*k); g.lineTo(topRect.x+topRect.w,capY+74*k); g.stroke();
+
+  /* ── lower: texture full-bleed + knocked-out motif ── */
+  g.save();
+  g.beginPath(); g.rect(botRect.x,botRect.y,botRect.w,botRect.h); g.clip();
+  g.drawImage(plate,botRect.x,botRect.y,botRect.w,botRect.h,botRect.x,botRect.y,botRect.w,botRect.h);
+  drawMotif(g,mask,N,botBox,p,'solid',p.paper==='acid'?'#eaff00':'#ffffff');
+  g.restore();
+
+  /* frame hairlines */
+  g.strokeStyle=pal.rule; g.lineWidth=Math.max(1,k);
+  g.strokeRect(topRect.x+0.5,topRect.y+0.5,topRect.w-1,topRect.h-1);
+  g.strokeRect(botRect.x+0.5,botRect.y+0.5,botRect.w-1,botRect.h-1);
+}
+
+/* ═══════════════════ LOOP ═══════════════════ */
+let clock=0, lastT=performance.now();
+function frame(now){
+  const p=params();
+  fitCanvas();
+  const dt=Math.min(80,now-lastT); lastT=now;
+  if(state.playing){
+    clock+=dt*p.speed;
+    state.frame++;
+    if(state.sub&&state.sub.kind==='video'){
+      const v=state.sub.el;
+      if(v.playbackRate!==p.speed) v.playbackRate=Math.max(0.1,p.speed);
+      if(v.paused) v.play().catch(()=>{});
+    }
+  }
+  const sx=canvas.width/ART_W, sy=canvas.height/ART_H;
+  ctx.setTransform(sx,0,0,sy,0,0);
+  render(ctx,ART_W,ART_H,p,clock);
+  ctx.setTransform(1,0,0,1,0,0);
+  document.getElementById('statStitch').textContent=state.stitches;
+  document.getElementById('statFrame').textContent=state.frame;
+  document.getElementById('cornerGrid').textContent=p.grid+' × '+p.grid;
+  requestAnimationFrame(frame);
+}
+
+/* ═══════════════════ UPLOADS ═══════════════════ */
+function slotPreview(slot,node,name,onClear){
+  slot.querySelectorAll('.ph,.badge,canvas,img,video').forEach(n=>n.remove());
+  slot.appendChild(node);
+  const bar=document.createElement('div');
+  bar.className='badge';
+  bar.innerHTML='<span>loaded</span><span class="grow"></span><button class="kill" type="button">Remove</button>';
+  bar.querySelector('.grow').textContent=name;
+  bar.querySelector('button').addEventListener('click',ev=>{ ev.stopPropagation(); onClear(); });
+  slot.appendChild(bar);
+}
+function resetSlot(slot,html){
+  slot.querySelectorAll('.ph,.badge,canvas,img,video').forEach(n=>n.remove());
+  const ph=document.createElement('div');
+  ph.className='ph'; ph.innerHTML=html;
+  slot.appendChild(ph);
+}
+const TEX_PH='<b>Drop / click — texture image</b>colour &amp; material source · jpg png webp';
+const SUB_PH='<b>Drop / click — subject clip</b>mp4 webm mov · or a still image';
+
+function clearTex(){
+  if(state.tex&&state.tex.url) URL.revokeObjectURL(state.tex.url);
+  state.tex=null; state.texPan={x:0,y:0};
+  resetSlot(document.getElementById('slotTex'),TEX_PH);
+  updateSourceTag();
+}
+function clearSub(){
+  if(state.sub){
+    if(state.sub.kind==='video'){ state.sub.el.pause(); state.sub.el.src=''; }
+    if(state.sub.url) URL.revokeObjectURL(state.sub.url);
+  }
+  state.sub=null;
+  resetSlot(document.getElementById('slotSub'),SUB_PH);
+  updateSourceTag();
+}
+function updateSourceTag(){
+  const bits=[state.tex?'texture':'demo plate',state.sub?(state.sub.kind==='video'?'clip':'still'):'demo subject'];
+  document.getElementById('cornerSrc').textContent='source · '+bits.join(' + ');
+}
+
+function loadTexture(file){
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    if(state.tex&&state.tex.url) URL.revokeObjectURL(state.tex.url);
+    state.tex={el:img,url,name:file.name,w:img.naturalWidth,h:img.naturalHeight};
+    const prev=new Image(); prev.src=url;
+    slotPreview(document.getElementById('slotTex'),prev,file.name,clearTex);
+    updateSourceTag();
+  };
+  img.onerror=()=>{ URL.revokeObjectURL(url); };
+  img.src=url;
+}
+function loadSubject(file){
+  const url=URL.createObjectURL(file);
+  const isVideo=file.type.startsWith('video/')||/\.(mp4|webm|mov|m4v)$/i.test(file.name);
+  if(isVideo){
+    const v=document.createElement('video');
+    v.src=url; v.loop=true; v.muted=true; v.playsInline=true; v.autoplay=true;
+    v.addEventListener('loadeddata',()=>{
+      if(state.sub&&state.sub.url) URL.revokeObjectURL(state.sub.url);
+      state.sub={el:v,url,name:file.name,kind:'video',w:v.videoWidth,h:v.videoHeight};
+      const prev=document.createElement('video');
+      prev.src=url; prev.loop=true; prev.muted=true; prev.playsInline=true; prev.autoplay=true;
+      prev.play().catch(()=>{});
+      slotPreview(document.getElementById('slotSub'),prev,file.name,clearSub);
+      updateSourceTag();
+      v.play().catch(()=>{});
+    },{once:true});
+    v.load();
+  }else{
+    const img=new Image();
+    img.onload=()=>{
+      if(state.sub&&state.sub.url) URL.revokeObjectURL(state.sub.url);
+      state.sub={el:img,url,name:file.name,kind:'image',w:img.naturalWidth,h:img.naturalHeight};
+      const prev=new Image(); prev.src=url;
+      slotPreview(document.getElementById('slotSub'),prev,file.name,clearSub);
+      updateSourceTag();
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); };
+    img.src=url;
+  }
+}
+
+function wireSlot(slotId,inputId,handler){
+  const slot=document.getElementById(slotId), input=document.getElementById(inputId);
+  slot.addEventListener('click',ev=>{ if(!ev.target.closest('button')) input.click(); });
+  slot.addEventListener('keydown',ev=>{ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); input.click(); } });
+  input.addEventListener('change',()=>{ if(input.files&&input.files[0]) handler(input.files[0]); input.value=''; });
+  ['dragenter','dragover'].forEach(t=>slot.addEventListener(t,ev=>{ ev.preventDefault(); slot.classList.add('is-over'); }));
+  ['dragleave','drop'].forEach(t=>slot.addEventListener(t,ev=>{ ev.preventDefault(); slot.classList.remove('is-over'); }));
+  slot.addEventListener('drop',ev=>{
+    const f=ev.dataTransfer&&ev.dataTransfer.files&&ev.dataTransfer.files[0];
+    if(f) handler(f);
+  });
+}
+wireSlot('slotTex','fileTex',loadTexture);
+wireSlot('slotSub','fileSub',loadSubject);
+
+window.addEventListener('paste',ev=>{
+  const items=ev.clipboardData&&ev.clipboardData.files;
+  if(!items||!items.length) return;
+  const f=items[0];
+  if(f.type.startsWith('video/')) loadSubject(f); else loadTexture(f);
+});
+
+/* ═══════════════════ CANVAS GESTURES ═══════════════════
+   upper half scales the motif · lower half drags and zooms the plate */
+function canvasHalf(ev){
+  const r=canvas.getBoundingClientRect();
+  return (ev.clientY-r.top)/r.height<0.5?'top':'bottom';
+}
+canvas.addEventListener('wheel',ev=>{
+  ev.preventDefault();
+  const step=ev.deltaY>0?-2:2;
+  const id=canvasHalf(ev)==='top'?'scale':'zoom';
+  const el=document.getElementById(id);
+  el.value=Math.max(+el.min,Math.min(+el.max,+el.value+step*(id==='zoom'?2:1)));
+  syncSlider(el);
+},{passive:false});
+
+let dragging=false,lastPt=null;
+canvas.addEventListener('pointerdown',ev=>{
+  if(canvasHalf(ev)!=='bottom') return;
+  dragging=true; lastPt={x:ev.clientX,y:ev.clientY};
+  canvas.classList.add('is-drag');
+  canvas.setPointerCapture(ev.pointerId);
+});
+canvas.addEventListener('pointermove',ev=>{
+  if(!dragging) return;
+  const r=canvas.getBoundingClientRect();
+  state.texPan.x+=(ev.clientX-lastPt.x)/r.width;
+  state.texPan.y+=(ev.clientY-lastPt.y)/r.height;
+  state.texPan.x=Math.max(-0.6,Math.min(0.6,state.texPan.x));
+  state.texPan.y=Math.max(-0.6,Math.min(0.6,state.texPan.y));
+  lastPt={x:ev.clientX,y:ev.clientY};
+});
+['pointerup','pointercancel'].forEach(t=>canvas.addEventListener(t,()=>{
+  dragging=false; canvas.classList.remove('is-drag');
+}));
+
+/* ═══════════════════ EXPORT / RECORD ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=ART_W*2; off.height=ART_H*2;
+  const g=off.getContext('2d');
+  g.setTransform(2,0,0,2,0,0);
+  render(g,ART_W,ART_H,p,clock);
+  off.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-knit-'+Date.now().toString(36)+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+  paintPlate(canvas.width,canvas.height,p);          // restore the live plate size
+}
+let recorder=null;
+function recordClip(){
+  const btn=document.getElementById('btnRecord');
+  if(recorder) return;
+  const stream=canvas.captureStream(30);
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
+  const chunks=[];
+  recorder.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  recorder.onstop=()=>{
+    const blob=new Blob(chunks,{type:'video/webm'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-knit-'+Date.now().toString(36)+'.webm';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    recorder=null;
+    btn.classList.remove('is-rec'); btn.disabled=false; btn.textContent='⏺ Rec 6s';
+  };
+  btn.classList.add('is-rec'); btn.disabled=true; btn.textContent='● recording';
+  recorder.start();
+  setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(!out) return;
+  if(el.id==='grid') out.textContent=v+' × '+v;
+  else if(el.id==='thresh') out.textContent=v|0;
+  else if(el.id==='speed') out.textContent=(v/100).toFixed(2)+'×';
+  else out.textContent=v+'%';
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>syncSlider(el));
+  syncSlider(el);
+});
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',ev=>{
+    const btn=ev.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+  });
+}
+wireSeg('segSym','sym',v=>{ state.sym=v; });
+wireSeg('segLayout','lay',v=>{ state.layout=v; });
+wireSeg('segPaper','paper',v=>{ state.paper=v; canvas.style.background=PAPERS[v].bg; });
+
+document.getElementById('btnPlay').addEventListener('click',()=>{
+  state.playing=!state.playing;
+  document.getElementById('btnPlay').textContent=state.playing?'❚❚ Pause':'▶ Play';
+  if(state.sub&&state.sub.kind==='video'){
+    if(state.playing) state.sub.el.play().catch(()=>{}); else state.sub.el.pause();
+  }
+});
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('btnRecord').addEventListener('click',recordClip);
+window.addEventListener('keydown',ev=>{
+  if(ev.target.closest('input')) return;
+  if(ev.key==='e') exportPNG();
+  if(ev.key==='p') document.getElementById('btnPlay').click();
+});
+
+/* boot */
+updateSourceTag();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
