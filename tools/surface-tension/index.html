@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Surface Tension" subtitle="Press and hold — water pools as a metaball and the words give way beneath it" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — surface tension</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:28px 28px 46px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#f1f0ee;touch-action:none;cursor:crosshair}
+.stage .hint{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  color:var(--white-dim);font-size:10px;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;text-align:center;
+}
+
+.rack{width:352px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+.sect-note{color:var(--white-dim);font-size:9px;letter-spacing:.1em;margin-top:8px;line-height:1.7}
+.sect-note b{color:var(--white-soft);font-weight:400}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+button.is-rec{background:var(--pink);border-color:var(--pink);color:var(--black)}
+button:disabled{opacity:.5;cursor:default}
+:where(button,input,textarea,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;--p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+textarea{
+  width:100%;min-height:84px;resize:vertical;background:var(--black-panel);border:1px solid var(--border);
+  color:var(--white);font-family:var(--font-display);font-weight:400;font-size:13px;letter-spacing:.06em;
+  padding:10px 12px;line-height:1.5;
+}
+textarea:focus{outline:none;border-color:var(--yellow)}
+
+.checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px}
+.chk{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--white-soft)}
+.chk input{appearance:none;-webkit-appearance:none;width:14px;height:14px;border:1px solid var(--border-hi);background:var(--black-panel);cursor:pointer;flex:none}
+.chk input:checked{background:var(--yellow);border-color:var(--yellow)}
+
+.seg{display:flex;border:1px solid var(--border-hi);flex-wrap:wrap}
+.seg button{flex:1 1 40%;border:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.1em}
+.seg button:last-child{border-right:0}
+.seg button.wide{flex:1 1 100%;border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black);flex-wrap:wrap}
+.actions button{flex:1;height:42px;min-width:78px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:900px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:18px;min-height:56vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Surface Tension</h1>
+      <div class="sub">press &amp; hold · the words give way</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span id="headSize">1080 × 1350 px</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="canvas">
+      <span class="corner tl">HOLD ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerStyle">water · flood</span>
+      <span class="corner br" id="cornerFmt">4:5</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+      <span class="hint">press and hold on the canvas · drag to pour it around</span>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Copy</h2><span class="coord">S.00</span></div>
+          <div class="param">
+            <textarea id="text" spellcheck="false" aria-label="headline copy">PRESS AND HOLD THE SURFACE UNTIL THE WORDS BEGIN TO GIVE WAY BENEATH YOU</textarea>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Type size</span><span class="val" data-val="tsize"></span></div>
+            <input type="range" id="tsize" min="24" max="130" step="1" value="62">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Tracking</span><span class="val" data-val="track"></span></div>
+            <input type="range" id="track" min="0" max="40" step="1" value="14">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Column</span><span class="val" data-val="col"></span></div>
+            <input type="range" id="col" min="40" max="96" step="1" value="72">
+          </div>
+          <div class="checks">
+            <label class="chk"><input type="checkbox" id="upper" checked> Uppercase</label>
+            <label class="chk"><input type="checkbox" id="ghost" checked> Ghost origins</label>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Water style</h2><span class="coord">S.01</span></div>
+          <div class="seg" id="segStyle" role="group" aria-label="water style">
+            <button data-style="flood" class="is-active">Flood</button>
+            <button data-style="contour">Contour</button>
+            <button data-style="xray">X-ray</button>
+            <button data-style="bleed">Bleed</button>
+            <button data-style="sink" class="wide">Sink · no water</button>
+          </div>
+          <div class="sect-note">
+            <b>Flood</b> — solid mass, letters inside knock out ·
+            <b>Contour</b> — computed isolines only ·
+            <b>X-ray</b> — isolines plus tinted letters ·
+            <b>Bleed</b> — soft translucent wash ·
+            <b>Sink</b> — invisible water, the copy just gives way.
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Physics</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Flow</span><span class="val" data-val="flow"></span></div>
+            <input type="range" id="flow" min="10" max="100" step="1" value="52">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Droplet</span><span class="val" data-val="drop"></span></div>
+            <input type="range" id="drop" min="10" max="90" step="1" value="38">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Gravity</span><span class="val" data-val="grav"></span></div>
+            <input type="range" id="grav" min="0" max="100" step="1" value="34">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Viscosity</span><span class="val" data-val="visc"></span></div>
+            <input type="range" id="visc" min="0" max="100" step="1" value="58">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Surface tension</span><span class="val" data-val="tension"></span></div>
+            <input type="range" id="tension" min="20" max="100" step="1" value="58">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Dwell</span><span class="val" data-val="dwell"></span></div>
+            <input type="range" id="dwell" min="10" max="100" step="1" value="46">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Give way</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Sag</span><span class="val" data-val="sag"></span></div>
+            <input type="range" id="sag" min="0" max="100" step="1" value="34">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Recovery</span><span class="val" data-val="recover"></span></div>
+            <input type="range" id="recover" min="0" max="100" step="1" value="42">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Isolines</span><span class="val" data-val="lines"></span></div>
+            <input type="range" id="lines" min="1" max="6" step="1" value="4">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style</h2><span class="coord">S.04</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Palette</span></div>
+            <div class="seg" id="segPalette" role="group" aria-label="palette">
+              <button data-pal="crimson" class="is-active">Crimson</button>
+              <button data-pal="cobalt">Cobalt</button>
+              <button data-pal="digidelic">Digidelic</button>
+              <button data-pal="noir">Noir</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Format</span></div>
+            <div class="seg" id="segFormat" role="group" aria-label="format">
+              <button data-fmt="45" class="is-active">4:5</button>
+              <button data-fmt="11">1:1</button>
+              <button data-fmt="916" class="wide">9:16 story</button>
+            </div>
+          </div>
+          <div class="checks">
+            <label class="chk"><input type="checkbox" id="auto" checked> Auto hold</label>
+            <label class="chk"><input type="checkbox" id="ring" checked> Cursor ring</label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnReset">✕ Reset</button>
+        <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>surfacegen v1.0</b></div>
+    <div class="cell">water <b id="statDrops">0</b></div>
+    <div class="cell">sunk <b id="statSunk">0</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+const TAU=Math.PI*2;
+const FORMATS={ '45':[1080,1350], '11':[1080,1080], '916':[1080,1920] };
+const PALETTES={
+  crimson:{  bg:'#f1f0ee', ink:'#26242a', water:'#c22f3a', inner:'#f3d9a4', line:'#8f1f27' },
+  cobalt:{   bg:'#f4f5f7', ink:'#9aa0aa', water:'#2f7fd0', inner:'#ffffff', line:'#22406b' },
+  digidelic:{bg:'#08080a', ink:'#f2f2f0', water:'#eaff00', inner:'#ff2d87', line:'#00d9ff' },
+  noir:{     bg:'#101014', ink:'#6d6f78', water:'#f2f2f0', inner:'#101014', line:'#f2f2f0' },
+};
+
+const state={
+  style:'flood', palette:'crimson', fmt:'45',
+  W:1080, H:1350,
+  holding:false, pointer:{x:540,y:500},
+  autoT:0, autoTarget:{x:540,y:500}, sunk:0,
+  textDirty:true,
+};
+const sliders=['tsize','track','col','flow','drop','grav','visc','tension','dwell','sag','recover','lines'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const c=id=>document.getElementById(id).checked;
+  return {
+    tsize:g('tsize'), track:g('track'), col:g('col')/100,
+    flow:g('flow')/100, drop:g('drop'), grav:g('grav')/100, visc:g('visc')/100,
+    tension:g('tension')/100, dwell:g('dwell')/100,
+    sag:g('sag')/100, recover:g('recover')/100, lines:g('lines')|0,
+    upper:c('upper'), ghost:c('ghost'), auto:c('auto'), ring:c('ring'),
+    text:document.getElementById('text').value,
+    style:state.style, palette:state.palette,
+  };
+}
+
+/* ═══════════════════ CANVASES ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+const layer=document.createElement('canvas');      // full-size scratch for masking
+const lctx=layer.getContext('2d');
+const blob=document.createElement('canvas');       // field mask, grid resolution
+const bctx=blob.getContext('2d');
+
+const CELL=4;                                      // field cell size in px
+let field=null, fw=0, fh=0, blobImg=null;
+
+function resizeLayers(){
+  const {W,H}=state;
+  if(layer.width!==W||layer.height!==H){ layer.width=W; layer.height=H; }
+  fw=Math.ceil(W/CELL)+1; fh=Math.ceil(H/CELL)+1;
+  field=new Float32Array(fw*fh);
+  blob.width=fw; blob.height=fh;
+  blobImg=bctx.createImageData(fw,fh);
+  state.textDirty=true;
+}
+
+/* ═══════════════════ TYPE ═══════════════════
+   every character is its own body so the water can sink it */
+let glyphs=[], lineH=0;
+function layoutText(p){
+  const {W,H}=state;
+  const size=p.tsize*(W/1080);
+  lineH=size*1.42;
+  lctx.font=`400 ${size}px 'Space Grotesk', system-ui, sans-serif`;
+  lctx.textAlign='left'; lctx.textBaseline='alphabetic';
+  let txt=(p.text||'').replace(/\s+/g,' ').trim();
+  if(p.upper) txt=txt.toUpperCase();
+  const track=p.track*(W/1080);
+  const wordW=w=>{
+    let s=0; for(const ch of w) s+=lctx.measureText(ch).width+track;
+    return s;
+  };
+  const maxW=W*p.col;
+  const words=txt?txt.split(' '):[];
+  const lines=[]; let cur=[];
+  const spaceW=lctx.measureText(' ').width+track;
+  let curW=0;
+  for(const w of words){
+    const ww=wordW(w);
+    if(cur.length&&curW+spaceW+ww>maxW){ lines.push(cur); cur=[w]; curW=ww; }
+    else { curW+=(cur.length?spaceW:0)+ww; cur.push(w); }
+  }
+  if(cur.length) lines.push(cur);
+
+  const total=lines.length*lineH;
+  const y0=H/2-total/2+lineH*0.72;
+  const next=[];
+  lines.forEach((words,li)=>{
+    let lw=0;
+    words.forEach((w,wi)=>{ lw+=wordW(w)+(wi?spaceW:0); });
+    let x=(W-lw)/2;
+    const baseY=y0+li*lineH;
+    words.forEach((w,wi)=>{
+      if(wi){ x+=spaceW; }
+      for(const ch of w){
+        const cw=lctx.measureText(ch).width;
+        next.push({ch,x,w:cw,homeY:baseY,y:baseY,vy:0,size,wet:0});
+        x+=cw+track;
+      }
+    });
+  });
+  /* keep the sag of characters that survive a re-layout */
+  if(glyphs.length===next.length){
+    for(let i=0;i<next.length;i++){
+      if(glyphs[i].ch===next[i].ch){ next[i].y=next[i].homeY+(glyphs[i].y-glyphs[i].homeY); next[i].vy=glyphs[i].vy; }
+    }
+  }
+  glyphs=next;
+}
+
+/* ═══════════════════ WATER ═══════════════════ */
+const drops=[];
+const MAX_DROPS=230;
+function spawn(p,x,y){
+  if(drops.length>=MAX_DROPS) drops.shift();
+  const r=p.drop*(state.W/1080)*(0.55+Math.random()*0.8);
+  drops.push({
+    x:x+(Math.random()-0.5)*r*1.4, y:y+(Math.random()-0.5)*r*0.5,
+    vx:(Math.random()-0.5)*46, vy:6+Math.random()*22,
+    r, life:1.4+p.dwell*7, age:0, wob:(Math.random()-0.5)*2.6, ph:Math.random()*6.283,
+  });
+}
+function stepWater(p,dt){
+  const grav=p.grav*900;
+  const drag=1-(0.02+p.visc*0.12);
+  for(let i=drops.length-1;i>=0;i--){
+    const d=drops[i];
+    d.age+=dt; d.life-=dt;
+    d.vy+=grav*dt;
+    d.vx+=Math.sin(d.age*1.7+d.ph)*d.wob*26*dt;
+    d.vx*=drag; d.vy*=drag;
+    d.x+=d.vx*dt; d.y+=d.vy*dt;
+    if(d.life<=0||d.y>state.H+120){ drops.splice(i,1); continue; }
+  }
+  /* light mutual repulsion so a held pour spreads into a mass
+     instead of stacking into a thread */
+  for(let i=0;i<drops.length;i++){
+    const a=drops[i];
+    for(let j=i+1;j<drops.length;j++){
+      const b=drops[j];
+      const dx=b.x-a.x, dy=b.y-a.y;
+      const min=(a.r+b.r)*0.62;
+      const d2=dx*dx+dy*dy;
+      if(d2>min*min||d2<0.01) continue;
+      const dist=Math.sqrt(d2);
+      const push=(min-dist)/min*96*dt;
+      const nx=dx/dist, ny=dy/dist;
+      a.vx-=nx*push; a.vy-=ny*push*0.4;
+      b.vx+=nx*push; b.vy+=ny*push*0.4;
+    }
+  }
+}
+
+/* scalar field — classic metaball sum, evaluated only near each droplet */
+function buildField(p){
+  field.fill(0);
+  for(const d of drops){
+    const fade=Math.min(1,d.life*1.5)*Math.min(1,d.age*4+0.15);
+    const rr=d.r*d.r*fade;
+    const reach=d.r*2.1;
+    const x0=Math.max(0,((d.x-reach)/CELL)|0), x1=Math.min(fw-1,((d.x+reach)/CELL)|0);
+    const y0=Math.max(0,((d.y-reach)/CELL)|0), y1=Math.min(fh-1,((d.y+reach)/CELL)|0);
+    for(let gy=y0;gy<=y1;gy++){
+      const py=gy*CELL-d.y, row=gy*fw;
+      for(let gx=x0;gx<=x1;gx++){
+        const px=gx*CELL-d.x;
+        const d2=px*px+py*py;
+        if(d2<1) { field[row+gx]+=rr; continue; }
+        field[row+gx]+=rr/d2;
+      }
+    }
+  }
+}
+function fieldAt(x,y){
+  const gx=Math.round(x/CELL), gy=Math.round(y/CELL);
+  if(gx<0||gy<0||gx>=fw||gy>=fh) return 0;
+  return field[gy*fw+gx];
+}
+function threshold(p){ return 0.45+p.tension*1.7; }
+
+/* field → hard-edged alpha mask, upscaled with bilinear smoothing */
+function paintBlobMask(p){
+  const T=threshold(p);
+  const d=blobImg.data;
+  for(let i=0,q=0;i<field.length;i++,q+=4){
+    const on=field[i]>=T;
+    d[q]=255; d[q+1]=255; d[q+2]=255; d[q+3]=on?255:0;
+  }
+  bctx.putImageData(blobImg,0,0);
+}
+
+/* marching squares — isolines straight off the field, like the reference */
+function strokeIsolines(g,p,levels,color,width){
+  const T=threshold(p);
+  g.strokeStyle=color; g.lineWidth=width; g.lineJoin='round'; g.lineCap='round';
+  for(let li=0;li<levels;li++){
+    const t=T*(1+li*0.55);
+    g.globalAlpha=1-li*(0.62/Math.max(1,levels));
+    g.beginPath();
+    for(let gy=0;gy<fh-1;gy++){
+      for(let gx=0;gx<fw-1;gx++){
+        const a=field[gy*fw+gx], b=field[gy*fw+gx+1];
+        const c=field[(gy+1)*fw+gx+1], e=field[(gy+1)*fw+gx];
+        let code=0;
+        if(a>=t) code|=8; if(b>=t) code|=4; if(c>=t) code|=2; if(e>=t) code|=1;
+        if(code===0||code===15) continue;
+        const x=gx*CELL, y=gy*CELL;
+        const ip=(v1,v2)=>{ const dv=v2-v1; return dv===0?0.5:Math.max(0,Math.min(1,(t-v1)/dv)); };
+        const top   =()=>[x+CELL*ip(a,b), y];
+        const right =()=>[x+CELL,         y+CELL*ip(b,c)];
+        const bottom=()=>[x+CELL*ip(e,c), y+CELL];
+        const left  =()=>[x,              y+CELL*ip(a,e)];
+        const seg=(p1,p2)=>{ g.moveTo(p1[0],p1[1]); g.lineTo(p2[0],p2[1]); };
+        switch(code){
+          case 1: case 14: seg(left(),bottom()); break;
+          case 2: case 13: seg(bottom(),right()); break;
+          case 3: case 12: seg(left(),right()); break;
+          case 4: case 11: seg(top(),right()); break;
+          case 5: seg(left(),top()); seg(bottom(),right()); break;
+          case 6: case 9: seg(top(),bottom()); break;
+          case 7: case 8: seg(left(),top()); break;
+          case 10: seg(left(),bottom()); seg(top(),right()); break;
+        }
+      }
+    }
+    g.stroke();
+  }
+  g.globalAlpha=1;
+}
+
+/* ═══════════════════ GIVE WAY ═══════════════════ */
+function sinkGlyphs(p,dt){
+  const T=threshold(p);
+  const sagA=p.sag*1900*(state.W/1080);
+  const rec=0.6+p.recover*8;
+  let wet=0;
+  for(const gl of glyphs){
+    const cx=gl.x+gl.w/2, cy=gl.y-gl.size*0.32;
+    const f=fieldAt(cx,cy);
+    const submerged=f>=T*0.72;
+    if(submerged){ wet++; gl.wet=Math.min(1,gl.wet+dt*4); }
+    else gl.wet=Math.max(0,gl.wet-dt*2.6);
+    if(submerged&&p.sag>0){
+      gl.vy+=sagA*dt*Math.min(1.6,f/T);
+    }else{
+      /* spring home once the water lets go */
+      const dy=gl.homeY-gl.y;
+      gl.vy+=dy*rec*dt*6;
+      gl.vy*=0.86;
+    }
+    gl.vy*=submerged?0.985:0.82;
+    const vCap=940*(state.W/1080);
+    if(gl.vy>vCap) gl.vy=vCap; else if(gl.vy<-vCap) gl.vy=-vCap;
+    gl.y+=gl.vy*dt;
+    const maxDrop=state.H*(0.06+p.sag*0.22);
+    if(gl.y-gl.homeY>maxDrop){ gl.y=gl.homeY+maxDrop; gl.vy=0; }
+    if(!submerged&&Math.abs(gl.y-gl.homeY)<0.4&&Math.abs(gl.vy)<6){ gl.y=gl.homeY; gl.vy=0; }
+  }
+  state.sunk=wet;
+}
+
+/* ═══════════════════ RENDER ═══════════════════ */
+function fitCanvas(){
+  const stage=document.querySelector('.stage');
+  const scale=Math.min((stage.clientWidth-70)/state.W,(stage.clientHeight-92)/state.H,1);
+  canvas.style.width=(state.W*scale)+'px';
+  canvas.style.height=(state.H*scale)+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const bw=Math.round(state.W*scale*dpr), bh=Math.round(state.H*scale*dpr);
+  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; }
+}
+function drawGlyphs(g,color,alpha,useHome){
+  g.fillStyle=color; g.globalAlpha=alpha;
+  g.textAlign='left'; g.textBaseline='alphabetic';
+  for(const gl of glyphs){
+    /* a ghost is only worth drawing once its letter has moved off it */
+    if(useHome&&Math.abs(gl.y-gl.homeY)<1.5) continue;
+    g.font=`400 ${gl.size}px 'Space Grotesk', system-ui, sans-serif`;
+    g.fillText(gl.ch,gl.x,useHome?gl.homeY:gl.y);
+  }
+  g.globalAlpha=1;
+}
+function drawBlob(g,W,H,color,alpha,blur){
+  lctx.clearRect(0,0,W,H);
+  lctx.imageSmoothingEnabled=true;
+  lctx.imageSmoothingQuality='high';
+  lctx.drawImage(blob,0,0,W,H);
+  lctx.globalCompositeOperation='source-in';
+  lctx.fillStyle=color; lctx.fillRect(0,0,W,H);
+  lctx.globalCompositeOperation='source-over';
+  g.save();
+  g.globalAlpha=alpha;
+  if(blur) g.filter=`blur(${blur}px)`;
+  g.drawImage(layer,0,0,W,H);
+  g.restore();
+}
+function drawGlyphsInBlob(g,W,H,color,alpha){
+  lctx.clearRect(0,0,W,H);
+  lctx.globalCompositeOperation='source-over';
+  drawGlyphs(lctx,color,1,false);
+  lctx.globalCompositeOperation='destination-in';
+  lctx.imageSmoothingEnabled=true;
+  lctx.drawImage(blob,0,0,W,H);
+  lctx.globalCompositeOperation='source-over';
+  g.globalAlpha=alpha;
+  g.drawImage(layer,0,0,W,H);
+  g.globalAlpha=1;
+}
+
+function compose(g,W,H,p){
+  const pal=PALETTES[p.palette];
+  const k=W/1080;
+  g.fillStyle=pal.bg; g.fillRect(0,0,W,H);
+
+  if(p.ghost&&p.style!=='flood') drawGlyphs(g,pal.ink,0.14,true);
+  drawGlyphs(g,pal.ink,1,false);
+
+  if(p.style==='flood'){
+    drawBlob(g,W,H,pal.water,1,0);
+    drawGlyphsInBlob(g,W,H,pal.inner,1);
+  }else if(p.style==='bleed'){
+    drawBlob(g,W,H,pal.water,0.5,10*k);
+    drawGlyphsInBlob(g,W,H,pal.inner,0.85);
+  }else if(p.style==='contour'){
+    strokeIsolines(g,p,p.lines,pal.line,1.6*k);
+  }else if(p.style==='xray'){
+    strokeIsolines(g,p,p.lines,pal.line,1.4*k);
+    drawGlyphsInBlob(g,W,H,pal.water,1);
+  }
+  /* 'sink' draws no water at all — only the copy gives way */
+
+  if(p.ring&&(state.holding||p.auto)){
+    g.strokeStyle=pal.line; g.globalAlpha=0.5; g.lineWidth=1.4*k;
+    g.beginPath(); g.arc(state.pointer.x,state.pointer.y,p.drop*k*1.15,0,TAU); g.stroke();
+    g.globalAlpha=1;
+    g.fillStyle=pal.line;
+    g.beginPath(); g.arc(state.pointer.x,state.pointer.y,3.4*k,0,TAU); g.fill();
+  }
+}
+
+/* ═══════════════════ LOOP ═══════════════════ */
+let lastT=performance.now(), emit=0;
+function frame(now){
+  const p=params();
+  fitCanvas();
+  const dt=Math.min(0.05,(now-lastT)/1000); lastT=now;
+
+  if(state.textDirty){ layoutText(p); state.textDirty=false; }
+
+  /* auto hold wanders the pointer around the copy block when idle */
+  if(!state.holding&&p.auto){
+    state.autoT-=dt;
+    if(state.autoT<=0){
+      state.autoT=1.6+Math.random()*2.2;
+      state.autoTarget={x:state.W*(0.28+Math.random()*0.44),y:state.H*(0.3+Math.random()*0.3)};
+    }
+    state.pointer.x+=(state.autoTarget.x-state.pointer.x)*Math.min(1,dt*1.6);
+    state.pointer.y+=(state.autoTarget.y-state.pointer.y)*Math.min(1,dt*1.6);
+  }
+
+  if(state.holding||(p.auto&&!state.holding)){
+    emit+=(14+p.flow*46)*dt;
+    const n=emit|0; emit-=n;
+    for(let i=0;i<n;i++) spawn(p,state.pointer.x,state.pointer.y);
+  }
+
+  stepWater(p,dt);
+  buildField(p);
+  paintBlobMask(p);
+  sinkGlyphs(p,dt);
+
+  const sx=canvas.width/state.W, sy=canvas.height/state.H;
+  ctx.setTransform(sx,0,0,sy,0,0);
+  ctx.filter='none';
+  compose(ctx,state.W,state.H,p);
+  ctx.setTransform(1,0,0,1,0,0);
+
+  document.getElementById('statDrops').textContent=drops.length;
+  document.getElementById('statSunk').textContent=state.sunk;
+  requestAnimationFrame(frame);
+}
+
+/* ═══════════════════ POINTER ═══════════════════ */
+function pt(ev){
+  const r=canvas.getBoundingClientRect();
+  return { x:(ev.clientX-r.left)/r.width*state.W, y:(ev.clientY-r.top)/r.height*state.H };
+}
+canvas.addEventListener('pointerdown',ev=>{
+  state.holding=true; state.pointer=pt(ev);
+  canvas.setPointerCapture(ev.pointerId);
+});
+canvas.addEventListener('pointermove',ev=>{ if(state.holding) state.pointer=pt(ev); });
+['pointerup','pointercancel'].forEach(t=>canvas.addEventListener(t,()=>{ state.holding=false; }));
+
+/* ═══════════════════ EXPORT / RECORD ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=state.W; off.height=state.H;
+  compose(off.getContext('2d'),state.W,state.H,p);
+  off.toBlob(b=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='digidelic-surface-'+Date.now().toString(36)+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+let recorder=null;
+function recordClip(){
+  const btn=document.getElementById('btnRecord');
+  if(recorder) return;
+  const stream=canvas.captureStream(30);
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
+  const chunks=[];
+  recorder.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  recorder.onstop=()=>{
+    const blob2=new Blob(chunks,{type:'video/webm'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob2);
+    a.download='digidelic-surface-'+Date.now().toString(36)+'.webm';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    recorder=null;
+    btn.classList.remove('is-rec'); btn.disabled=false; btn.textContent='⏺ Rec 6s';
+  };
+  btn.classList.add('is-rec'); btn.disabled=true; btn.textContent='● recording';
+  recorder.start();
+  setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
+}
+function resetSheet(){
+  drops.length=0;
+  for(const gl of glyphs){ gl.y=gl.homeY; gl.vy=0; gl.wet=0; }
+  state.sunk=0;
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(!out) return;
+  if(el.id==='tsize'||el.id==='drop') out.textContent=v+'px';
+  else if(el.id==='track') out.textContent='+'+v;
+  else if(el.id==='lines') out.textContent=v;
+  else out.textContent=v+'%';
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{
+    syncSlider(el);
+    if(id==='tsize'||id==='track'||id==='col') state.textDirty=true;
+  });
+  syncSlider(el);
+});
+document.getElementById('text').addEventListener('input',()=>{ state.textDirty=true; });
+document.getElementById('upper').addEventListener('change',()=>{ state.textDirty=true; });
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',ev=>{
+    const btn=ev.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+  });
+}
+wireSeg('segStyle','style',v=>{
+  state.style=v;
+  document.getElementById('cornerStyle').textContent='water · '+v;
+});
+wireSeg('segPalette','pal',v=>{
+  state.palette=v;
+  canvas.style.background=PALETTES[v].bg;
+});
+wireSeg('segFormat','fmt',v=>{
+  [state.W,state.H]=FORMATS[v];
+  document.getElementById('headSize').textContent=state.W+' × '+state.H+' px';
+  document.getElementById('cornerFmt').textContent=({'45':'4:5','11':'1:1','916':'9:16'})[v];
+  state.pointer={x:state.W/2,y:state.H*0.42};
+  glyphs=[];
+  resizeLayers();
+  resetSheet();
+});
+
+document.getElementById('btnReset').addEventListener('click',resetSheet);
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('btnRecord').addEventListener('click',recordClip);
+window.addEventListener('keydown',ev=>{
+  if(ev.target.closest('input,textarea')) return;
+  if(ev.key==='e') exportPNG();
+  if(ev.key==='r') resetSheet();
+});
+
+/* boot */
+resizeLayers();
+canvas.style.background=PALETTES[state.palette].bg;
+state.pointer={x:state.W/2,y:state.H*0.42};
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
