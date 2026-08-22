@@ -1,0 +1,54 @@
+# Surface Tension
+
+Live **interactive** type tool — set a line of copy, then **press and hold**
+the canvas. Water pools under your finger as a metaball mass, and every
+character it touches gives way and sinks beneath it. Let go and the copy
+springs back.
+
+Eleventh sibling in the tools family — same shell, same rack UX. Open
+`index.html` in a browser. No build step, no dependencies — single
+self-contained file styled with the digidelic design system.
+
+## How it works
+
+Holding spawns droplets at the pointer. They fall under gravity, damp with
+viscosity, and push each other apart so a held pour spreads into a mass
+rather than stacking into a thread. Each frame their **scalar field** is
+summed onto a 4px grid (classic metaball falloff); a threshold — the
+**surface tension** slider — turns that field into the water body.
+
+The body is consumed two ways: as an alpha mask upscaled for the filled
+styles, and through **marching squares** for the isoline styles, which trace
+the real boundary at several levels the way the reference does.
+
+The copy is laid out as **individual characters**, each its own body. A
+character whose centre reads above threshold accelerates downward; once the
+water lets go it springs home with damping. Sag depth and spring rate are
+both on sliders, and ghosts mark where each sunk letter started.
+
+## Parameter rack
+
+| Section | Control | Effect |
+|---|---|---|
+| Copy | Text area | The headline; wraps into centred lines |
+| | Type size · Tracking · Column | Scale, letter spacing, measure width |
+| | Uppercase · Ghost origins | Case fold · faint marks at the original positions |
+| Water style | `Flood` | Solid mass, letters inside knocked out in the accent |
+| | `Contour` | Computed isolines only |
+| | `X-ray` | Isolines plus letters tinted inside the body |
+| | `Bleed` | Soft translucent wash |
+| | `Sink` | No water drawn at all — the copy just gives way |
+| Physics | Flow · Droplet · Gravity | Pour rate, droplet scale, fall speed |
+| | Viscosity · Surface tension · Dwell | Damping, how tightly the mass holds together, how long water lingers |
+| Give way | Sag · Recovery | How far letters sink · how fast they spring back |
+| | Isolines | Number of contour levels |
+| Style | Palette | `Crimson` · `Cobalt` · `Digidelic` · `Noir` |
+| | Format | 4:5 · 1:1 · 9:16 |
+| | Auto hold · Cursor ring | Idle demo pour · pointer readout |
+
+`e` = export PNG, `r` = reset.
+
+## Export
+
+- `▶ Export PNG` — the poster at its full format size
+- `⏺ Rec 6s` — 6-second WebM of a live pour via `MediaRecorder`
