@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Culture" subtitle="Paint living cells and filaments — they grow, divide, and pack into foam and labyrinths" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — culture</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+
+/* ── tool rail ── */
+.rail{
+  width:62px;flex:none;border-right:1px solid var(--border);background:var(--black);
+  display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0;overflow-y:auto;
+}
+.rail button{
+  width:42px;height:42px;padding:0;font-size:17px;line-height:1;letter-spacing:0;
+  display:flex;align-items:center;justify-content:center;position:relative;
+}
+.rail .divider{width:30px;height:1px;background:var(--border);margin:4px 0;flex:none}
+.rail button.is-active{background:var(--yellow);color:var(--black);border-color:var(--yellow)}
+.rail button.is-active:hover{background:var(--yellow);color:var(--black)}
+.rail .tag{
+  position:absolute;top:-3px;right:-3px;background:var(--green);color:var(--black);
+  font-size:7px;letter-spacing:0;padding:1px 3px;font-weight:700;
+}
+
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:28px 28px 46px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#04060d;touch-action:none;cursor:crosshair}
+.stage .hint{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  color:var(--white-dim);font-size:10px;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;text-align:center;
+}
+
+.rack{width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+.sect-note{color:var(--white-dim);font-size:9px;letter-spacing:.1em;margin-top:8px;line-height:1.7}
+.sect-note b{color:var(--white-soft);font-weight:400}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+button.is-rec{background:var(--pink);border-color:var(--pink);color:var(--black)}
+button:disabled{opacity:.5;cursor:default}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;--p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+.checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px}
+.chk{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--white-soft)}
+.chk input{appearance:none;-webkit-appearance:none;width:14px;height:14px;border:1px solid var(--border-hi);background:var(--black-panel);cursor:pointer;flex:none}
+.chk input:checked{background:var(--yellow);border-color:var(--yellow)}
+
+.seg{display:flex;border:1px solid var(--border-hi);flex-wrap:wrap}
+.seg button{flex:1 1 40%;border:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.1em}
+.seg button:last-child{border-right:0}
+.seg button.wide{flex:1 1 100%;border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black);flex-wrap:wrap}
+.actions button{flex:1;height:42px;min-width:78px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:980px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rail{width:100%;flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--border)}
+  .rail .divider{width:1px;height:30px;margin:0 4px}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:18px;min-height:56vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Culture</h1>
+      <div class="sub">differential growth studio · paint it alive</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span id="headSize">1080 × 1080 px</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <nav class="rail" aria-label="tools">
+      <button id="tCells" data-tool="cells" class="is-active" title="Cell brush — seeds that divide and pack">✺</button>
+      <button id="tFilament" data-tool="filament" title="Filament brush — a line that grows and folds">〰</button>
+      <button id="tRing" data-tool="ring" title="Ring — a closed loop that buckles into a labyrinth">◯</button>
+      <button id="tSpray" data-tool="spray" title="Spray — scattered seeds">⁙</button>
+      <button id="tErase" data-tool="erase" title="Erase">⌫</button>
+      <span class="divider"></span>
+      <button id="btnFreeze" title="Freeze growth">❄<span class="tag" id="freezeTag" hidden>OFF</span></button>
+      <button id="btnSeed" title="Drop a seed colony in the middle">◉</button>
+      <button id="btnClear" title="Clear the dish">🗑</button>
+    </nav>
+
+    <section class="stage" aria-label="canvas">
+      <span class="corner tl">DISH ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerTool">brush · cells</span>
+      <span class="corner br" id="cornerFmt">1:1</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+      <span class="hint">drag to paint · everything you plant keeps growing</span>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Growth</h2><span class="coord">S.00</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Blob size</span><span class="val" data-val="blob"></span></div>
+            <input type="range" id="blob" min="4" max="100" step="1" value="27">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Excitability</span><span class="val" data-val="excite"></span></div>
+            <input type="range" id="excite" min="0" max="100" step="1" value="95">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Inflation</span><span class="val" data-val="inflate"></span></div>
+            <input type="range" id="inflate" min="0" max="100" step="1" value="0">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Stiffness</span><span class="val" data-val="stiff"></span></div>
+            <input type="range" id="stiff" min="0" max="100" step="1" value="30">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Chaos</span><span class="val" data-val="chaos"></span></div>
+            <input type="range" id="chaos" min="0" max="100" step="1" value="18">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Speed</span><span class="val" data-val="speed"></span></div>
+            <input type="range" id="speed" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="sect-note">
+            <b>Excitability</b> drives division and node insertion ·
+            <b>Inflation</b> pushes the colony outward ·
+            <b>Stiffness</b> holds neighbours together ·
+            <b>Chaos</b> jitters everything.
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Brush</h2><span class="coord">S.01</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Brush size</span><span class="val" data-val="brush"></span></div>
+            <input type="range" id="brush" min="10" max="260" step="1" value="70">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Line weight</span><span class="val" data-val="weight"></span></div>
+            <input type="range" id="weight" min="1" max="14" step="0.5" value="3">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Palette</span></div>
+            <div class="seg" id="segPalette" role="group" aria-label="palette">
+              <button data-pal="cobalt" class="is-active">Cobalt</button>
+              <button data-pal="digidelic">Digidelic</button>
+              <button data-pal="spore">Spore</button>
+              <button data-pal="bone">Bone</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Format</span></div>
+            <div class="seg" id="segFormat" role="group" aria-label="format">
+              <button data-fmt="11" class="is-active">1:1</button>
+              <button data-fmt="45">4:5</button>
+              <button data-fmt="169" class="wide">16:9</button>
+            </div>
+          </div>
+          <div class="checks">
+            <label class="chk"><input type="checkbox" id="glow" checked> Bloom</label>
+            <label class="chk"><input type="checkbox" id="fillCells"> Solid cells</label>
+            <label class="chk"><input type="checkbox" id="ring" checked> Cursor ring</label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>culturegen v1.0</b></div>
+    <div class="cell">cells <b id="statCells">0</b></div>
+    <div class="cell">nodes <b id="statNodes">0</b></div>
+    <div class="cell">divisions <b id="statDiv">0</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+const TAU=Math.PI*2;
+const FORMATS={ '11':[1080,1080], '45':[1080,1350], '169':[1920,1080] };
+const PALETTES={
+  cobalt:{ bg:'#04060d', ramp:['#1b57ff','#2f7bff','#0f3ddb'], hi:'#8fb6ff' },
+  digidelic:{ bg:'#08080a', ramp:['#eaff00','#ff2d87','#00d9ff','#39ff6a'], hi:'#ffffff' },
+  spore:{ bg:'#0a0704', ramp:['#ff7a1a','#ffc247','#ff3b30'], hi:'#fff0c9' },
+  bone:{ bg:'#f2efe7', ramp:['#1a1814','#3f3a30','#6b6152'], hi:'#a8452c' },
+};
+
+const state={
+  tool:'cells', palette:'cobalt', fmt:'11',
+  W:1080, H:1080,
+  frozen:false, painting:false,
+  pointer:{x:540,y:540}, last:null,
+  divisions:0, activeFil:null, pointerIn:false,
+};
+const sliders=['blob','excite','inflate','stiff','chaos','speed','brush','weight'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const c=id=>document.getElementById(id).checked;
+  return {
+    blob:g('blob'), excite:g('excite')/100, inflate:g('inflate')/100,
+    stiff:g('stiff')/100, chaos:g('chaos')/100, speed:g('speed')/100,
+    brush:g('brush'), weight:g('weight'),
+    glow:c('glow'), fillCells:c('fillCells'), ring:c('ring'),
+    palette:state.palette,
+  };
+}
+/* blob size slider → world radius / node spacing */
+function unitR(p){ return 3+p.blob*0.42; }
+
+/* ═══════════════════ COLONY ═══════════════════
+   cells   — discs that inflate, shove each other apart, and divide
+   fils    — polylines whose nodes repel, spring to neighbours, and
+             gain new nodes wherever the line stretches (differential growth) */
+const cells=[];                       // {x,y,r,tint}
+const fils=[];                        // {pts:[{x,y}], closed, tint}
+const MAX_CELLS=2600, MAX_NODES=5200;
+function nodeCount(){ let n=0; for(const f of fils) n+=f.pts.length; return n; }
+
+function addCell(x,y,r,tint){
+  if(cells.length>=MAX_CELLS) return;
+  cells.push({x,y,r,tint:tint!==undefined?tint:Math.random()});
+}
+function addFil(pts,closed,tint){
+  fils.push({pts,closed:!!closed,tint:tint!==undefined?tint:Math.random()});
+  return fils[fils.length-1];
+}
+
+/* ── uniform grid so neighbour queries stay cheap ── */
+const hash={ heads:null, next:null, cols:0, rows:0, size:1 };
+function buildHash(items,size,W,H){
+  const cols=Math.max(1,Math.ceil(W/size)), rows=Math.max(1,Math.ceil(H/size));
+  if(!hash.heads||hash.heads.length!==cols*rows){ hash.heads=new Int32Array(cols*rows); }
+  hash.heads.fill(-1);
+  if(!hash.next||hash.next.length<items.length) hash.next=new Int32Array(Math.max(64,items.length*2));
+  hash.cols=cols; hash.rows=rows; hash.size=size;
+  for(let i=0;i<items.length;i++){
+    const it=items[i];
+    const cx=Math.min(cols-1,Math.max(0,(it.x/size)|0));
+    const cy=Math.min(rows-1,Math.max(0,(it.y/size)|0));
+    const k=cy*cols+cx;
+    hash.next[i]=hash.heads[k];
+    hash.heads[k]=i;
+  }
+}
+function eachNear(x,y,fn){
+  const {cols,rows,size,heads,next}=hash;
+  const cx=Math.min(cols-1,Math.max(0,(x/size)|0));
+  const cy=Math.min(rows-1,Math.max(0,(y/size)|0));
+  for(let gy=Math.max(0,cy-1);gy<=Math.min(rows-1,cy+1);gy++){
+    for(let gx=Math.max(0,cx-1);gx<=Math.min(cols-1,cx+1);gx++){
+      let i=heads[gy*cols+gx];
+      while(i!==-1){ fn(i); i=next[i]; }
+    }
+  }
+}
+
+function stepCells(p,dt){
+  if(!cells.length) return;
+  const R=unitR(p);
+  buildHash(cells,Math.max(8,R*2.2),state.W,state.H);
+  const push=0.35+p.stiff*0.9;
+  const cx0=state.W/2, cy0=state.H/2;
+  for(let i=0;i<cells.length;i++){
+    const a=cells[i];
+    /* inflate toward the target radius */
+    const grow=(0.25+p.excite*1.6)*R*dt;
+    if(a.r<R) a.r=Math.min(R,a.r+grow);
+    eachNear(a.x,a.y,j=>{
+      if(j<=i) return;
+      const b=cells[j];
+      const dx=b.x-a.x, dy=b.y-a.y;
+      const min=(a.r+b.r);
+      const d2=dx*dx+dy*dy;
+      if(d2>min*min) return;
+      const d=Math.sqrt(d2)||0.001;
+      const over=(min-d)/min;
+      const f=over*push*R*dt*22;
+      const nx=dx/d, ny=dy/d;
+      a.x-=nx*f; a.y-=ny*f;
+      b.x+=nx*f; b.y+=ny*f;
+    });
+    if(p.inflate>0){                    /* colony pressure, pushing outward */
+      const dx=a.x-cx0, dy=a.y-cy0;
+      const d=Math.hypot(dx,dy)||0.001;
+      a.x+=dx/d*p.inflate*46*dt; a.y+=dy/d*p.inflate*46*dt;
+    }
+    if(p.chaos>0){
+      a.x+=(Math.random()-0.5)*p.chaos*R*2.2*dt;
+      a.y+=(Math.random()-0.5)*p.chaos*R*2.2*dt;
+    }
+    a.x=Math.max(2,Math.min(state.W-2,a.x));
+    a.y=Math.max(2,Math.min(state.H-2,a.y));
+  }
+  /* division — a grown cell splits only if the daughter has somewhere to
+     go, so a colony fills the shape it was painted into and then holds */
+  if(cells.length<MAX_CELLS&&p.excite>0){
+    const rate=p.excite*1.6*dt;
+    const n=cells.length;
+    for(let i=0;i<n&&cells.length<MAX_CELLS;i++){
+      const a=cells[i];
+      if(a.r<R*0.9) continue;
+      if(Math.random()>rate) continue;
+      const ang=Math.random()*TAU;
+      const nr=a.r*0.66;
+      const bx=a.x+Math.cos(ang)*a.r*1.5, by=a.y+Math.sin(ang)*a.r*1.5;
+      if(bx<2||by<2||bx>state.W-2||by>state.H-2) continue;
+      let blocked=false;
+      eachNear(bx,by,j=>{
+        if(blocked||j===i) return;
+        const c=cells[j];
+        const dx=c.x-bx, dy=c.y-by;
+        const lim=(c.r+nr)*0.82;
+        if(dx*dx+dy*dy<lim*lim) blocked=true;
+      });
+      if(blocked) continue;
+      a.r=nr;
+      addCell(bx,by,nr*0.7,a.tint);
+      state.divisions++;
+    }
+  }
+}
+
+function stepFils(p,dt){
+  if(!fils.length) return;
+  const L=Math.max(3,unitR(p)*1.1);        // desired node spacing
+  const flat=[];
+  for(const f of fils) for(const pt of f.pts) flat.push(pt);
+  if(!flat.length) return;
+  buildHash(flat,Math.max(8,L*2.2),state.W,state.H);
+  const repelR=L*2.6;
+  const sep=(0.7+p.stiff*1.1);
+  /* separation */
+  for(let i=0;i<flat.length;i++){
+    const a=flat[i];
+    let fx=0, fy=0;
+    eachNear(a.x,a.y,j=>{
+      if(j===i) return;
+      const b=flat[j];
+      const dx=a.x-b.x, dy=a.y-b.y;
+      const d2=dx*dx+dy*dy;
+      if(d2>repelR*repelR||d2<0.0001) return;
+      const d=Math.sqrt(d2);
+      const w=(1-d/repelR)/d;
+      fx+=dx*w; fy+=dy*w;
+    });
+    a.fx=fx*sep*L*dt*10; a.fy=fy*sep*L*dt*10;
+  }
+  for(const f of fils){
+    const pts=f.pts, n=pts.length;
+    for(let i=0;i<n;i++){
+      const a=pts[i];
+      const prev=pts[i-1]||(f.closed?pts[n-1]:null);
+      const next=pts[i+1]||(f.closed?pts[0]:null);
+      /* spring to neighbours at the target spacing + curvature smoothing */
+      if(prev){
+        const dx=prev.x-a.x, dy=prev.y-a.y, d=Math.hypot(dx,dy)||0.001;
+        const s=(d-L)/d*0.5*(0.3+p.stiff);
+        a.fx+=dx*s; a.fy+=dy*s;
+      }
+      if(next){
+        const dx=next.x-a.x, dy=next.y-a.y, d=Math.hypot(dx,dy)||0.001;
+        const s=(d-L)/d*0.5*(0.3+p.stiff);
+        a.fx+=dx*s; a.fy+=dy*s;
+      }
+      if(prev&&next){
+        const mx=(prev.x+next.x)/2-a.x, my=(prev.y+next.y)/2-a.y;
+        a.fx+=mx*p.stiff*0.28; a.fy+=my*p.stiff*0.28;
+      }
+      if(p.inflate>0&&prev&&next){       /* grow outward along the normal */
+        const tx=next.x-prev.x, ty=next.y-prev.y;
+        const d=Math.hypot(tx,ty)||0.001;
+        a.fx+=(-ty/d)*p.inflate*30*dt; a.fy+=(tx/d)*p.inflate*30*dt;
+      }
+      if(p.chaos>0){
+        a.fx+=(Math.random()-0.5)*p.chaos*L*1.6*dt;
+        a.fy+=(Math.random()-0.5)*p.chaos*L*1.6*dt;
+      }
+    }
+    for(const a of pts){
+      a.x=Math.max(2,Math.min(state.W-2,a.x+(a.fx||0)));
+      a.y=Math.max(2,Math.min(state.H-2,a.y+(a.fy||0)));
+      a.fx=0; a.fy=0;
+    }
+    /* differential growth — stretched segments gain a node */
+    if(nodeCount()<MAX_NODES){
+      const lim=f.closed?n:n-1;
+      for(let i=lim-1;i>=0;i--){
+        const a=pts[i], b=pts[(i+1)%n];
+        if(!b) continue;
+        const d=Math.hypot(b.x-a.x,b.y-a.y);
+        if(d>L*1.7||(p.excite>0&&Math.random()<p.excite*0.005*dt*60)){
+          if(d<L*0.6) continue;
+          pts.splice(i+1,0,{x:(a.x+b.x)/2,y:(a.y+b.y)/2,fx:0,fy:0});
+          state.divisions++;
+        }
+      }
+    }
+  }
+}
+
+/* ═══════════════════ RENDER ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+const layer=document.createElement('canvas');
+const lctx=layer.getContext('2d');
+
+function fitCanvas(){
+  const stage=document.querySelector('.stage');
+  const scale=Math.min((stage.clientWidth-70)/state.W,(stage.clientHeight-92)/state.H,1);
+  canvas.style.width=(state.W*scale)+'px';
+  canvas.style.height=(state.H*scale)+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const bw=Math.round(state.W*scale*dpr), bh=Math.round(state.H*scale*dpr);
+  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; }
+  if(layer.width!==state.W||layer.height!==state.H){ layer.width=state.W; layer.height=state.H; }
+}
+function tintOf(pal,t){ return pal.ramp[((t*pal.ramp.length)|0)%pal.ramp.length]; }
+
+function paintColony(g,p,pal){
+  g.clearRect(0,0,state.W,state.H);
+  g.lineJoin='round'; g.lineCap='round';
+  /* cells: dark bodies ringed in colour, so packing reads as foam */
+  g.lineWidth=p.weight;
+  for(const c of cells){
+    g.beginPath(); g.arc(c.x,c.y,Math.max(0.6,c.r),0,TAU);
+    if(p.fillCells){ g.fillStyle=tintOf(pal,c.tint); g.globalAlpha=0.5; g.fill(); g.globalAlpha=1; }
+    else { g.fillStyle=pal.bg; g.fill(); }
+    g.strokeStyle=tintOf(pal,c.tint); g.stroke();
+  }
+  /* filaments: one continuous stroke per line */
+  g.lineWidth=p.weight*1.9;
+  for(const f of fils){
+    if(f.pts.length<2) continue;
+    g.strokeStyle=tintOf(pal,f.tint);
+    g.beginPath();
+    g.moveTo(f.pts[0].x,f.pts[0].y);
+    for(let i=1;i<f.pts.length;i++) g.lineTo(f.pts[i].x,f.pts[i].y);
+    if(f.closed) g.closePath();
+    g.stroke();
+  }
+}
+function compose(g,W,H,p){
+  const pal=PALETTES[p.palette];
+  g.fillStyle=pal.bg; g.fillRect(0,0,W,H);
+  paintColony(lctx,p,pal);
+  g.drawImage(layer,0,0,W,H);
+  if(p.glow&&p.palette!=='bone'){
+    g.save();
+    g.globalCompositeOperation='lighter'; g.globalAlpha=0.5;
+    g.filter=`blur(${7*(W/1080)}px)`;
+    g.drawImage(layer,0,0,W,H);
+    g.restore();
+  }
+  if(p.ring&&state.pointerIn){
+    g.strokeStyle=pal.hi; g.globalAlpha=0.45; g.lineWidth=1.5*(W/1080);
+    g.beginPath(); g.arc(state.pointer.x,state.pointer.y,p.brush/2,0,TAU); g.stroke();
+    g.globalAlpha=1;
+  }
+}
+
+/* ═══════════════════ PAINTING ═══════════════════ */
+function plantCells(p,x,y){
+  const R=unitR(p);
+  const rad=p.brush/2;
+  const tries=Math.max(1,Math.round(rad/Math.max(4,R)));
+  for(let i=0;i<tries;i++){
+    const a=Math.random()*TAU, d=Math.sqrt(Math.random())*rad;
+    const px=x+Math.cos(a)*d, py=y+Math.sin(a)*d;
+    let clear=true;
+    for(const c of cells){
+      const dx=c.x-px, dy=c.y-py;
+      if(dx*dx+dy*dy<(R*0.85)*(R*0.85)){ clear=false; break; }
+    }
+    if(clear) addCell(px,py,R*0.35);
+  }
+}
+function plantSpray(p,x,y){
+  const R=unitR(p), rad=p.brush/2;
+  for(let i=0;i<3;i++){
+    const a=Math.random()*TAU, d=Math.sqrt(Math.random())*rad;
+    addCell(x+Math.cos(a)*d,y+Math.sin(a)*d,R*0.3);
+  }
+}
+function plantRing(p,x,y){
+  const rad=Math.max(12,p.brush/2);
+  const n=Math.max(12,Math.round(TAU*rad/Math.max(4,unitR(p))));
+  const pts=[];
+  for(let i=0;i<n;i++){
+    const a=i/n*TAU;
+    pts.push({x:x+Math.cos(a)*rad,y:y+Math.sin(a)*rad,fx:0,fy:0});
+  }
+  addFil(pts,true);
+}
+function eraseAt(p,x,y){
+  const rad=p.brush/2;
+  for(let i=cells.length-1;i>=0;i--){
+    const c=cells[i];
+    if((c.x-x)**2+(c.y-y)**2<rad*rad) cells.splice(i,1);
+  }
+  for(let fi=fils.length-1;fi>=0;fi--){
+    const f=fils[fi];
+    f.pts=f.pts.filter(pt=>(pt.x-x)**2+(pt.y-y)**2>=rad*rad);
+    if(f.pts.length<2) fils.splice(fi,1);
+    else f.closed=false;
+  }
+}
+function paintAt(p,x,y){
+  if(state.tool==='cells') plantCells(p,x,y);
+  else if(state.tool==='spray') plantSpray(p,x,y);
+  else if(state.tool==='erase') eraseAt(p,x,y);
+  else if(state.tool==='filament'){
+    const L=Math.max(4,unitR(p)*1.1);
+    if(!state.activeFil) state.activeFil=addFil([{x,y,fx:0,fy:0}],false);
+    const pts=state.activeFil.pts;
+    const last=pts[pts.length-1];
+    if(Math.hypot(x-last.x,y-last.y)>=L) pts.push({x,y,fx:0,fy:0});
+  }
+}
+function seedColony(){
+  const p=params();
+  const R=unitR(p);
+  for(let i=0;i<26;i++){
+    const a=Math.random()*TAU, d=Math.sqrt(Math.random())*R*3.4;
+    addCell(state.W/2+Math.cos(a)*d,state.H/2+Math.sin(a)*d,R*0.4);
+  }
+}
+
+/* ═══════════════════ LOOP ═══════════════════ */
+let lastT=performance.now();
+function frame(now){
+  const p=params();
+  fitCanvas();
+  const dt=Math.min(0.05,(now-lastT)/1000); lastT=now;
+  if(!state.frozen){
+    const steps=1+Math.round(p.speed*3);
+    const sdt=Math.min(0.033,dt)*(0.4+p.speed*1.6)/steps;
+    for(let s=0;s<steps;s++){ stepCells(p,sdt); stepFils(p,sdt); }
+  }
+  const sx=canvas.width/state.W, sy=canvas.height/state.H;
+  ctx.setTransform(sx,0,0,sy,0,0);
+  ctx.filter='none';
+  compose(ctx,state.W,state.H,p);
+  ctx.setTransform(1,0,0,1,0,0);
+  document.getElementById('statCells').textContent=cells.length;
+  document.getElementById('statNodes').textContent=nodeCount();
+  document.getElementById('statDiv').textContent=state.divisions;
+  requestAnimationFrame(frame);
+}
+
+/* ═══════════════════ POINTER ═══════════════════ */
+function pt(ev){
+  const r=canvas.getBoundingClientRect();
+  return { x:(ev.clientX-r.left)/r.width*state.W, y:(ev.clientY-r.top)/r.height*state.H };
+}
+canvas.addEventListener('pointerdown',ev=>{
+  const p=params();
+  state.painting=true; state.pointerIn=true;
+  state.pointer=pt(ev);
+  canvas.setPointerCapture(ev.pointerId);
+  if(state.tool==='ring'){ plantRing(p,state.pointer.x,state.pointer.y); return; }
+  state.activeFil=null;
+  paintAt(p,state.pointer.x,state.pointer.y);
+});
+canvas.addEventListener('pointermove',ev=>{
+  state.pointer=pt(ev); state.pointerIn=true;
+  if(!state.painting||state.tool==='ring') return;
+  paintAt(params(),state.pointer.x,state.pointer.y);
+});
+['pointerup','pointercancel'].forEach(t=>canvas.addEventListener(t,()=>{
+  state.painting=false; state.activeFil=null;
+}));
+canvas.addEventListener('pointerleave',()=>{ state.pointerIn=false; });
+
+/* ═══════════════════ EXPORT / RECORD ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=state.W; off.height=state.H;
+  compose(off.getContext('2d'),state.W,state.H,p);
+  off.toBlob(b=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='digidelic-culture-'+Date.now().toString(36)+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+let recorder=null;
+function recordClip(){
+  const btn=document.getElementById('btnRecord');
+  if(recorder) return;
+  const stream=canvas.captureStream(30);
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
+  const chunks=[];
+  recorder.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  recorder.onstop=()=>{
+    const blob=new Blob(chunks,{type:'video/webm'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-culture-'+Date.now().toString(36)+'.webm';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    recorder=null;
+    btn.classList.remove('is-rec'); btn.disabled=false; btn.textContent='⏺ Rec 6s';
+  };
+  btn.classList.add('is-rec'); btn.disabled=true; btn.textContent='● recording';
+  recorder.start();
+  setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
+}
+function clearDish(){
+  cells.length=0; fils.length=0; state.divisions=0; state.activeFil=null;
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(!out) return;
+  if(el.id==='brush') out.textContent=v+'px';
+  else if(el.id==='weight') out.textContent=v+'px';
+  else out.textContent=v+'%';
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>syncSlider(el));
+  syncSlider(el);
+});
+
+document.querySelectorAll('.rail button[data-tool]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.rail button[data-tool]').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    state.tool=btn.dataset.tool;
+    document.getElementById('cornerTool').textContent='brush · '+state.tool;
+  });
+});
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',ev=>{
+    const btn=ev.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+  });
+}
+wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
+wireSeg('segFormat','fmt',v=>{
+  [state.W,state.H]=FORMATS[v];
+  document.getElementById('headSize').textContent=state.W+' × '+state.H+' px';
+  document.getElementById('cornerFmt').textContent=({'11':'1:1','45':'4:5','169':'16:9'})[v];
+  clearDish(); seedColony();
+});
+
+document.getElementById('btnFreeze').addEventListener('click',()=>{
+  state.frozen=!state.frozen;
+  const b=document.getElementById('btnFreeze');
+  b.classList.toggle('is-active',state.frozen);
+  document.getElementById('freezeTag').hidden=!state.frozen;
+});
+document.getElementById('btnSeed').addEventListener('click',seedColony);
+document.getElementById('btnClear').addEventListener('click',clearDish);
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('btnRecord').addEventListener('click',recordClip);
+window.addEventListener('keydown',ev=>{
+  if(ev.target.closest('input')) return;
+  if(ev.key==='e') exportPNG();
+  if(ev.key==='f') document.getElementById('btnFreeze').click();
+  if(ev.key==='c') clearDish();
+});
+
+/* boot */
+canvas.style.background=PALETTES[state.palette].bg;
+seedColony();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
