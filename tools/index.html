@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Tools Index" subtitle="Hub for every digidelic generative tool — live previews and links" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--black-soft); color:var(--white); min-height:100%;
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+a{color:inherit;text-decoration:none}
+
+header{
+  display:flex;align-items:stretch;border-bottom:1px solid var(--border);background:var(--black);
+  position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+.bar{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:12px 24px;border-bottom:1px solid var(--border);background:var(--black);
+  position:sticky;top:53px;z-index:40;
+}
+.bar .count{color:var(--white-dim);font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+.bar .count b{color:var(--yellow);font-weight:400}
+input[type=search]{
+  flex:1;min-width:190px;max-width:340px;height:34px;
+  background:var(--black-panel);border:1px solid var(--border);color:var(--white);
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;padding:0 12px;
+  -webkit-appearance:none;appearance:none;
+}
+input[type=search]:focus{outline:none;border-color:var(--yellow)}
+input[type=search]::placeholder{color:var(--white-dim);text-transform:uppercase;letter-spacing:.16em}
+.filters{display:flex;gap:0;border:1px solid var(--border-hi);flex-wrap:wrap}
+.filters button{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:0;border-right:1px solid var(--border);
+  height:32px;padding:0 12px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap);
+}
+.filters button:last-child{border-right:0}
+.filters button:hover{background:var(--white);color:var(--black)}
+.filters button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+:where(a,button,input):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+main{padding:24px}
+.grid{
+  display:grid;gap:16px;
+  grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+}
+.card{
+  position:relative;border:1px solid var(--border);background:var(--black);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:border-color var(--d-base) var(--e-snap),transform var(--d-base) var(--e-flow);
+}
+.card:hover,.card:focus-within{border-color:var(--border-hi);transform:translateY(-2px)}
+.card::before{
+  content:'';position:absolute;top:8px;left:8px;width:9px;height:9px;
+  border:1px solid var(--yellow);border-width:1px 0 0 1px;opacity:0;z-index:3;
+  transition:opacity var(--d-base) var(--e-snap);
+}
+.card:hover::before,.card:focus-within::before{opacity:1}
+.card .shot{position:relative;display:block;border-bottom:1px solid var(--border);background:#000}
+.card canvas{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.card .idx{
+  position:absolute;top:8px;right:10px;font-size:9px;letter-spacing:.2em;color:var(--white-dim);
+  background:rgba(0,0,0,.6);padding:2px 6px;z-index:2;
+}
+.card .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:9px;flex:1}
+.card h2{font-family:var(--font-display);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.14em}
+.card h2 a::after{content:'';position:absolute;inset:0;z-index:1}
+.card p{color:var(--white-dim);font-size:10.5px;line-height:1.6;letter-spacing:.03em;flex:1}
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{
+  font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;
+  border:1px solid var(--border);color:var(--white-dim);padding:2px 6px;
+}
+.tag.hot{border-color:var(--yellow);color:var(--yellow)}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;position:relative;z-index:2}
+.links a{
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  border:1px solid var(--border-hi);padding:5px 10px;color:var(--white-soft);
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+.links a:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+.links a.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+.links a.primary:hover{background:var(--white);border-color:var(--white)}
+
+.empty{
+  border:1px dashed var(--border-hi);padding:40px;text-align:center;
+  color:var(--white-dim);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+}
+footer{
+  display:flex;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);margin-top:8px;
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:700px){
+  .bar{top:53px}
+  main{padding:16px}
+  .grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+  <div class="title-block">
+    <h1>Tools</h1>
+    <div class="sub">generative instrument rack · <span id="toolCount">—</span> builds</div>
+  </div>
+  <div class="head-coords">
+    <span>A1.2</span><span>X.06</span><span>0x4F3A</span><span class="live">live</span>
+  </div>
+</header>
+
+<div class="bar">
+  <input type="search" id="q" placeholder="filter tools" aria-label="filter tools" spellcheck="false">
+  <div class="filters" id="filters" role="group" aria-label="filter by trait">
+    <button data-tag="all" class="is-active">All</button>
+    <button data-tag="interactive">Interactive</button>
+    <button data-tag="animated">Animated</button>
+    <button data-tag="sound">Sound</button>
+    <button data-tag="upload">Upload</button>
+    <button data-tag="type">Type</button>
+  </div>
+  <span class="count"><b id="shown">0</b> shown</span>
+</div>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>no tools match that filter_</div>
+</main>
+
+<footer>
+  <div class="cell">sys <b>digidelic tools</b></div>
+  <div class="cell">index <b id="footCount">0</b></div>
+  <div class="cell">build <b>standalone + source</b></div>
+  <div class="cell fill">session authenticated · awaiting input_</div>
+</footer>
+
+<script>
+'use strict';
+const TAU=Math.PI*2;
+
+/* Links resolve for wherever this page is opened from: the repo's tools/
+   directory, or next to the baked single-file builds in dist/. */
+const IN_DIST=/(^|\/)dist\//.test(location.pathname);
+const href=slug=>IN_DIST?`./tools-${slug}.html`:`./${slug}/index.html`;
+const standalone=slug=>IN_DIST?`./tools-${slug}.html`:`../dist/tools-${slug}.html`;
+const readme=slug=>IN_DIST?null:`./${slug}/README.md`;
+
+function rng(seed){
+  return function(){
+    seed|=0; seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+
+/* ── each card carries a hand-drawn signature of what the tool does ── */
+const TOOLS=[
+  {
+    slug:'patchwork-generator', name:'Patchwork Generator', bg:'#0b0b0d',
+    blurb:'Recursive patch grid — cells subdivide into stripes, checkers, arcs and dots, reshuffled from a seed.',
+    tags:['animated'],
+    draw(g,w,h,t){
+      const r=rng(7); const cols=5, rows=3;
+      const cw=w/cols, ch=h/rows;
+      const pal=['#eaff00','#ff2d87','#00d9ff','#39ff6a','#2d4cff'];
+      for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+        const c=pal[(r()*pal.length)|0], k=r();
+        g.fillStyle=c;
+        const px=x*cw, py=y*ch;
+        if(k<0.3){ for(let i=0;i<4;i++) g.fillRect(px+2,py+2+i*(ch-4)/4,cw-4,(ch-4)/8); }
+        else if(k<0.55){ for(let i=0;i<3;i++)for(let j=0;j<3;j++) if((i+j)%2===0) g.fillRect(px+2+i*(cw-4)/3,py+2+j*(ch-4)/3,(cw-4)/3,(ch-4)/3); }
+        else if(k<0.78){ g.beginPath(); g.arc(px+cw/2,py+ch/2,Math.min(cw,ch)*0.34*(0.75+0.25*Math.sin(t*0.002+x+y)),0,TAU); g.fill(); }
+        else { g.fillRect(px+3,py+3,cw-6,ch-6); g.fillStyle='#0b0b0d'; g.fillRect(px+cw*0.32,py+ch*0.32,cw*0.36,ch*0.36); }
+      }
+    },
+  },
+  {
+    slug:'cosmogram-generator', name:'Cosmogram Generator', bg:'#07070c',
+    blurb:'Esoteric orbital diagram — bodies on rings, circuit combs and glyph borders, all seeded.',
+    tags:['animated'],
+    draw(g,w,h,t){
+      const cx=w/2, cy=h/2, R=Math.min(w,h)*0.42;
+      g.strokeStyle='rgba(255,255,255,0.18)'; g.lineWidth=1;
+      for(let i=1;i<=4;i++){ g.beginPath(); g.arc(cx,cy,R*i/4,0,TAU); g.stroke(); }
+      const pal=['#eaff00','#ff2d87','#00d9ff','#39ff6a'];
+      for(let i=0;i<7;i++){
+        const ring=1+(i%4), a=t*0.00035*(1+i*0.4)+i*1.3;
+        const rr=R*ring/4;
+        const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr;
+        g.fillStyle=pal[i%pal.length];
+        g.beginPath(); g.arc(x,y,2.6+(i%3),0,TAU); g.fill();
+      }
+      g.strokeStyle='#eaff00'; g.lineWidth=1;
+      g.beginPath(); g.arc(cx,cy,R*1.06,t*0.0004,t*0.0004+1.1); g.stroke();
+      g.fillStyle='#fff'; g.beginPath(); g.arc(cx,cy,3,0,TAU); g.fill();
+    },
+  },
+  {
+    slug:'glyph-foundry', name:'Glyph Foundry', bg:'#0a0a0a',
+    blurb:'Specimen sheets of invented letterforms — asemic strokes, planetary stacks, Bauhaus primitives.',
+    tags:['animated','type'],
+    draw(g,w,h,t){
+      const cols=6, rows=3, cw=w/cols, ch=h/rows;
+      const gen=((t/2600)|0);
+      const r=rng(gen*97+11);
+      g.strokeStyle='#eaff00'; g.lineWidth=1.6; g.lineCap='round';
+      for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+        const px=x*cw+cw*0.5, py=y*ch+ch*0.5;
+        const s=Math.min(cw,ch)*0.3;
+        g.beginPath();
+        const n=2+((r()*3)|0);
+        for(let i=0;i<n;i++){
+          const a=r()*TAU, b=r()*TAU;
+          g.moveTo(px+Math.cos(a)*s,py+Math.sin(a)*s);
+          if(r()<0.5) g.lineTo(px+Math.cos(b)*s,py+Math.sin(b)*s);
+          else g.arc(px,py,s*(0.4+r()*0.6),a,b);
+        }
+        g.stroke();
+      }
+    },
+  },
+  {
+    slug:'reaction-field', name:'Reaction Field', bg:'#04120c',
+    blurb:'Gray-Scott reaction–diffusion, shaded as 3D relief — coral, mitosis and maze regimes.',
+    tags:['animated'],
+    draw(g,w,h,t){
+      const step=7;
+      for(let y=0;y<h;y+=step)for(let x=0;x<w;x+=step){
+        const v=Math.sin(x*0.06+Math.sin(y*0.05+t*0.0007)*2.2)+Math.sin(y*0.075-t*0.0005);
+        const a=(v+2)/4;
+        if(a<0.42) continue;
+        g.fillStyle=`rgba(57,255,106,${(a*0.9).toFixed(2)})`;
+        g.fillRect(x,y,step-1.6,step-1.6);
+      }
+    },
+  },
+  {
+    slug:'colony-display', name:'Colony Display', bg:'#04100e',
+    blurb:'Life colonies on a phosphor dot matrix — liquid undulation, spectral refraction, touch splash.',
+    tags:['animated','interactive','sound'],
+    draw(g,w,h,t){
+      const N=22, cs=Math.min(w,h)/N*1.1;
+      const cols=Math.ceil(w/cs), rows=Math.ceil(h/cs);
+      for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+        const v=Math.sin(x*0.7+t*0.0012)+Math.sin(y*0.9-t*0.0009)+Math.sin((x+y)*0.4+t*0.0006);
+        const e=(v+3)/6;
+        if(e<0.42) continue;
+        const und=0.6+0.4*Math.sin(t*0.0016+x*0.4+y*0.3);
+        g.fillStyle=e>0.86?`rgba(184,255,224,${und})`:`rgba(52,242,161,${(e*und).toFixed(2)})`;
+        g.beginPath(); g.arc((x+0.5)*cs,(y+0.5)*cs,cs*0.34*und,0,TAU); g.fill();
+      }
+    },
+  },
+  {
+    slug:'signal-scope', name:'Signal Scope', bg:'#051208',
+    blurb:'Dual-beam phosphor harmonograph — detuned Lissajous figures that precess, and can be heard.',
+    tags:['animated','sound'],
+    draw(g,w,h,t){
+      const cx=w/2, cy=h/2, R=Math.min(w,h)*0.4;
+      g.strokeStyle='rgba(80,200,140,0.12)'; g.lineWidth=1;
+      for(let i=1;i<4;i++){ g.beginPath(); g.moveTo(0,h*i/4); g.lineTo(w,h*i/4); g.stroke(); }
+      for(const [col,ph] of [['#34f2a1',0],['#beff78',Math.PI/2]]){
+        g.strokeStyle=col; g.lineWidth=1.2; g.beginPath();
+        for(let i=0;i<=260;i++){
+          const th=i*0.05+t*0.0004;
+          const x=cx+Math.sin(3*th+ph)*R, y=cy+Math.sin(4*th+t*0.00022)*R*0.9;
+          i?g.lineTo(x,y):g.moveTo(x,y);
+        }
+        g.stroke();
+      }
+    },
+  },
+  {
+    slug:'circuit-matrix', name:'Circuit Matrix', bg:'#050505',
+    blurb:'Self-routing LED panel — traces corner at right angles, cap in solder pads, and re-route forever.',
+    tags:['animated','interactive'],
+    draw(g,w,h,t){
+      const cs=Math.max(7,Math.min(w,h)/15);
+      const cols=Math.ceil(w/cs), rows=Math.ceil(h/cs);
+      g.fillStyle='rgba(255,255,255,0.05)';
+      for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){ g.beginPath(); g.arc((x+0.5)*cs,(y+0.5)*cs,cs*0.1,0,TAU); g.fill(); }
+      const pal=['#ffd028','#ff4b3a','#57d9a3','#7b5bff','#2d6eff'];
+      const r=rng(31);
+      g.lineCap='square'; g.lineJoin='miter';
+      for(let k=0;k<9;k++){
+        const col=pal[k%pal.length];
+        let x=1+((r()*(cols-2))|0), y=1+((r()*(rows-2))|0);
+        let dir=(r()*4)|0;
+        const len=5+((r()*8)|0);
+        const grow=Math.max(2,Math.min(len,2+((t*0.005+k*4)%(len+9))));
+        g.strokeStyle=col; g.lineWidth=cs*0.34;
+        g.beginPath(); g.moveTo((x+0.5)*cs,(y+0.5)*cs);
+        let ex=x, ey=y;
+        for(let i=0;i<grow;i++){
+          if(r()<0.32) dir=(dir+(r()<0.5?1:3))%4;
+          const nx=ex+[1,-1,0,0][dir], ny=ey+[0,0,1,-1][dir];
+          if(nx<0||ny<0||nx>=cols||ny>=rows) break;
+          ex=nx; ey=ny;
+          g.lineTo((ex+0.5)*cs,(ey+0.5)*cs);
+        }
+        g.stroke();
+        g.fillStyle=col;                       // solder pad at the end of the run
+        g.fillRect((ex+0.5)*cs-cs*0.5,(ey+0.5)*cs-cs*0.5,cs,cs);
+      }
+    },
+  },
+  {
+    slug:'pixel-echo', name:'Pixel Echo', bg:'#000',
+    blurb:'Chromatic echo compositor — shapes trail offset copies up a colour ramp over a scrolling spine.',
+    tags:['animated','interactive'],
+    draw(g,w,h,t){
+      const ramp=['#3a3a42','#2d4cff','#00d9ff','#39ff6a','#eaff00','#ff2d87'];
+      const spine=['#ff2d87','#eaff00','#39ff6a','#00d9ff','#2d4cff'];
+      const bw=Math.max(8,w*0.045);
+      let y=-((t*0.03)%40)-40;
+      let i=0;
+      while(y<h){ const bh=12+((i*7)%22); g.fillStyle=spine[i%spine.length]; g.fillRect(w/2-bw/2,y,bw,bh); y+=bh; i++; }
+      const r=rng(5);
+      for(let s=0;s<7;s++){
+        const x=r()*w*0.82, y0=r()*h*0.75, sz=10+r()*26;
+        const dir=[[1,1],[-1,1],[1,-1],[-1,-1]][(r()*4)|0];
+        const off=(5+r()*6)*(1+0.4*Math.sin(t*0.0016+s));
+        for(let d=4;d>=0;d--){
+          g.fillStyle=ramp[(d+s)%ramp.length];
+          g.fillRect(x+dir[0]*off*d,y0+dir[1]*off*d,sz,sz);
+        }
+      }
+    },
+  },
+  {
+    slug:'pixel-knit', name:'Pixel Knit', bg:'#0d1b12',
+    blurb:'Texture photo × subject clip — the video is binarised into a knit grid the texture shows through.',
+    tags:['animated','interactive','upload'],
+    draw(g,w,h,t){
+      const N=15, cs=Math.min(w,h)/N;
+      const ox=(w-cs*N)/2, oy=(h-cs*N)/2;
+      const cols=['#ff3b30','#ff86a8','#ffd166','#5b8cff','#f4f1ea','#c05cff'];
+      const flap=Math.sin(t*0.002);
+      for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+        const dx=(x-N/2)/(N/2), dy=(y-N/2)/(N/2);
+        const wing=Math.abs(dx)*(0.7+flap*0.3);
+        const on=(Math.abs(dx)<0.14&&Math.abs(dy)<0.8)||(wing<0.9&&Math.abs(dy)<0.62-Math.abs(dx)*0.3);
+        if(!on) continue;
+        g.fillStyle=cols[(x*3+y*5)%cols.length];
+        g.beginPath(); g.arc(ox+(x+0.5)*cs,oy+(y+0.5)*cs,cs*0.38,0,TAU); g.fill();
+      }
+    },
+  },
+  {
+    slug:'surface-tension', name:'Surface Tension', bg:'#f1f0ee',
+    blurb:'Press and hold — water pools as a metaball and every letter it touches gives way beneath it.',
+    tags:['interactive','type'],
+    draw(g,w,h,t){
+      const lines=['PRESS AND HOLD','THE SURFACE','UNTIL THE WORDS','GIVE WAY'];
+      let size=Math.max(7,h*0.115);
+      g.textAlign='center'; g.textBaseline='middle';
+      g.font=`400 ${size}px 'Space Grotesk', system-ui, sans-serif`;
+      let widest=0;
+      for(const ln of lines) widest=Math.max(widest,g.measureText(ln).width);
+      if(widest>w*0.9){ size*=w*0.9/widest; g.font=`400 ${size}px 'Space Grotesk', system-ui, sans-serif`; }
+      const cx=w*0.5, cy=h*0.52, br=Math.min(w,h)*(0.26+0.03*Math.sin(t*0.0014));
+      lines.forEach((ln,i)=>{
+        const y=h*0.24+i*size*1.36;
+        const sink=Math.max(0,1-Math.abs(y-cy)/br)*size*0.9;
+        g.fillStyle=sink>0.5?'#c22f3a':'#26242a';
+        g.fillText(ln,cx,y+sink);
+      });
+      g.fillStyle='#c22f3a';
+      g.beginPath();
+      for(let a=0;a<=TAU+0.01;a+=0.16){
+        const rr=br*(1+0.16*Math.sin(a*3+t*0.0012)+0.1*Math.sin(a*5-t*0.0009));
+        const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*1.15;
+        a?g.lineTo(x,y):g.moveTo(x,y);
+      }
+      g.fill();
+      g.fillStyle='#f3d9a4';
+      g.font=`400 ${size}px 'Space Grotesk', system-ui, sans-serif`;
+      g.save();
+      g.beginPath();
+      for(let a=0;a<=TAU+0.01;a+=0.16){
+        const rr=br*(1+0.16*Math.sin(a*3+t*0.0012)+0.1*Math.sin(a*5-t*0.0009));
+        const x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*1.15;
+        a?g.lineTo(x,y):g.moveTo(x,y);
+      }
+      g.clip();
+      lines.forEach((ln,i)=>{
+        const y=h*0.24+i*size*1.36;
+        const sink=Math.max(0,1-Math.abs(y-cy)/br)*size*0.9;
+        g.fillText(ln,cx,y+sink);
+      });
+      g.restore();
+    },
+  },
+  {
+    slug:'culture', name:'Culture', bg:'#04060d',
+    blurb:'Differential growth studio — painted cells divide and pack into foam, rings buckle into labyrinths.',
+    tags:['interactive','animated'],
+    draw(g,w,h,t){
+      const cx=w*0.32, cy=h*0.5;
+      const r=rng(3);
+      g.strokeStyle='#2f7bff'; g.lineWidth=1.4;
+      const grow=Math.min(1,(t%9000)/6000);
+      for(let i=0;i<70;i++){
+        const a=r()*TAU, d=Math.sqrt(r())*Math.min(w,h)*0.34*grow;
+        const rr=Math.min(w,h)*0.045;
+        g.beginPath(); g.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,rr,0,TAU);
+        g.fillStyle='#04060d'; g.fill(); g.stroke();
+      }
+      g.strokeStyle='#1b57ff'; g.lineWidth=2.4;
+      g.beginPath();
+      const lx=w*0.74, R=Math.min(w,h)*0.3;
+      for(let a=0;a<=TAU+0.01;a+=0.05){
+        const wob=1+0.24*Math.sin(a*9+t*0.0009)+0.14*Math.sin(a*15-t*0.0006);
+        const x=lx+Math.cos(a)*R*wob, y=cy+Math.sin(a)*R*wob;
+        a?g.lineTo(x,y):g.moveTo(x,y);
+      }
+      g.closePath(); g.stroke();
+    },
+  },
+];
+
+/* ═══════════════════ BUILD THE GRID ═══════════════════ */
+const grid=document.getElementById('grid');
+const cards=[];
+TOOLS.forEach((tool,i)=>{
+  const card=document.createElement('article');
+  card.className='card';
+  card.dataset.tags=tool.tags.join(' ');
+  card.dataset.search=(tool.name+' '+tool.blurb+' '+tool.tags.join(' ')+' '+tool.slug).toLowerCase();
+
+  const shot=document.createElement('a');
+  shot.className='shot'; shot.href=href(tool.slug); shot.tabIndex=-1; shot.setAttribute('aria-hidden','true');
+  const cv=document.createElement('canvas');
+  cv.style.background=tool.bg;
+  shot.appendChild(cv);
+  const idx=document.createElement('span');
+  idx.className='idx'; idx.textContent=String(i+1).padStart(2,'0')+' // '+TOOLS.length;
+  shot.appendChild(idx);
+  card.appendChild(shot);
+
+  const body=document.createElement('div');
+  body.className='body';
+  const hd=document.createElement('h2');
+  const a=document.createElement('a');
+  a.href=href(tool.slug); a.textContent=tool.name;
+  hd.appendChild(a);
+  const p=document.createElement('p');
+  p.textContent=tool.blurb;
+  const tags=document.createElement('div');
+  tags.className='tags';
+  tool.tags.forEach(tg=>{
+    const s=document.createElement('span');
+    s.className='tag'+(tg==='interactive'?' hot':'');
+    s.textContent=tg;
+    tags.appendChild(s);
+  });
+  const links=document.createElement('div');
+  links.className='links';
+  const open=document.createElement('a');
+  open.className='primary'; open.href=href(tool.slug); open.textContent='▶ Open';
+  links.appendChild(open);
+  const sa=document.createElement('a');
+  sa.href=standalone(tool.slug); sa.textContent='Standalone';
+  links.appendChild(sa);
+  const rm=readme(tool.slug);
+  if(rm){ const rl=document.createElement('a'); rl.href=rm; rl.textContent='Readme'; links.appendChild(rl); }
+
+  body.append(hd,p,tags,links);
+  card.appendChild(body);
+  grid.appendChild(card);
+
+  cards.push({tool,card,cv,ctx:cv.getContext('2d'),visible:true});
+});
+document.getElementById('toolCount').textContent=TOOLS.length;
+document.getElementById('footCount').textContent=TOOLS.length;
+
+/* only paint the previews that are actually on screen */
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver(entries=>{
+    for(const e of entries){
+      const c=cards.find(c=>c.card===e.target);
+      if(c) c.visible=e.isIntersecting;
+    }
+  },{rootMargin:'160px'});
+  cards.forEach(c=>io.observe(c.card));
+}
+
+function sizeCanvas(c){
+  const rect=c.cv.getBoundingClientRect();
+  if(!rect.width) return false;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const w=Math.round(rect.width*dpr), h=Math.round(rect.height*dpr);
+  if(c.cv.width!==w||c.cv.height!==h){ c.cv.width=w; c.cv.height=h; }
+  return true;
+}
+let last=0;
+function frame(now){
+  if(now-last>33){                       // previews idle at ~30fps
+    last=now;
+    for(const c of cards){
+      if(!c.visible||c.card.hidden) continue;
+      if(!sizeCanvas(c)) continue;
+      const g=c.ctx, w=c.cv.width, h=c.cv.height;
+      const dpr=Math.min(window.devicePixelRatio||1,2);
+      g.setTransform(dpr,0,0,dpr,0,0);
+      const lw=w/dpr, lh=h/dpr;
+      g.fillStyle=c.tool.bg; g.fillRect(0,0,lw,lh);
+      try{ c.tool.draw(g,lw,lh,now); }catch{ /* a preview must never take the page down */ }
+      g.setTransform(1,0,0,1,0,0);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ═══════════════════ FILTER ═══════════════════ */
+const q=document.getElementById('q');
+const shown=document.getElementById('shown');
+const empty=document.getElementById('empty');
+let activeTag='all';
+function applyFilter(){
+  const term=q.value.trim().toLowerCase();
+  let n=0;
+  for(const c of cards){
+    const okTag=activeTag==='all'||c.card.dataset.tags.split(' ').includes(activeTag);
+    const okTerm=!term||c.card.dataset.search.includes(term);
+    const show=okTag&&okTerm;
+    c.card.hidden=!show;
+    if(show) n++;
+  }
+  shown.textContent=n;
+  empty.hidden=n>0;
+}
+q.addEventListener('input',applyFilter);
+document.getElementById('filters').addEventListener('click',ev=>{
+  const b=ev.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#filters button').forEach(x=>x.classList.remove('is-active'));
+  b.classList.add('is-active');
+  activeTag=b.dataset.tag;
+  applyFilter();
+});
+applyFilter();
+</script>
+</body>
+</html>
