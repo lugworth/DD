@@ -466,6 +466,39 @@ const TOOLS=[
       g.closePath(); g.stroke();
     },
   },
+  {
+    slug:'readout', name:'Readout', bg:'#3a22ee',
+    blurb:'Drop an image — it comes back as a numeric character mosaic, dark falling out of the sheet.',
+    tags:['upload','animated','type'],
+    draw(g,w,h,t){
+      const cols=22, cw=w/cols, rows=Math.max(6,Math.round(h/cw)), chh=h/rows;
+      const set='0123456789{}[]%';
+      const r=rng(11);
+      const cx=cols*0.5, cy=rows*0.46, rx=cols*0.3, ry=rows*0.36;
+      g.textAlign='center'; g.textBaseline='middle';
+      g.font=`500 ${chh*0.74}px 'Geist Mono','Red Hat Mono',monospace`;
+      for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+        const dx=(x+0.5-cx)/rx, dy=(y+0.5-cy)/ry;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        const lum=Math.max(0,1.12-d)+0.16*Math.sin(x*0.9+y*0.5)+0.1*Math.sin(t*0.0011+x*0.4);
+        if(lum<0.28) continue;
+        const ch=set[(r()*set.length)|0];
+        const px=x*cw, py=y*chh, gp=Math.min(cw,chh)*0.07;
+        if(lum>0.78){
+          g.fillStyle='#fff';
+          g.fillRect(px+gp,py+gp,cw-gp*2,chh-gp*2);
+          g.fillStyle='#2c19c4';
+        }else if(lum>0.52){
+          g.strokeStyle='#fff'; g.lineWidth=0.8;
+          g.strokeRect(px+gp,py+gp,cw-gp*2,chh-gp*2);
+          g.fillStyle='#fff';
+        }else{
+          g.fillStyle='#fff';
+        }
+        g.fillText(ch,px+cw/2,py+chh/2);
+      }
+    },
+  },
 ];
 
 /* ═══════════════════ BUILD THE GRID ═══════════════════ */
