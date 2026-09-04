@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Readout" subtitle="Drop an image — it comes back as a numeric character mosaic on ultramarine" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — readout</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:28px 28px 46px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#3a22ee}
+.stage .hint{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  color:var(--white-dim);font-size:10px;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;text-align:center;
+}
+
+.rack{width:352px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+.sect-note{color:var(--white-dim);font-size:9px;letter-spacing:.1em;margin-top:8px;line-height:1.7}
+.sect-note b{color:var(--white-soft);font-weight:400}
+
+.slot{
+  position:relative;border:1px dashed var(--border-hi);background:var(--black-panel);
+  min-height:104px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  cursor:pointer;transition:border-color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap);
+}
+.slot:hover,.slot.is-over{border-color:var(--yellow);background:#15150f}
+.slot .ph{color:var(--white-dim);font-size:10px;letter-spacing:.16em;text-transform:uppercase;text-align:center;padding:16px;line-height:1.8}
+.slot .ph b{display:block;color:var(--white-soft);font-weight:400;margin-bottom:4px}
+.slot img{display:block;width:100%;height:100%;object-fit:cover;max-height:150px}
+.slot .badge{
+  position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:8px;
+  padding:5px 8px;background:rgba(0,0,0,.72);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--white-soft);
+}
+.slot .badge .grow{flex:1;color:var(--white-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot .badge button{height:20px;padding:0 8px;font-size:9px;letter-spacing:.1em;background:var(--pink);border-color:var(--pink);color:var(--black)}
+.slot input[type=file]{display:none}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+button:disabled{opacity:.5;cursor:default}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;--p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+.checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px}
+.chk{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--white-soft)}
+.chk input{appearance:none;-webkit-appearance:none;width:14px;height:14px;border:1px solid var(--border-hi);background:var(--black-panel);cursor:pointer;flex:none}
+.chk input:checked{background:var(--yellow);border-color:var(--yellow)}
+
+.seg{display:flex;border:1px solid var(--border-hi);flex-wrap:wrap}
+.seg button{flex:1 1 40%;border:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.1em}
+.seg button:last-child{border-right:0}
+.seg button.wide{flex:1 1 100%;border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black);flex-wrap:wrap}
+.actions button{flex:1;height:42px;min-width:78px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:900px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:18px 18px 64px;min-height:56vh}
+  .stage .hint{bottom:32px;width:calc(100% - 24px);font-size:9px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Readout</h1>
+      <div class="sub">image → character mosaic · measured in metrics</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span id="headSize">—</span><span class="live">live</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="canvas">
+      <span class="corner tl">SCAN ▶ OUT</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerSrc">source · demo bust</span>
+      <span class="corner br" id="cornerGrid">—</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+      <span class="hint">drop an image in the rack · every cell is one measured character</span>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Source</h2><span class="coord">S.00</span></div>
+          <div class="slot" id="slot" tabindex="0" role="button" aria-label="upload an image">
+            <div class="ph"><b>Drop / click — image</b>portraits read best · jpg png webp</div>
+            <input type="file" id="file" accept="image/*">
+          </div>
+          <div class="sect-note">Paste with ⌘/Ctrl+V too. Luminance decides each cell: dark drops out, mid gets a glyph, brighter gets a boxed glyph, brightest inverts to a filled tile.</div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Grid</h2><span class="coord">S.01</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Columns</span><span class="val" data-val="cols"></span></div>
+            <input type="range" id="cols" min="20" max="150" step="1" value="46">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Cell gap</span><span class="val" data-val="gap"></span></div>
+            <input type="range" id="gap" min="0" max="40" step="1" value="12">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Glyph size</span><span class="val" data-val="glyph"></span></div>
+            <input type="range" id="glyph" min="40" max="100" step="1" value="76">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Character set</span></div>
+            <div class="seg" id="segSet" role="group" aria-label="character set">
+              <button data-set="metrics" class="is-active">Metrics</button>
+              <button data-set="numeric">Numeric</button>
+              <button data-set="hex">Hex</button>
+              <button data-set="ramp">ASCII ramp</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Levels</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Ink floor</span><span class="val" data-val="floor"></span></div>
+            <input type="range" id="floor" min="0" max="90" step="1" value="26">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Box level</span><span class="val" data-val="boxlv"></span></div>
+            <input type="range" id="boxlv" min="10" max="95" step="1" value="46">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Fill level</span><span class="val" data-val="filllv"></span></div>
+            <input type="range" id="filllv" min="15" max="100" step="1" value="62">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Contrast</span><span class="val" data-val="contrast"></span></div>
+            <input type="range" id="contrast" min="30" max="260" step="1" value="120">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Brightness</span><span class="val" data-val="bright"></span></div>
+            <input type="range" id="bright" min="-60" max="60" step="1" value="0">
+          </div>
+          <div class="checks">
+            <label class="chk"><input type="checkbox" id="invert"> Invert</label>
+            <label class="chk"><input type="checkbox" id="outlines" checked> Box outlines</label>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Signal</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Accents</span><span class="val" data-val="accent"></span></div>
+            <input type="range" id="accent" min="0" max="20" step="1" value="4">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Flicker</span><span class="val" data-val="flicker"></span></div>
+            <input type="range" id="flicker" min="0" max="100" step="1" value="14">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Palette</span></div>
+            <div class="seg" id="segPalette" role="group" aria-label="palette">
+              <button data-pal="ultramarine" class="is-active">Ultramarine</button>
+              <button data-pal="digidelic">Digidelic</button>
+              <button data-pal="terminal">Terminal</button>
+              <button data-pal="mono">Mono</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Format</span></div>
+            <div class="seg" id="segFormat" role="group" aria-label="format">
+              <button data-fmt="source" class="is-active">Source</button>
+              <button data-fmt="11">1:1</button>
+              <button data-fmt="45" class="wide">4:5</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnReroll">⟳ Reroll</button>
+        <button id="btnCopy">⧉ Copy text</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>readoutgen v1.0</b></div>
+    <div class="cell">cells <b id="statCells">0</b></div>
+    <div class="cell">inked <b id="statInk">0%</b></div>
+    <div class="cell fill">session authenticated · awaiting input_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+const PALETTES={
+  ultramarine:{ bg:'#3a22ee', ink:'#ffffff', tile:'#ffffff', tileInk:'#2c19c4',
+                accents:['#ff3b30','#00d9ff','#ff2d87'] },
+  digidelic:{   bg:'#0a0a0a', ink:'#eaff00', tile:'#eaff00', tileInk:'#0a0a0a',
+                accents:['#ff2d87','#00d9ff','#39ff6a'] },
+  terminal:{    bg:'#04120c', ink:'#39ff6a', tile:'#39ff6a', tileInk:'#04120c',
+                accents:['#eaff00','#00d9ff','#ffffff'] },
+  mono:{        bg:'#0b0b0b', ink:'#f2f2f0', tile:'#f2f2f0', tileInk:'#0b0b0b',
+                accents:['#f2f2f0','#9a9a9a','#ffffff'] },
+};
+const SETS={
+  metrics:'0123456789{}[]%'.split(''),
+  numeric:'0123456789'.split(''),
+  hex:'0123456789ABCDEF'.split(''),
+  ramp:'.:-=+*#%@'.split(''),
+};
+
+const state={
+  palette:'ultramarine', set:'metrics', fmt:'source',
+  img:null, imgURL:null, imgName:'',
+  cols:0, rows:0, cells:null, seed:(Math.random()*1e9)|0,
+  inked:0, dirty:true,
+};
+const sliders=['cols','gap','glyph','floor','boxlv','filllv','contrast','bright','accent','flicker'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  const c=id=>document.getElementById(id).checked;
+  return {
+    cols:g('cols')|0, gap:g('gap')/100, glyph:g('glyph')/100,
+    floor:g('floor')/100, boxlv:g('boxlv')/100, filllv:g('filllv')/100,
+    contrast:g('contrast')/100, bright:g('bright')/100,
+    accent:g('accent')/100, flicker:g('flicker')/100,
+    invert:c('invert'), outlines:c('outlines'),
+    palette:state.palette, set:state.set, fmt:state.fmt,
+  };
+}
+
+/* ═══════════════════ DEMO SOURCE ═══════════════════
+   a procedural bust so the readout has something to measure
+   before anything is dropped in */
+const demo=document.createElement('canvas');
+(function buildDemo(){
+  demo.width=760; demo.height=940;
+  const g=demo.getContext('2d');
+  g.fillStyle='#050505'; g.fillRect(0,0,760,940);
+  const cx=380, cy=430;
+  /* shoulders */
+  const sh=g.createLinearGradient(0,690,0,940);
+  sh.addColorStop(0,'#d8d6d0'); sh.addColorStop(0.55,'#8d8b92'); sh.addColorStop(1,'#3c3c44');
+  g.fillStyle=sh;
+  g.beginPath(); g.ellipse(cx,990,430,270,0,0,Math.PI*2); g.fill();
+  /* neck */
+  g.fillStyle='#6f6f78';
+  g.fillRect(cx-70,cy+150,140,190);
+  /* head */
+  const hd=g.createRadialGradient(cx-90,cy-110,40,cx,cy,340);
+  hd.addColorStop(0,'#f4f2ee'); hd.addColorStop(0.55,'#b9b6b0'); hd.addColorStop(1,'#3a3a40');
+  g.fillStyle=hd;
+  g.beginPath(); g.ellipse(cx,cy,210,265,0,0,Math.PI*2); g.fill();
+  /* hair mass */
+  g.fillStyle='#1a1a20';
+  g.beginPath(); g.ellipse(cx,cy-170,220,150,0,Math.PI,0); g.fill();
+  g.beginPath(); g.ellipse(cx-195,cy-40,58,150,0.2,0,Math.PI*2); g.fill();
+  /* features as soft shadow */
+  g.fillStyle='rgba(20,20,26,0.72)';
+  g.beginPath(); g.ellipse(cx-78,cy-40,30,15,0,0,Math.PI*2); g.fill();
+  g.beginPath(); g.ellipse(cx+78,cy-40,30,15,0,0,Math.PI*2); g.fill();
+  g.fillStyle='rgba(20,20,26,0.42)';
+  g.beginPath(); g.ellipse(cx,cy+60,26,44,0,0,Math.PI*2); g.fill();
+  g.beginPath(); g.ellipse(cx,cy+150,64,22,0,0,Math.PI*2); g.fill();
+  /* key light from the left */
+  const kl=g.createLinearGradient(120,0,700,940);
+  kl.addColorStop(0,'rgba(255,255,255,0.24)'); kl.addColorStop(0.55,'rgba(0,0,0,0)');
+  kl.addColorStop(1,'rgba(0,0,0,0.5)');
+  g.fillStyle=kl; g.fillRect(0,0,760,940);
+})();
+
+/* ═══════════════════ SAMPLING ═══════════════════ */
+const sampler=document.createElement('canvas');
+const sctx=sampler.getContext('2d',{willReadFrequently:true});
+
+function sourceEl(){ return state.img||demo; }
+function sourceSize(){
+  const s=sourceEl();
+  return [s.naturalWidth||s.width, s.naturalHeight||s.height];
+}
+function targetAspect(p){
+  if(p.fmt==='11') return 1;
+  if(p.fmt==='45') return 0.8;
+  const [w,h]=sourceSize();
+  return w/h;
+}
+/* stable per-cell randomness so a re-render doesn't reshuffle the sheet */
+function hash2(x,y,seed){
+  let h=Math.imul(x,374761393)^Math.imul(y,668265263)^Math.imul(seed,1442695041);
+  h=Math.imul(h^(h>>>13),1274126177);
+  return ((h^(h>>>16))>>>0)/4294967296;
+}
+
+/* build the cell grid: luminance → tier, plus a character and accent per cell */
+function buildCells(p){
+  const aspect=targetAspect(p);
+  const cols=p.cols;
+  const rows=Math.max(4,Math.round(cols/aspect));
+  state.cols=cols; state.rows=rows;
+  if(sampler.width!==cols||sampler.height!==rows){ sampler.width=cols; sampler.height=rows; }
+  sctx.fillStyle='#000'; sctx.fillRect(0,0,cols,rows);
+  const src=sourceEl();
+  const [sw,sh]=sourceSize();
+  /* cover-crop the source into the target aspect */
+  const srcAspect=sw/sh;
+  let cw=sw, ch=sh;
+  if(srcAspect>aspect) cw=sh*aspect; else ch=sw/aspect;
+  try{
+    sctx.drawImage(src,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,cols,rows);
+  }catch{ /* image not decodable yet */ }
+  const d=sctx.getImageData(0,0,cols,rows).data;
+  const set=SETS[p.set];
+  const cells=new Array(cols*rows);
+  let inked=0;
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+    const i=y*cols+x, q=i*4;
+    let L=(0.2126*d[q]+0.7152*d[q+1]+0.0722*d[q+2])/255;
+    L=(L-0.5)*p.contrast+0.5+p.bright;
+    if(p.invert) L=1-L;
+    L=Math.max(0,Math.min(1,L));
+    let tier=0;                                    // 0 empty · 1 glyph · 2 boxed · 3 filled
+    if(L>=p.filllv) tier=3;
+    else if(L>=p.boxlv) tier=2;
+    else if(L>=p.floor) tier=1;
+    if(tier) inked++;
+    const r1=hash2(x,y,state.seed);
+    const r2=hash2(x,y,state.seed^0x9e37);
+    cells[i]={
+      tier,
+      ch:set[(r1*set.length)|0],
+      accent:r2<p.accent?((r2*997)|0)%3:-1,
+    };
+  }
+  state.cells=cells;
+  state.inked=rows*cols?inked/(rows*cols):0;
+}
+
+/* ═══════════════════ RENDER ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+const ART_W=1080;
+
+function artSize(p){
+  const a=targetAspect(p);
+  return [ART_W,Math.round(ART_W/a)];
+}
+function fitCanvas(p){
+  const [W,H]=artSize(p);
+  const stage=document.querySelector('.stage');
+  const scale=Math.min((stage.clientWidth-70)/W,(stage.clientHeight-92)/H,1);
+  canvas.style.width=(W*scale)+'px';
+  canvas.style.height=(H*scale)+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const bw=Math.round(W*scale*dpr), bh=Math.round(H*scale*dpr);
+  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; }
+}
+
+function paintCell(g,p,pal,x,y,cw,chh){
+  const c=state.cells[y*state.cols+x];
+  const px=x*cw, py=y*chh;
+  const gap=Math.min(cw,chh)*p.gap*0.5;
+  const bx=px+gap, by=py+gap, bw=cw-gap*2, bh=chh-gap*2;
+  g.fillStyle=pal.bg;
+  g.fillRect(px,py,cw+0.6,chh+0.6);              // clear the cell first
+  if(!c.tier) return;
+  const fs=chh*p.glyph;
+  g.font=`500 ${fs}px 'Geist Mono','Red Hat Mono',monospace`;
+  g.textAlign='center'; g.textBaseline='middle';
+  const cxp=px+cw/2, cyp=py+chh/2;
+  if(c.tier===3){                                 // filled tile, glyph knocked out
+    g.fillStyle=pal.tile;
+    g.fillRect(bx,by,bw,bh);
+    g.fillStyle=c.accent>=0?pal.accents[c.accent]:pal.tileInk;
+    g.fillText(c.ch,cxp,cyp);
+  }else if(c.tier===2){                           // outlined box holding a glyph
+    if(p.outlines){
+      g.strokeStyle=pal.ink; g.lineWidth=Math.max(0.7,Math.min(cw,chh)*0.055);
+      g.strokeRect(bx+g.lineWidth/2,by+g.lineWidth/2,bw-g.lineWidth,bh-g.lineWidth);
+    }
+    g.fillStyle=c.accent>=0?pal.accents[c.accent]:pal.ink;
+    g.fillText(c.ch,cxp,cyp);
+  }else{                                          // bare glyph
+    g.fillStyle=c.accent>=0?pal.accents[c.accent]:pal.ink;
+    g.fillText(c.ch,cxp,cyp);
+  }
+}
+
+function renderAll(g,W,H,p){
+  const pal=PALETTES[p.palette];
+  g.fillStyle=pal.bg; g.fillRect(0,0,W,H);
+  const cw=W/state.cols, chh=H/state.rows;
+  for(let y=0;y<state.rows;y++)for(let x=0;x<state.cols;x++) paintCell(g,p,pal,x,y,cw,chh);
+}
+
+/* ═══════════════════ LOOP ═══════════════════
+   the sheet is static until something changes; flicker only repaints
+   the handful of cells whose characters were re-rolled */
+let lastFlick=0;
+function frame(now){
+  const p=params();
+  fitCanvas(p);
+  const [W,H]=artSize(p);
+  const sx=canvas.width/W, sy=canvas.height/H;
+  if(state.dirty){
+    buildCells(p);
+    ctx.setTransform(sx,0,0,sy,0,0);
+    renderAll(ctx,W,H,p);
+    ctx.setTransform(1,0,0,1,0,0);
+    state.dirty=false;
+    document.getElementById('statCells').textContent=state.cols*state.rows;
+    document.getElementById('statInk').textContent=Math.round(state.inked*100)+'%';
+    document.getElementById('cornerGrid').textContent=state.cols+' × '+state.rows;
+    document.getElementById('headSize').textContent=W+' × '+H+' px';
+  }else if(p.flicker>0&&now-lastFlick>70){
+    lastFlick=now;
+    const set=SETS[p.set], pal=PALETTES[p.palette];
+    const n=Math.max(1,Math.round(state.cols*state.rows*p.flicker*0.012));
+    const cw=W/state.cols, chh=H/state.rows;
+    ctx.setTransform(sx,0,0,sy,0,0);
+    for(let k=0;k<n;k++){
+      const x=(Math.random()*state.cols)|0, y=(Math.random()*state.rows)|0;
+      const c=state.cells[y*state.cols+x];
+      if(!c||!c.tier) continue;
+      c.ch=set[(Math.random()*set.length)|0];
+      paintCell(ctx,p,pal,x,y,cw,chh);
+    }
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+  requestAnimationFrame(frame);
+}
+const markDirty=()=>{ state.dirty=true; };
+
+/* ═══════════════════ UPLOAD ═══════════════════ */
+const slot=document.getElementById('slot'), fileInput=document.getElementById('file');
+function clearImage(){
+  if(state.imgURL) URL.revokeObjectURL(state.imgURL);
+  state.img=null; state.imgURL=null; state.imgName='';
+  slot.querySelectorAll('.ph,.badge,img').forEach(n=>n.remove());
+  const ph=document.createElement('div');
+  ph.className='ph';
+  ph.innerHTML='<b>Drop / click — image</b>portraits read best · jpg png webp';
+  slot.appendChild(ph);
+  document.getElementById('cornerSrc').textContent='source · demo bust';
+  markDirty();
+}
+function loadImage(file){
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    if(state.imgURL) URL.revokeObjectURL(state.imgURL);
+    state.img=img; state.imgURL=url; state.imgName=file.name;
+    slot.querySelectorAll('.ph,.badge,img').forEach(n=>n.remove());
+    const prev=new Image(); prev.src=url;
+    slot.appendChild(prev);
+    const bar=document.createElement('div');
+    bar.className='badge';
+    bar.innerHTML='<span>loaded</span><span class="grow"></span><button type="button">Remove</button>';
+    bar.querySelector('.grow').textContent=file.name;
+    bar.querySelector('button').addEventListener('click',ev=>{ ev.stopPropagation(); clearImage(); });
+    slot.appendChild(bar);
+    document.getElementById('cornerSrc').textContent='source · '+file.name;
+    markDirty();
+  };
+  img.onerror=()=>URL.revokeObjectURL(url);
+  img.src=url;
+}
+slot.addEventListener('click',ev=>{ if(!ev.target.closest('button')) fileInput.click(); });
+slot.addEventListener('keydown',ev=>{ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); fileInput.click(); } });
+fileInput.addEventListener('change',()=>{ if(fileInput.files&&fileInput.files[0]) loadImage(fileInput.files[0]); fileInput.value=''; });
+['dragenter','dragover'].forEach(t=>slot.addEventListener(t,ev=>{ ev.preventDefault(); slot.classList.add('is-over'); }));
+['dragleave','drop'].forEach(t=>slot.addEventListener(t,ev=>{ ev.preventDefault(); slot.classList.remove('is-over'); }));
+slot.addEventListener('drop',ev=>{
+  const f=ev.dataTransfer&&ev.dataTransfer.files&&ev.dataTransfer.files[0];
+  if(f) loadImage(f);
+});
+window.addEventListener('paste',ev=>{
+  const f=ev.clipboardData&&ev.clipboardData.files&&ev.clipboardData.files[0];
+  if(f&&f.type.startsWith('image/')) loadImage(f);
+});
+
+/* ═══════════════════ EXPORT ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const [W,H]=artSize(p);
+  const off=document.createElement('canvas');
+  off.width=W*2; off.height=H*2;
+  const g=off.getContext('2d');
+  g.setTransform(2,0,0,2,0,0);
+  renderAll(g,W,H,p);
+  off.toBlob(b=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='digidelic-readout-'+Date.now().toString(36)+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+function asText(){
+  let out='';
+  for(let y=0;y<state.rows;y++){
+    let line='';
+    for(let x=0;x<state.cols;x++){
+      const c=state.cells[y*state.cols+x];
+      line+=c&&c.tier?c.ch:' ';
+    }
+    out+=line.replace(/\s+$/,'')+'\n';
+  }
+  return out;
+}
+async function copyText(){
+  const btn=document.getElementById('btnCopy');
+  const txt=asText();
+  try{
+    await navigator.clipboard.writeText(txt);
+    btn.textContent='✓ Copied';
+  }catch{
+    const ta=document.createElement('textarea');
+    ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); btn.textContent='✓ Copied'; }
+    catch{ btn.textContent='× Blocked'; }
+    ta.remove();
+  }
+  setTimeout(()=>{ btn.textContent='⧉ Copy text'; },1600);
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(!out) return;
+  if(el.id==='cols') out.textContent=v+' col';
+  else if(el.id==='bright') out.textContent=(v>0?'+':'')+v+'%';
+  else out.textContent=v+'%';
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{ syncSlider(el); if(id!=='flicker') markDirty(); });
+  syncSlider(el);
+});
+['invert','outlines'].forEach(id=>document.getElementById(id).addEventListener('change',markDirty));
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',ev=>{
+    const btn=ev.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+    markDirty();
+  });
+}
+wireSeg('segSet','set',v=>{ state.set=v; });
+wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
+wireSeg('segFormat','fmt',v=>{ state.fmt=v; });
+
+document.getElementById('btnReroll').addEventListener('click',()=>{
+  state.seed=(Math.random()*1e9)|0; markDirty();
+});
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('btnCopy').addEventListener('click',copyText);
+window.addEventListener('keydown',ev=>{
+  if(ev.target.closest('input')) return;
+  if(ev.key==='e') exportPNG();
+  if(ev.key==='r') document.getElementById('btnReroll').click();
+});
+window.addEventListener('resize',markDirty);
+
+/* boot */
+canvas.style.background=PALETTES[state.palette].bg;
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
