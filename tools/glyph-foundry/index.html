@@ -242,6 +242,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
 
       <div class="actions">
         <button id="btnRegen">⟳ Regenerate</button>
+        <button id="btnSvg" title="export scalable vector">⬡ SVG</button>
         <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
@@ -812,6 +813,157 @@ function exportPNG(){
   },'image/png');
 }
 
+/* ═══════════════════ SVG EXPORT ═══════════════════
+   A context object shaped like CanvasRenderingContext2D that records SVG
+   instead of pixels, so render() can be replayed straight into a vector
+   file without the drawing code knowing anything about it. Alpha is
+   split out of rgba() into its own attribute — browsers tolerate rgba in
+   SVG, Illustrator and Inkscape do not. */
+function makeSVGCtx(W,H,bg){
+  const out=[], defs=[];
+  let uid=0;
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const mul=(m,n)=>[m[0]*n[0]+m[2]*n[1],m[1]*n[0]+m[3]*n[1],m[0]*n[2]+m[2]*n[3],m[1]*n[2]+m[3]*n[3],
+                    m[0]*n[4]+m[2]*n[5]+m[4],m[1]*n[4]+m[3]*n[5]+m[5]];
+  let st={m:[1,0,0,1,0,0],fill:'#000',stroke:'#000',lw:1,alpha:1,dash:null,
+          cap:'butt',join:'miter',font:'10px sans-serif',align:'start',base:'alphabetic',clip:null};
+  const stack=[];
+  let d='', cx=0, cy=0;
+  const num=v=>Math.round(v*1000)/1000;
+  const mtx=m=>'matrix('+m.map(num).join(' ')+')';
+  function splitPaint(v){
+    if(typeof v==='string'){
+      const m=/^rgba\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/i.exec(v);
+      if(m) return {color:'rgb('+m[1]+','+m[2]+','+m[3]+')',alpha:parseFloat(m[4])};
+    }
+    return {color:v,alpha:1};
+  }
+  function paintOf(v){
+    if(v&&typeof v==='object'&&v.__grad){
+      const id='g'+(uid++);
+      const stops=v.stops.map(s=>{
+        const c=splitPaint(s[1]);
+        return '<stop offset="'+num(s[0])+'" stop-color="'+esc(c.color)+'"'+(c.alpha<1?' stop-opacity="'+num(c.alpha)+'"':'')+'/>';
+      }).join('');
+      defs.push('<radialGradient id="'+id+'" gradientUnits="userSpaceOnUse" cx="'+num(v.x1)+'" cy="'+num(v.y1)+'" r="'+num(v.r1)+'">'+stops+'</radialGradient>');
+      return 'url(#'+id+')';
+    }
+    return v;
+  }
+  function paintAttrs(kind){
+    const a=['transform="'+mtx(st.m)+'"'];
+    if(kind==='fill'){
+      const f=splitPaint(st.fill);
+      a.push('fill="'+esc(paintOf(f.color))+'"','stroke="none"');
+      if(f.alpha<1) a.push('fill-opacity="'+num(f.alpha)+'"');
+    }else{
+      const s=splitPaint(st.stroke);
+      a.push('fill="none"','stroke="'+esc(paintOf(s.color))+'"','stroke-width="'+num(st.lw)+'"');
+      if(s.alpha<1) a.push('stroke-opacity="'+num(s.alpha)+'"');
+      if(st.dash&&st.dash.length) a.push('stroke-dasharray="'+st.dash.map(num).join(' ')+'"');
+      if(st.cap!=='butt') a.push('stroke-linecap="'+st.cap+'"');
+      if(st.join!=='miter') a.push('stroke-linejoin="'+st.join+'"');
+    }
+    if(st.alpha<1) a.push('opacity="'+num(st.alpha)+'"');
+    if(st.clip) a.push('clip-path="url(#'+st.clip+')"');
+    return a.join(' ');
+  }
+  function arcPath(x,y,rx,ry,a0,a1,ccw,rot){
+    const T=Math.PI*2;
+    let delta=a1-a0;
+    if(ccw){ if(delta>0) delta-=T*Math.ceil(delta/T); if(delta===0) delta=-T; }
+    else{ if(delta<0) delta+=T*Math.ceil(-delta/T); if(delta===0) delta=T; }
+    if(Math.abs(delta)>T) delta=delta>0?T:-T;
+    const pt=a=>{
+      const c=Math.cos(rot),s=Math.sin(rot),px=rx*Math.cos(a),py=ry*Math.sin(a);
+      return [x+px*c-py*s,y+px*s+py*c];
+    };
+    const sweep=delta>0?1:0, rd=num(rot*180/Math.PI);
+    if(Math.abs(delta)>=T-1e-9){
+      const s=pt(a0), m=pt(a0+delta/2), e=pt(a0+delta);
+      cx=e[0]; cy=e[1];
+      return 'M'+num(s[0])+' '+num(s[1])+'A'+num(rx)+' '+num(ry)+' '+rd+' 0 '+sweep+' '+num(m[0])+' '+num(m[1])
+             +'A'+num(rx)+' '+num(ry)+' '+rd+' 0 '+sweep+' '+num(e[0])+' '+num(e[1]);
+    }
+    const s=pt(a0), e=pt(a0+delta), large=Math.abs(delta)>Math.PI?1:0;
+    const head=d?'L'+num(s[0])+' '+num(s[1]):'M'+num(s[0])+' '+num(s[1]);
+    cx=e[0]; cy=e[1];
+    return head+'A'+num(rx)+' '+num(ry)+' '+rd+' '+large+' '+sweep+' '+num(e[0])+' '+num(e[1]);
+  }
+  return {
+    canvas:{width:W,height:H},
+    set fillStyle(v){st.fill=v;}, get fillStyle(){return st.fill;},
+    set strokeStyle(v){st.stroke=v;}, get strokeStyle(){return st.stroke;},
+    set lineWidth(v){st.lw=v;}, get lineWidth(){return st.lw;},
+    set globalAlpha(v){st.alpha=v;}, get globalAlpha(){return st.alpha;},
+    set lineCap(v){st.cap=v;}, set lineJoin(v){st.join=v;},
+    set font(v){st.font=v;}, get font(){return st.font;},
+    set textAlign(v){st.align=v;}, set textBaseline(v){st.base=v;},
+    set globalCompositeOperation(v){}, set imageSmoothingEnabled(v){}, set imageSmoothingQuality(v){},
+    save(){stack.push(Object.assign({},st,{m:st.m.slice(),dash:st.dash&&st.dash.slice()}));},
+    restore(){ if(stack.length) st=stack.pop(); },
+    setTransform(a,b,c,dd,e,f){st.m=[a,b,c,dd,e,f];},
+    transform(a,b,c,dd,e,f){st.m=mul(st.m,[a,b,c,dd,e,f]);},
+    translate(x,y){st.m=mul(st.m,[1,0,0,1,x,y]);},
+    scale(x,y){st.m=mul(st.m,[x,0,0,y,0,0]);},
+    rotate(a){const c=Math.cos(a),s=Math.sin(a);st.m=mul(st.m,[c,s,-s,c,0,0]);},
+    setLineDash(a){st.dash=a&&a.length?a.slice():null;},
+    getLineDash(){return st.dash||[];},
+    beginPath(){d='';},
+    closePath(){ if(d) d+='Z'; },
+    moveTo(x,y){d+='M'+num(x)+' '+num(y);cx=x;cy=y;},
+    lineTo(x,y){d+=(d?'':'M'+num(cx)+' '+num(cy))+'L'+num(x)+' '+num(y);cx=x;cy=y;},
+    quadraticCurveTo(x1,y1,x,y){d+=(d?'':'M'+num(cx)+' '+num(cy))+'Q'+num(x1)+' '+num(y1)+' '+num(x)+' '+num(y);cx=x;cy=y;},
+    bezierCurveTo(x1,y1,x2,y2,x,y){d+=(d?'':'M'+num(cx)+' '+num(cy))+'C'+num(x1)+' '+num(y1)+' '+num(x2)+' '+num(y2)+' '+num(x)+' '+num(y);cx=x;cy=y;},
+    arc(x,y,r,a0,a1,ccw){d+=arcPath(x,y,r,r,a0,a1,!!ccw,0);},
+    ellipse(x,y,rx,ry,rot,a0,a1,ccw){d+=arcPath(x,y,rx,ry,a0,a1,!!ccw,rot||0);},
+    rect(x,y,w,h){d+='M'+num(x)+' '+num(y)+'h'+num(w)+'v'+num(h)+'h'+num(-w)+'Z';},
+    fill(rule){ if(d) out.push('<path '+paintAttrs('fill')+(rule==='evenodd'?' fill-rule="evenodd"':'')+' d="'+d+'"/>'); },
+    stroke(){ if(d) out.push('<path '+paintAttrs('stroke')+' d="'+d+'"/>'); },
+    clip(){
+      if(!d) return;
+      const id='c'+(uid++);
+      defs.push('<clipPath id="'+id+'" clipPathUnits="userSpaceOnUse"><path d="'+d+'" transform="'+mtx(st.m)+'"/></clipPath>');
+      st.clip=id;
+    },
+    fillRect(x,y,w,h){ out.push('<rect '+paintAttrs('fill')+' x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'"/>'); },
+    strokeRect(x,y,w,h){ out.push('<rect '+paintAttrs('stroke')+' x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'"/>'); },
+    clearRect(){},
+    fillText(t,x,y){
+      const f=/(?:(\d+)\s+)?(?:(italic|oblique)\s+)?(?:(\d+)\s+)?([\d.]+)px\s+(.+)/.exec(st.font)||[];
+      const size=f[4]||10, fam=(f[5]||'sans-serif').replace(/"/g,"'"), weight=f[3]||f[1]||'400';
+      const anchor=st.align==='center'?'middle':(st.align==='right'||st.align==='end')?'end':'start';
+      const base=st.base==='middle'?' dominant-baseline="central"':st.base==='top'?' dominant-baseline="hanging"':'';
+      out.push('<text '+paintAttrs('fill')+' x="'+num(x)+'" y="'+num(y)+'" font-family="'+esc(fam)+'" font-size="'+num(+size)+'" font-weight="'+esc(weight)+'" text-anchor="'+anchor+'"'+base+'>'+esc(t)+'</text>');
+    },
+    measureText(t){ const f=/([\d.]+)px/.exec(st.font); const s=f?+f[1]:10; return {width:String(t).length*s*0.58}; },
+    createRadialGradient(x0,y0,r0,x1,y1,r1){ return {__grad:true,x1:x1,y1:y1,r1:r1,stops:[],addColorStop(o,c){this.stops.push([o,c]);}}; },
+    createLinearGradient(x0,y0,x1,y1){ return {__grad:true,x1:x0,y1:y0,r1:Math.hypot(x1-x0,y1-y0),stops:[],addColorStop(o,c){this.stops.push([o,c]);}}; },
+    drawImage(){}, putImageData(){},
+    getImageData(x,y,w,h){ return {data:new Uint8ClampedArray(w*h*4),width:w,height:h}; },
+    createImageData(w,h){ return {data:new Uint8ClampedArray(w*h*4),width:w,height:h}; },
+    toSVG(){
+      return '<?xml version="1.0" encoding="UTF-8"?>\n'
+        +'<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">\n'
+        +(bg?'<rect width="'+W+'" height="'+H+'" fill="'+esc(bg)+'"/>\n':'')
+        +(defs.length?'<defs>'+defs.join('')+'</defs>\n':'')
+        +out.join('\n')+'\n</svg>\n';
+    },
+  };
+}
+function exportSVG(){
+  const p=params();
+  const H=artHeight(p.format);
+  const g=makeSVGCtx(ART_W,H,PALETTES[p.palette].bg);
+  render(g,ART_W,H,p,state.seed);
+  const blob=new Blob([g.toSVG()],{type:'image/svg+xml;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='digidelic-glyphs-'+state.seed.toString(16).padStart(8,'0')+'.svg';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
 function serializeState(){
   const vals={};
@@ -930,6 +1082,7 @@ function regenerate(){ state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
 document.getElementById('btnRandom').addEventListener('click',regenerate);
 document.getElementById('btnRegen').addEventListener('click',regenerate);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('btnSvg').addEventListener('click',exportSVG);
 document.getElementById('seedReadout').addEventListener('click',copyPermalink);
 if(navigator.share) document.getElementById('btnShare').hidden=false;
 document.getElementById('btnShare').addEventListener('click',shareArt);

@@ -40,3 +40,21 @@ Opening a link restores that exact state. `Ctrl+Z` / `Ctrl+Shift+Z`
 (or `Ctrl+Y`) step through parameter **undo/redo**. On devices that
 support the Web Share API a **Share** button appears next to Export and
 hands the rendered PNG straight to the system share sheet.
+
+## SVG export
+
+**⬡ SVG** writes the plate as true vector art rather than pixels —
+infinitely scalable, and editable in Illustrator, Inkscape or Figma,
+which suits the print-oriented output of this tool far better than a
+raster export.
+
+It works by replaying the same `render()` through a context object shaped
+like `CanvasRenderingContext2D` that records SVG instead of drawing, so
+the vector file and the on-screen canvas come from one code path and
+cannot drift apart. Alpha is split out of `rgba()` into `fill-opacity` /
+`stroke-opacity`, since browsers tolerate `rgba()` in SVG but Illustrator
+and Inkscape do not.
+
+Two caveats: canvas blend modes have no SVG equivalent and are dropped,
+and text is emitted as `<text>` with a font reference rather than
+outlines, so a machine without Space Grotesk will substitute a fallback.
