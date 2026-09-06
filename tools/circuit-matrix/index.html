@@ -351,6 +351,7 @@ function reseed(p){
   board.elements=[]; board.walkers=[]; board.filled=0;
   board.rnd=mulberry32(state.seed);
   state.tick=0;
+  dirty=true;
 }
 function pickColor(p){
   return weightedPick(board.rnd,PALETTES[p.palette].colors);
@@ -527,7 +528,7 @@ function fitCanvas(){
   canvas.style.height=(H*scale)+'px';
   const dpr=Math.min(window.devicePixelRatio||1,2);
   const bw=Math.round(ART_W*scale*dpr), bh=Math.round(H*scale*dpr);
-  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; }
+  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; dirty=true; }
 }
 
 function render(g,Wpx,Hpx,p,tNow){
@@ -588,7 +589,7 @@ function render(g,Wpx,Hpx,p,tNow){
 }
 
 /* ═══════════════════ LOOP ═══════════════════ */
-let acc=0, lastT=performance.now();
+let acc=0, lastT=performance.now(), dirty=true;
 function frame(tNow){
   const p=params();
   fitCanvas();
@@ -598,8 +599,12 @@ function frame(tNow){
     const interval=1000/p.speed;
     let guard=0;
     while(acc>=interval&&guard++<4){ tick(p); acc-=interval; }
+    dirty=true;
   }
-  render(ctx,canvas.width,canvas.height,p,tNow);
+  if(dirty){
+    render(ctx,canvas.width,canvas.height,p,tNow);
+    dirty=false;
+  }
   document.getElementById('statTick').textContent=state.tick;
   document.getElementById('statFill').textContent=((board.filled/(board.W*board.H))*100).toFixed(0)+'%';
   requestAnimationFrame(frame);
@@ -614,6 +619,7 @@ canvas.addEventListener('pointerdown',ev=>{
   for(let k=0;k<3;k++) spawnWalker(p,
     Math.max(1,Math.min(board.W-2,x+((board.rnd()*5)|0)-2)),
     Math.max(1,Math.min(board.H-2,y+((board.rnd()*5)|0)-2)));
+  dirty=true;
 });
 
 /* ═══════════════════ EXPORT / RECORD ═══════════════════ */
@@ -671,6 +677,7 @@ sliders.forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('input',()=>{
     syncSlider(el);
+    dirty=true;
     if(id==='grid') reseed(params());
   });
   syncSlider(el);
@@ -685,7 +692,7 @@ function wireSeg(segId,attr,onPick){
     onPick(btn.dataset[attr]);
   });
 }
-wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
+wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; dirty=true; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; reseed(params()); });
 
 function newSeed(){
@@ -698,6 +705,7 @@ function newSeed(){
 document.getElementById('btnRandom').addEventListener('click',newSeed);
 document.getElementById('btnPlay').addEventListener('click',()=>{
   state.playing=!state.playing;
+  dirty=true;
   document.getElementById('btnPlay').textContent=state.playing?'❚❚ Pause':'▶ Play';
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);

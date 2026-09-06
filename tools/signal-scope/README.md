@@ -42,5 +42,10 @@ same ratio you see).
 
 ## Export
 
-- `▶ Export PNG` — current phosphor state at 2160×2160
-- `⏺ Rec 6s` — 6-second WebM clip of the live sweep via `MediaRecorder`
+- `▶ Export PNG` — current phosphor state at 2160×2160. This upscales the
+  live trail canvas rather than re-rendering the beam history at target
+  resolution, so sharpness tracks whatever size the canvas was actually
+  drawn at (larger browser window = crisper export) — not a fixed 2160px
+  render.
+- `⏺ Rec 6s` — 6-second WebM clip of the live sweep via `MediaRecorder`,
+  including audio when Sound is on

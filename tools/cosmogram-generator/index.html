@@ -381,9 +381,9 @@ function gBeadRow(ctx,rnd,pal,S,x,y,w,h,pickColor,vertical){
   const r=3+rnd()*2;
   for(let i=0;i<n;i++){
     const t=(i+0.5)/n;
-    const px=vertical?x+w/2:x+len*t+(x?0:0), py=vertical?y+len*t:y+h/2;
+    const px=vertical?x+w/2:x+len*t, py=vertical?y+len*t:y+h/2;
     ctx.fillStyle=rnd()<0.35?pal.ink:pickColor();
-    ctx.beginPath(); ctx.arc(vertical?px:x+len*t,py,r,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(px,py,r,0,TAU); ctx.fill();
   }
   markCount++;
 }
@@ -919,12 +919,9 @@ function wireSeg(segId,attr,onPick){
 wireSeg('segPalette','pal',v=>{ state.palette=v; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; });
 
-document.getElementById('btnRandom').addEventListener('click',()=>{
-  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
-});
-document.getElementById('btnRegen').addEventListener('click',()=>{
-  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
-});
+function regenerate(){ state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); }
+document.getElementById('btnRandom').addEventListener('click',regenerate);
+document.getElementById('btnRegen').addEventListener('click',regenerate);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 window.addEventListener('resize',requestDraw);
 window.addEventListener('keydown',e=>{
