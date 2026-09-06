@@ -239,6 +239,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-snd="on">On</button>
             </div>
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">Listen</span><span class="val" id="micLevel">—</span></div>
+            <div class="seg" id="segMic" role="group" aria-label="microphone reactive">
+              <button data-mic="off" class="is-active">Off</button>
+              <button data-mic="on">Mic ▸ vitality</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -584,6 +591,7 @@ function render(g,size,p,tNow){
 let acc=0, lastT=performance.now();
 function frame(tNow){
   const p=params();
+  { const e=micEnergy(); if(e>0) p.vitality=Math.min(1,p.vitality+e*0.85); }
   fitCanvas();
   const dt=Math.min(100,tNow-lastT); lastT=tNow;
   if(state.playing){
@@ -607,22 +615,25 @@ function canvasCell(ev){
   const y=(ev.clientY-rect.top)/rect.height*sim.N;
   return [x,y];
 }
-let touching=false, lastStamp=0;
+/* One throttle per finger, not one shared between them — with a single
+   timer two fingers halve each other's stamp rate. */
+const touches=new Map();          // pointerId → last stamp timestamp
 canvas.addEventListener('pointerdown',ev=>{
-  touching=true;
+  touches.set(ev.pointerId,0);
   const [x,y]=canvasCell(ev);
   stampBlob(x,y,4+Math.floor(sim.rnd()*3),true);
   if(state.sound) audioTick(params());
 });
 canvas.addEventListener('pointermove',ev=>{
-  if(!touching) return;
+  const last=touches.get(ev.pointerId);
+  if(last===undefined) return;
   const now=performance.now();
-  if(now-lastStamp<28) return;
-  lastStamp=now;
+  if(now-last<28) return;
+  touches.set(ev.pointerId,now);
   const [x,y]=canvasCell(ev);
   stampBlob(x,y,2+Math.floor(sim.rnd()*2),true);
 });
-window.addEventListener('pointerup',()=>{ touching=false; });
+['pointerup','pointercancel'].forEach(t=>window.addEventListener(t,ev=>touches.delete(ev.pointerId)));
 
 /* ═══════════════════ EXPORT / RECORD ═══════════════════ */
 function exportPNG(){
@@ -833,6 +844,47 @@ function recordGIF(){
   grab();
 }
 
+/* ═══════════════════ LISTEN ═══════════════════
+   Optional microphone input reduced to one smoothed 0..1 energy value.
+   Off until asked for — it needs a user gesture and a permission grant —
+   and any failure silently falls back to "no mic". */
+let mic={on:false,ctx:null,an:null,data:null,energy:0,stream:null};
+async function micToggle(on){
+  if(on===mic.on) return;
+  if(!on){
+    mic.on=false;
+    if(mic.stream) mic.stream.getTracks().forEach(t=>t.stop());
+    mic.stream=null; mic.energy=0;
+    const lv=document.getElementById('micLevel'); if(lv) lv.textContent='—';
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const ctx=mic.ctx||new (window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==='suspended') await ctx.resume();
+    const an=ctx.createAnalyser();
+    an.fftSize=1024; an.smoothingTimeConstant=0.7;
+    ctx.createMediaStreamSource(stream).connect(an);
+    mic={on:true,ctx,an,data:new Uint8Array(an.frequencyBinCount),energy:0,stream};
+  }catch{
+    mic.on=false;
+    if(typeof flashStatus==='function') flashStatus('no mic — permission denied_');
+    document.querySelectorAll('#segMic button').forEach(b=>b.classList.toggle('is-active',b.dataset.mic==='off'));
+  }
+}
+function micEnergy(){
+  if(!mic.on||!mic.an) return 0;
+  mic.an.getByteFrequencyData(mic.data);
+  let sum=0;
+  for(let i=0;i<mic.data.length;i++) sum+=mic.data[i];
+  const avg=sum/mic.data.length/255;
+  mic.energy=mic.energy*0.72+avg*0.28;
+  const e=Math.min(1,mic.energy*2.4);
+  const lv=document.getElementById('micLevel');
+  if(lv) lv.textContent=Math.round(e*100)+'%';
+  return e;
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
@@ -866,6 +918,7 @@ function wireSeg(segId,attr,onPick){
   });
 }
 wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
+wireSeg('segMic','mic',v=>{ micToggle(v==='on'); });
 wireSeg('segSound','snd',v=>{
   state.sound=v==='on';
   if(state.sound&&audio&&audio.ctx.state==='suspended') audio.ctx.resume();

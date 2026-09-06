@@ -71,3 +71,10 @@ from a CDN, so the tool stays dependency-free: colour is quantised to a
 6·6·6 cube plus a 40-step grey ramp with an ordered dither, then LZW
 packed. Capture is downscaled to 480px on the long edge; the pack step
 takes a second or two at the end.
+
+## Multi-touch pooling
+
+Every held finger is its own pour point, and the flow rate is shared
+between them rather than multiplied — so pooling in two places costs the
+same water as pooling in one, and the metaball field merges the pools
+where they meet.

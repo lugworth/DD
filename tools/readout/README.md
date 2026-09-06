@@ -70,3 +70,11 @@ input the URL can't carry — a dropped image, or a sheet you painted by
 hand — so a link restores the *settings*, not that content.
 `Ctrl+Z` / `Ctrl+Shift+Z` step through parameter **undo/redo**, and a
 **Share** button appears on devices with the Web Share API.
+
+## Custom ramp & text export
+
+**Custom** adds a fifth character set you type yourself, ordered dark ▸
+light; it round-trips through the permalink with everything else.
+**⤓ .txt** downloads the mosaic as a text file — the reliable route when
+clipboard permission is refused, or when the sheet is simply too large to
+paste.

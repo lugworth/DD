@@ -320,7 +320,7 @@ const PALETTES={
 const state={
   style:'flood', palette:'crimson', fmt:'45',
   W:1080, H:1350,
-  holding:false, pointer:{x:540,y:500},
+  holding:false, pointer:{x:540,y:500}, pointers:new Map(),
   autoT:0, autoTarget:{x:540,y:500}, sunk:0,
   textDirty:true,
 };
@@ -636,11 +636,13 @@ function compose(g,W,H,p){
   /* 'sink' draws no water at all — only the copy gives way */
 
   if(p.ring&&(state.holding||p.auto)){
-    g.strokeStyle=pal.line; g.globalAlpha=0.5; g.lineWidth=1.4*k;
-    g.beginPath(); g.arc(state.pointer.x,state.pointer.y,p.drop*k*1.15,0,TAU); g.stroke();
-    g.globalAlpha=1;
-    g.fillStyle=pal.line;
-    g.beginPath(); g.arc(state.pointer.x,state.pointer.y,3.4*k,0,TAU); g.fill();
+    for(const src of pourSources()){
+      g.strokeStyle=pal.line; g.globalAlpha=0.5; g.lineWidth=1.4*k;
+      g.beginPath(); g.arc(src.x,src.y,p.drop*k*1.15,0,TAU); g.stroke();
+      g.globalAlpha=1;
+      g.fillStyle=pal.line;
+      g.beginPath(); g.arc(src.x,src.y,3.4*k,0,TAU); g.fill();
+    }
   }
 }
 
@@ -667,7 +669,11 @@ function frame(now){
   if(state.holding||(p.auto&&!state.holding)){
     emit+=(14+p.flow*46)*dt;
     const n=emit|0; emit-=n;
-    for(let i=0;i<n;i++) spawn(p,state.pointer.x,state.pointer.y);
+    /* the flow rate is shared between fingers rather than multiplied,
+       so pooling in two places costs the same as pooling in one */
+    const src=pourSources();
+    const per=Math.ceil(n/src.length);
+    for(const s of src) for(let i=0;i<per;i++) spawn(p,s.x,s.y);
   }
 
   stepWater(p,dt);
@@ -691,12 +697,27 @@ function pt(ev){
   const r=canvas.getBoundingClientRect();
   return { x:(ev.clientX-r.left)/r.width*state.W, y:(ev.clientY-r.top)/r.height*state.H };
 }
+/* every held finger is a pour point; falling back to the drifting
+   auto-pointer when nothing is held */
+function pourSources(){
+  return state.pointers.size ? [...state.pointers.values()] : [state.pointer];
+}
 canvas.addEventListener('pointerdown',ev=>{
-  state.holding=true; state.pointer=pt(ev);
+  const q=pt(ev);
+  state.pointers.set(ev.pointerId,q);
+  state.holding=true; state.pointer=q;
   canvas.setPointerCapture(ev.pointerId);
 });
-canvas.addEventListener('pointermove',ev=>{ if(state.holding) state.pointer=pt(ev); });
-['pointerup','pointercancel'].forEach(t=>canvas.addEventListener(t,()=>{ state.holding=false; }));
+canvas.addEventListener('pointermove',ev=>{
+  if(!state.pointers.has(ev.pointerId)) return;
+  const q=pt(ev);
+  state.pointers.set(ev.pointerId,q);
+  state.pointer=q;
+});
+['pointerup','pointercancel'].forEach(t=>canvas.addEventListener(t,ev=>{
+  state.pointers.delete(ev.pointerId);
+  state.holding=state.pointers.size>0;
+}));
 
 /* ═══════════════════ EXPORT / RECORD ═══════════════════ */
 function exportPNG(){

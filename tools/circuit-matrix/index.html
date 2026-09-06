@@ -239,6 +239,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-fmt="square">1:1 Square</button>
             </div>
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">Listen</span><span class="val" id="micLevel">—</span></div>
+            <div class="seg" id="segMic" role="group" aria-label="microphone reactive">
+              <button data-mic="off" class="is-active">Off</button>
+              <button data-mic="on">Mic ▸ trace rate</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -594,6 +601,7 @@ function render(g,Wpx,Hpx,p,tNow){
 let acc=0, lastT=performance.now(), dirty=true;
 function frame(tNow){
   const p=params();
+  { const e=micEnergy(); if(e>0) p.spawn=Math.min(1,p.spawn+e*0.9); }
   fitCanvas();
   const dt=Math.min(100,tNow-lastT); lastT=tNow;
   if(state.playing){
@@ -834,6 +842,47 @@ function recordGIF(){
   grab();
 }
 
+/* ═══════════════════ LISTEN ═══════════════════
+   Optional microphone input reduced to one smoothed 0..1 energy value.
+   Off until asked for — it needs a user gesture and a permission grant —
+   and any failure silently falls back to "no mic". */
+let mic={on:false,ctx:null,an:null,data:null,energy:0,stream:null};
+async function micToggle(on){
+  if(on===mic.on) return;
+  if(!on){
+    mic.on=false;
+    if(mic.stream) mic.stream.getTracks().forEach(t=>t.stop());
+    mic.stream=null; mic.energy=0;
+    const lv=document.getElementById('micLevel'); if(lv) lv.textContent='—';
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const ctx=mic.ctx||new (window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==='suspended') await ctx.resume();
+    const an=ctx.createAnalyser();
+    an.fftSize=1024; an.smoothingTimeConstant=0.7;
+    ctx.createMediaStreamSource(stream).connect(an);
+    mic={on:true,ctx,an,data:new Uint8Array(an.frequencyBinCount),energy:0,stream};
+  }catch{
+    mic.on=false;
+    if(typeof flashStatus==='function') flashStatus('no mic — permission denied_');
+    document.querySelectorAll('#segMic button').forEach(b=>b.classList.toggle('is-active',b.dataset.mic==='off'));
+  }
+}
+function micEnergy(){
+  if(!mic.on||!mic.an) return 0;
+  mic.an.getByteFrequencyData(mic.data);
+  let sum=0;
+  for(let i=0;i<mic.data.length;i++) sum+=mic.data[i];
+  const avg=sum/mic.data.length/255;
+  mic.energy=mic.energy*0.72+avg*0.28;
+  const e=Math.min(1,mic.energy*2.4);
+  const lv=document.getElementById('micLevel');
+  if(lv) lv.textContent=Math.round(e*100)+'%';
+  return e;
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
@@ -867,6 +916,7 @@ function wireSeg(segId,attr,onPick){
     pushHistory();
   });
 }
+wireSeg('segMic','mic',v=>{ micToggle(v==='on'); });
 wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; dirty=true; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; reseed(params()); });
 
