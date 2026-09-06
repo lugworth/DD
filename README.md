@@ -176,6 +176,13 @@ ui_kits/
 
 *v2.0 — 2026. Will refine as more source assets arrive.*
 
+## Tools
+
+`tools/index.html` is the hub for every generative tool in the repo — a
+live-preview card per tool, filterable by trait, linking to both the source
+page and its standalone build. It works opened from `tools/` or from
+`dist/tools.html` next to the baked builds.
+
 ## Standalone builds
 
 Every preview, UI-kit, and tool page references local fonts/images with
