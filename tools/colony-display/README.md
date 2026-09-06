@@ -69,3 +69,13 @@ Opening a link restores that exact state. `Ctrl+Z` / `Ctrl+Shift+Z`
 (or `Ctrl+Y`) step through parameter **undo/redo**. On devices that
 support the Web Share API a **Share** button appears next to Export and
 hands the rendered PNG straight to the system share sheet.
+
+## GIF capture
+
+**◉ GIF 3s** grabs 36 frames off the live canvas at 12.5fps and packs a
+looping GIF89a — useful where a WebM won't play inline (chat, forums,
+older clients). The encoder is written into the file rather than pulled
+from a CDN, so the tool stays dependency-free: colour is quantised to a
+6·6·6 cube plus a 40-step grey ramp with an ordered dither, then LZW
+packed. Capture is downscaled to 480px on the long edge; the pack step
+takes a second or two at the end.
