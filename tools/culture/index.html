@@ -275,6 +275,8 @@ footer .fill{flex:1;border-right:0;text-align:right}
 
       <div class="actions">
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnLink" title="copy a link to these settings">⧉ Copy Link</button>
+        <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -741,8 +743,103 @@ function syncSlider(el){
 sliders.forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('input',()=>syncSlider(el));
+  el.addEventListener('change',pushHistory);
   syncSlider(el);
 });
+['glow','ring'].forEach(id=>document.getElementById(id).addEventListener('change',pushHistory));
+
+/* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════
+   The dish is painted by hand, so a link carries the studio setup —
+   brush, growth parameters, palette, format — not the colony itself. */
+const checkFields=['glow','ring'];
+function serializeState(){
+  const vals={}, checks={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  checkFields.forEach(id=>{ checks[id]=document.getElementById(id).checked; });
+  return {tool:state.tool,palette:state.palette,fmt:state.fmt,vals,checks};
+}
+function applyFormat(v){
+  state.fmt=v;
+  [state.W,state.H]=FORMATS[v];
+  document.getElementById('headSize').textContent=state.W+' × '+state.H+' px';
+  document.getElementById('cornerFmt').textContent=({'11':'1:1','45':'4:5','169':'16:9'})[v];
+  clearDish(); seedColony();
+}
+function applyState(s){
+  state.tool=s.tool; state.palette=s.palette;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  checkFields.forEach(id=>{ if(s.checks[id]!==undefined) document.getElementById(id).checked=s.checks[id]; });
+  document.querySelectorAll('.rail button[data-tool]').forEach(b=>b.classList.toggle('is-active',b.dataset.tool===state.tool));
+  document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
+  document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===s.fmt));
+  document.getElementById('cornerTool').textContent='brush · '+state.tool;
+  canvas.style.background=PALETTES[state.palette].bg;
+  applyFormat(s.fmt);
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('settings link copied_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=state.W; off.height=state.H;
+  compose(off.getContext('2d'),state.W,state.H,p);
+  off.toBlob(async b=>{
+    if(!b) return;
+    const file=new File([b],'digidelic-culture-'+Date.now().toString(36)+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — culture'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+}
 
 document.querySelectorAll('.rail button[data-tool]').forEach(btn=>{
   btn.addEventListener('click',()=>{
@@ -750,6 +847,7 @@ document.querySelectorAll('.rail button[data-tool]').forEach(btn=>{
     btn.classList.add('is-active');
     state.tool=btn.dataset.tool;
     document.getElementById('cornerTool').textContent='brush · '+state.tool;
+    pushHistory();
   });
 });
 function wireSeg(segId,attr,onPick){
@@ -759,15 +857,11 @@ function wireSeg(segId,attr,onPick){
     seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
     btn.classList.add('is-active');
     onPick(btn.dataset[attr]);
+    pushHistory();
   });
 }
 wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
-wireSeg('segFormat','fmt',v=>{
-  [state.W,state.H]=FORMATS[v];
-  document.getElementById('headSize').textContent=state.W+' × '+state.H+' px';
-  document.getElementById('cornerFmt').textContent=({'11':'1:1','45':'4:5','169':'16:9'})[v];
-  clearDish(); seedColony();
-});
+wireSeg('segFormat','fmt',applyFormat);
 
 document.getElementById('btnFreeze').addEventListener('click',()=>{
   state.frozen=!state.frozen;
@@ -779,16 +873,25 @@ document.getElementById('btnSeed').addEventListener('click',seedColony);
 document.getElementById('btnClear').addEventListener('click',clearDish);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
+document.getElementById('btnLink').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('keydown',ev=>{
   if(ev.target.closest('input')) return;
   if(ev.key==='e') exportPNG();
   if(ev.key==='f') document.getElementById('btnFreeze').click();
   if(ev.key==='c') clearDish();
+  if((ev.metaKey||ev.ctrlKey) && ev.key.toLowerCase()==='z'){ ev.preventDefault(); ev.shiftKey?redo():undo(); }
+  if((ev.metaKey||ev.ctrlKey) && ev.key.toLowerCase()==='y'){ ev.preventDefault(); redo(); }
 });
 
 /* boot */
 canvas.style.background=PALETTES[state.palette].bg;
-seedColony();
+{
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink) applyState(fromLink); else seedColony();
+}
+pushHistory();
 requestAnimationFrame(frame);
 </script>
 </body>

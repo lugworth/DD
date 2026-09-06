@@ -59,3 +59,12 @@ gaining length in a space that cannot hold it, and folds.
 
 - `▶ Export PNG` — the dish at its full format size
 - `⏺ Rec 6s` — 6-second WebM of the colony growing via `MediaRecorder`
+
+## Sharing & history
+
+**⧉ Copy Link** copies a permalink encoding every rack setting, so a
+look can be shared as a URL. Note that this tool's canvas depends on
+input the URL can't carry — a dropped image, or a sheet you painted by
+hand — so a link restores the *settings*, not that content.
+`Ctrl+Z` / `Ctrl+Shift+Z` step through parameter **undo/redo**, and a
+**Share** button appears on devices with the Web Share API.
