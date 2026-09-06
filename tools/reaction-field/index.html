@@ -387,6 +387,7 @@ function reseed(p){
   simCanvas.width=W; simCanvas.height=H;
   img=simCtx.createImageData(W,H);
   state.gen=0;
+  dirty=true;
 }
 
 /* agitation — occasional droplets of B rain onto the field, keeping it alive */
@@ -492,7 +493,7 @@ function fitCanvas(){
   canvas.style.height=(H*scale)+'px';
   const dpr=Math.min(window.devicePixelRatio||1,2);
   const bw=Math.round(ART_W*scale*dpr), bh=Math.round(H*scale*dpr);
-  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; }
+  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; dirty=true; }
 }
 
 function blit(){
@@ -501,7 +502,7 @@ function blit(){
   ctx.drawImage(simCanvas,0,0,canvas.width,canvas.height);
 }
 
-let lastP=params();
+let dirty=true;
 function frame(){
   const p=params();
   fitCanvas();
@@ -510,9 +511,13 @@ function frame(){
     agitate(p);
     step(p.speed,p);
     document.getElementById('statMs').textContent=(performance.now()-t0).toFixed(1)+'ms';
+    dirty=true;
   }
-  shade(p);
-  blit();
+  if(dirty){
+    shade(p);
+    blit();
+    dirty=false;
+  }
   document.getElementById('statGen').textContent=state.gen;
   requestAnimationFrame(frame);
 }
@@ -582,6 +587,7 @@ sliders.forEach(id=>{
     if(id==='detail'){ reseed(p); }
     else if(id==='feed'||id==='kill'||id==='morph'||id==='rim'){ buildMaps(p); }
     /* diffusion / aniso / agitate / relief / gloss / light / speed apply instantly in the loop */
+    dirty=true;
   });
   syncSlider(el);
 });
@@ -595,7 +601,7 @@ function wireSeg(segId,attr,onPick){
     onPick(btn.dataset[attr]);
   });
 }
-wireSeg('segPalette','pal',v=>{ state.palette=v; });
+wireSeg('segPalette','pal',v=>{ state.palette=v; dirty=true; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; reseed(params()); });
 
 function newSeed(){

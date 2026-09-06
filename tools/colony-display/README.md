@@ -58,4 +58,5 @@ the canvas stamps colonies with ripples.
 ## Export
 
 - `▶ Export PNG` — current frame at 2160×2160
-- `⏺ Rec 6s` — 6-second WebM clip of the live animation via `MediaRecorder`
+- `⏺ Rec 6s` — 6-second WebM clip of the live animation via `MediaRecorder`,
+  including audio when Sound is on

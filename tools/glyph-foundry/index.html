@@ -843,12 +843,9 @@ function wireSeg(segId,attr,onPick){
 wireSeg('segPalette','pal',v=>{ state.palette=v; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; });
 
-document.getElementById('btnRandom').addEventListener('click',()=>{
-  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
-});
-document.getElementById('btnRegen').addEventListener('click',()=>{
-  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
-});
+function regenerate(){ state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); }
+document.getElementById('btnRandom').addEventListener('click',regenerate);
+document.getElementById('btnRegen').addEventListener('click',regenerate);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 window.addEventListener('resize',requestDraw);
 window.addEventListener('keydown',e=>{
@@ -856,7 +853,6 @@ window.addEventListener('keydown',e=>{
   if(e.key==='e' && !e.target.closest('input')) exportPNG();
 });
 
-if(document.fonts&&document.fonts.ready) document.fonts.ready.then(requestDraw);
 draw();
 </script>
 </body>

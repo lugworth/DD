@@ -439,8 +439,9 @@ function audioTick(p){
       const ctx=new (window.AudioContext||window.webkitAudioContext)();
       const gain=ctx.createGain(); gain.gain.value=0.12;
       const filt=ctx.createBiquadFilter(); filt.type='lowpass';
-      filt.connect(gain); gain.connect(ctx.destination);
-      audio={ctx,filt,scale:[0,3,5,7,10,12,15,17]};
+      const dest=ctx.createMediaStreamDestination();
+      filt.connect(gain); gain.connect(ctx.destination); gain.connect(dest);
+      audio={ctx,filt,dest,scale:[0,3,5,7,10,12,15,17]};
     }
     const {ctx,filt,scale}=audio;
     if(ctx.state==='suspended') ctx.resume();
@@ -640,6 +641,7 @@ function recordClip(){
   const btn=document.getElementById('btnRecord');
   if(recorder) return;
   const stream=canvas.captureStream(30);
+  if(state.sound && audio) stream.addTrack(audio.dest.stream.getAudioTracks()[0]);
   const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
   const chunks=[];

@@ -45,6 +45,9 @@ Blinn-style specular bloom on ridge tops.
 
 ## Export
 
-- `▶ Export PNG` — current frame at 2160px wide
+- `▶ Export PNG` — current frame at 2160px wide. This upscales the live
+  simulation canvas rather than re-rendering at target resolution, so
+  sharpness tracks the **Detail** slider (grid resolution) — low-Detail
+  exports will look softer than the 2160px file size implies.
 - `⏺ Rec 6s` — captures a 6-second WebM clip of the live animation
   (30 fps via `MediaRecorder`), named `digidelic-reaction-<seed>.webm`
