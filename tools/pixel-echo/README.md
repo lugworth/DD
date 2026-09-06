@@ -65,3 +65,11 @@ from a CDN, so the tool stays dependency-free: colour is quantised to a
 6·6·6 cube plus a 40-step grey ramp with an ordered dither, then LZW
 packed. Capture is downscaled to 480px on the long edge; the pack step
 takes a second or two at the end.
+
+## Listening
+
+**Listen** turns on microphone input, reduced to one smoothed 0–1 energy
+value that is folded into a single parameter (shown on the button) on top
+of whatever the slider is set to — so the rack still governs the floor and
+the room only ever pushes upward. It is off until asked for, needs a
+permission grant, and any failure quietly falls back to no mic.

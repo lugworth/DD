@@ -122,6 +122,12 @@ input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,
 input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
 input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
 
+input[type=text]{
+  width:100%;height:32px;background:var(--black-panel);border:1px solid var(--border);
+  color:var(--white-soft);font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;padding:0 10px;
+}
+input[type=text]:focus{outline:none;border-color:var(--yellow)}
+
 .checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px}
 .chk{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--white-soft)}
 .chk input{appearance:none;-webkit-appearance:none;width:14px;height:14px;border:1px solid var(--border-hi);background:var(--black-panel);cursor:pointer;flex:none}
@@ -214,7 +220,12 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-set="numeric">Numeric</button>
               <button data-set="hex">Hex</button>
               <button data-set="ramp">ASCII ramp</button>
+              <button data-set="custom">Custom</button>
             </div>
+          </div>
+          <div class="param" id="customRow" hidden>
+            <div class="lab"><span class="name">Custom ramp</span><span class="val">dark ▸ light</span></div>
+            <input type="text" id="customSet" value="·:+=oOX#@" spellcheck="false" aria-label="custom character ramp">
           </div>
         </div>
 
@@ -280,6 +291,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnReroll">⟳ Reroll</button>
         <button id="btnCopy">⧉ Copy text</button>
+        <button id="btnTxt" title="download the mosaic as a .txt file">⤓ .txt</button>
         <button id="btnLink" title="copy a link to these settings">⧉ Copy Link</button>
         <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
@@ -314,6 +326,13 @@ const SETS={
   hex:'0123456789ABCDEF'.split(''),
   ramp:'.:-=+*#%@'.split(''),
 };
+/* the custom set is read live from the field, ordered dark ▸ light */
+function charSet(name){
+  if(name!=='custom') return SETS[name];
+  const raw=document.getElementById('customSet').value;
+  const chars=[...raw].filter(c=>c!=='\n');
+  return chars.length?chars:SETS.ramp;
+}
 
 const state={
   palette:'ultramarine', set:'metrics', fmt:'source',
@@ -415,7 +434,7 @@ function buildCells(p){
     sctx.drawImage(src,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,cols,rows);
   }catch{ /* image not decodable yet */ }
   const d=sctx.getImageData(0,0,cols,rows).data;
-  const set=SETS[p.set];
+  const set=charSet(p.set);
   const cells=new Array(cols*rows);
   let inked=0;
   for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
@@ -519,7 +538,7 @@ function frame(now){
     document.getElementById('headSize').textContent=W+' × '+H+' px';
   }else if(p.flicker>0&&now-lastFlick>70){
     lastFlick=now;
-    const set=SETS[p.set], pal=PALETTES[p.palette];
+    const set=charSet(p.set), pal=PALETTES[p.palette];
     const n=Math.max(1,Math.round(state.cols*state.rows*p.flicker*0.012));
     const cw=W/state.cols, chh=H/state.rows;
     ctx.setTransform(sx,0,0,sy,0,0);
@@ -629,6 +648,16 @@ async function copyText(){
   }
   setTimeout(()=>{ btn.textContent='⧉ Copy text'; },1600);
 }
+/* a download always works, even where clipboard permission does not —
+   and it is the only sane route for a very large sheet */
+function downloadText(){
+  const blob=new Blob([asText()],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='digidelic-readout-'+Date.now().toString(36)+'.txt';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
 
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
@@ -661,7 +690,8 @@ function serializeState(){
   const vals={}, checks={};
   sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
   checkFields.forEach(id=>{ checks[id]=document.getElementById(id).checked; });
-  return {seed:state.seed,palette:state.palette,set:state.set,fmt:state.fmt,vals,checks};
+  return {seed:state.seed,palette:state.palette,set:state.set,fmt:state.fmt,
+          custom:document.getElementById('customSet').value,vals,checks};
 }
 function applyState(s){
   state.seed=s.seed; state.palette=s.palette; state.set=s.set; state.fmt=s.fmt;
@@ -674,6 +704,8 @@ function applyState(s){
   document.querySelectorAll('#segSet button').forEach(b=>b.classList.toggle('is-active',b.dataset.set===state.set));
   document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
   document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===state.fmt));
+  if(s.custom!==undefined) document.getElementById('customSet').value=s.custom;
+  syncCustomRow();
   canvas.style.background=PALETTES[state.palette].bg;
   markDirty();
 }
@@ -752,7 +784,10 @@ function wireSeg(segId,attr,onPick){
     pushHistory();
   });
 }
-wireSeg('segSet','set',v=>{ state.set=v; });
+wireSeg('segSet','set',v=>{ state.set=v; syncCustomRow(); });
+function syncCustomRow(){ document.getElementById('customRow').hidden=state.set!=='custom'; }
+document.getElementById('customSet').addEventListener('input',markDirty);
+document.getElementById('customSet').addEventListener('change',pushHistory);
 wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
 wireSeg('segFormat','fmt',v=>{ state.fmt=v; });
 
@@ -761,6 +796,7 @@ document.getElementById('btnReroll').addEventListener('click',()=>{
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnCopy').addEventListener('click',copyText);
+document.getElementById('btnTxt').addEventListener('click',downloadText);
 document.getElementById('btnLink').addEventListener('click',copyPermalink);
 if(navigator.share) document.getElementById('btnShare').hidden=false;
 document.getElementById('btnShare').addEventListener('click',shareArt);
@@ -777,7 +813,7 @@ window.addEventListener('resize',markDirty);
 canvas.style.background=PALETTES[state.palette].bg;
 {
   const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
-  if(fromLink) applyState(fromLink);
+  if(fromLink) applyState(fromLink); else syncCustomRow();
 }
 pushHistory();
 requestAnimationFrame(frame);
