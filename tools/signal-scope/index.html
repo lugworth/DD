@@ -234,6 +234,14 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-snd="on">On</button>
             </div>
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">External</span></div>
+            <div class="seg" id="segCtl" role="group" aria-label="external control">
+              <button data-ctl="off" class="is-active">Off</button>
+              <button data-ctl="midi">MIDI CC</button>
+              <button data-ctl="pad">Gamepad</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -701,6 +709,63 @@ function recordGIF(){
   grab();
 }
 
+/* ═══════════════════ EXTERNAL CONTROL ═══════════════════
+   MIDI continuous controllers and gamepad axes drive the rack directly:
+   CC n moves the nth slider, stick axis n likewise. Values are written
+   through the slider's own input event, so every handler already wired
+   to that slider — rebuild, redraw, readout sync — runs unchanged and
+   this needs no per-tool knowledge of what the sliders mean. */
+let extCtl={mode:'off',raf:0};
+function setSliderFromNorm(id,norm){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const min=parseFloat(el.min), max=parseFloat(el.max), step=parseFloat(el.step)||1;
+  let v=min+(max-min)*Math.max(0,Math.min(1,norm));
+  v=Math.round(v/step)*step;
+  if(parseFloat(el.value)===v) return;
+  el.value=v;
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+}
+function extFallback(){
+  extCtl.mode='off';
+  document.querySelectorAll('#segCtl button').forEach(b=>b.classList.toggle('is-active',b.dataset.ctl==='off'));
+}
+async function extControl(mode){
+  cancelAnimationFrame(extCtl.raf);
+  extCtl.mode=mode;
+  if(mode==='midi'){
+    try{
+      if(!navigator.requestMIDIAccess) throw new Error('no webmidi');
+      const access=await navigator.requestMIDIAccess();
+      let n=0;
+      for(const input of access.inputs.values()){
+        n++;
+        input.onmidimessage=ev=>{
+          if(extCtl.mode!=='midi') return;
+          const [status,cc,val]=ev.data;
+          if((status&0xF0)!==0xB0) return;              // control-change only
+          setSliderFromNorm(sliders[cc%sliders.length],val/127);
+        };
+      }
+      flashStatus(n?('midi listening · '+n+' in_'):'midi ready · no inputs_');
+    }catch{
+      extFallback();
+      flashStatus('no midi access_');
+    }
+  }else if(mode==='pad'){
+    if(!navigator.getGamepads){ extFallback(); flashStatus('no gamepad api_'); return; }
+    const poll=()=>{
+      if(extCtl.mode!=='pad') return;
+      const pad=[...(navigator.getGamepads()||[])].find(Boolean);
+      if(pad) for(let i=0;i<Math.min(pad.axes.length,sliders.length);i++)
+        setSliderFromNorm(sliders[i],(pad.axes[i]+1)/2);
+      extCtl.raf=requestAnimationFrame(poll);
+    };
+    poll();
+    flashStatus('gamepad polling_');
+  }
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
@@ -730,6 +795,7 @@ function wireSeg(segId,attr,onPick){
     pushHistory();
   });
 }
+wireSeg('segCtl','ctl',extControl);
 wireSeg('segPalette','pal',v=>{
   state.palette=v;
   canvas.style.background=PALETTES[v].bg;

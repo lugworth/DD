@@ -78,3 +78,11 @@ from a CDN, so the tool stays dependency-free: colour is quantised to a
 6·6·6 cube plus a 40-step grey ramp with an ordered dither, then LZW
 packed. Capture is downscaled to 480px on the long edge; the pack step
 takes a second or two at the end.
+
+## Saving a dish
+
+A painted dish cannot be reproduced from a seed the way a seeded
+generator can, so **⤓ Dish** writes the culture itself — every cell and
+filament, plus the studio settings — to a small JSON file, and **⤒ Open**
+reads one back. A `.json` dish dropped straight onto the canvas loads
+too. This is the tool's equivalent of a permalink.

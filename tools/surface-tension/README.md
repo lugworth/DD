@@ -78,3 +78,10 @@ Every held finger is its own pour point, and the flow rate is shared
 between them rather than multiplied — so pooling in two places costs the
 same water as pooling in one, and the metaball field merges the pools
 where they meet.
+
+## Tilt
+
+On a handset, **Tilt** leans the gravity vector with the device, so a
+pool actually runs downhill as you turn the phone. It is opt-in because
+iOS requires an explicit permission gesture, and a refusal simply leaves
+gravity wherever the slider put it.

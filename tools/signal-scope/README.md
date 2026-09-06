@@ -68,3 +68,11 @@ from a CDN, so the tool stays dependency-free: colour is quantised to a
 6·6·6 cube plus a 40-step grey ramp with an ordered dither, then LZW
 packed. Capture is downscaled to 480px on the long edge; the pack step
 takes a second or two at the end.
+
+## External control
+
+**External** hands the rack to hardware. `MIDI CC` listens on every MIDI
+input and maps continuous-controller *n* to the *n*th slider; `Gamepad`
+maps stick axis *n* the same way. Values are written through each
+slider's own input event, so everything already wired to that slider
+still runs — this needs no per-tool knowledge of what the controls mean.

@@ -73,3 +73,11 @@ value that is folded into a single parameter (shown on the button) on top
 of whatever the slider is set to — so the rack still governs the floor and
 the room only ever pushes upward. It is off until asked for, needs a
 permission grant, and any failure quietly falls back to no mic.
+
+## External control
+
+**External** hands the rack to hardware. `MIDI CC` listens on every MIDI
+input and maps continuous-controller *n* to the *n*th slider; `Gamepad`
+maps stick axis *n* the same way. Values are written through each
+slider's own input event, so everything already wired to that slider
+still runs — this needs no per-tool knowledge of what the controls mean.

@@ -223,6 +223,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-set="custom">Custom</button>
             </div>
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">Camera</span></div>
+            <div class="seg" id="segCam" role="group" aria-label="webcam source">
+              <button data-cam="off" class="is-active">Off</button>
+              <button data-cam="on">Live webcam</button>
+            </div>
+          </div>
           <div class="param" id="customRow" hidden>
             <div class="lab"><span class="name">Custom ramp</span><span class="val">dark ▸ light</span></div>
             <input type="text" id="customSet" value="·:+=oOX#@" spellcheck="false" aria-label="custom character ramp">
@@ -401,7 +408,7 @@ const sctx=sampler.getContext('2d',{willReadFrequently:true});
 function sourceEl(){ return state.img||demo; }
 function sourceSize(){
   const s=sourceEl();
-  return [s.naturalWidth||s.width, s.naturalHeight||s.height];
+  return [s.videoWidth||s.naturalWidth||s.width, s.videoHeight||s.naturalHeight||s.height];
 }
 function targetAspect(p){
   if(p.fmt==='11') return 1;
@@ -523,6 +530,7 @@ function renderAll(g,W,H,p){
 let lastFlick=0;
 function frame(now){
   const p=params();
+  if(cam.on) markDirty();      // live frames keep arriving
   fitCanvas(p);
   const [W,H]=artSize(p);
   const sx=canvas.width/W, sy=canvas.height/H;
@@ -681,6 +689,38 @@ sliders.forEach(id=>{
   el.addEventListener('change',pushHistory);
 });
 
+/* ═══════════════════ WEBCAM ═══════════════════
+   A live camera feed is just another source element — drawImage samples
+   a <video> exactly like an <img> — so the mosaic engine needs no
+   changes beyond keeping the sheet marked dirty while frames arrive. */
+let cam={on:false,el:null,stream:null};
+async function camToggle(on){
+  if(!on){
+    cam.on=false;
+    if(cam.stream) cam.stream.getTracks().forEach(t=>t.stop());
+    if(cam.el===state.img){ state.img=null; state.imgName=''; }
+    cam.stream=null; cam.el=null;
+    document.getElementById('cornerSrc').textContent='source · demo bust';
+    markDirty();
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480},audio:false});
+    const v=document.createElement('video');
+    v.srcObject=stream; v.muted=true; v.playsInline=true;
+    await v.play();
+    cam={on:true,el:v,stream};
+    state.img=v; state.imgName='webcam';
+    document.getElementById('cornerSrc').textContent='source · webcam';
+    markDirty();
+    flashStatus('camera live_');
+  }catch{
+    cam.on=false;
+    document.querySelectorAll('#segCam button').forEach(b=>b.classList.toggle('is-active',b.dataset.cam==='off'));
+    flashStatus('no camera access_');
+  }
+}
+
 /* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════
    Seed and every readout setting round-trip through the link; the
    dropped source image does not, so a shared link opens on the demo
@@ -785,6 +825,7 @@ function wireSeg(segId,attr,onPick){
   });
 }
 wireSeg('segSet','set',v=>{ state.set=v; syncCustomRow(); });
+wireSeg('segCam','cam',v=>camToggle(v==='on'));
 function syncCustomRow(){ document.getElementById('customRow').hidden=state.set!=='custom'; }
 document.getElementById('customSet').addEventListener('input',markDirty);
 document.getElementById('customSet').addEventListener('change',pushHistory);
