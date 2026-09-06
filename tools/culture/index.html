@@ -276,6 +276,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnRecord">⏺ Rec 6s</button>
         <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
+        <button id="btnLapse" title="timelapse — ~34s of growth packed into a short loop">◷ Lapse</button>
         <button id="btnLink" title="copy a link to these settings">⧉ Copy Link</button>
         <button id="btnSave" title="save the dish — cells, filaments and settings">⤓ Dish</button>
         <button id="btnOpen" title="load a saved dish">⤒ Open</button>
@@ -849,6 +850,38 @@ function gifEncoder(W,H,delayCs){
     finish(){ u8(0x3B); return new Uint8Array(B); },
   };
 }
+function recordTimelapse(){
+  const btn=document.getElementById('btnLapse');
+  if(btn.disabled) return;
+  const GW=Math.min(480,canvas.width);
+  const GH=Math.max(1,Math.round(GW*canvas.height/canvas.width));
+  const off=document.createElement('canvas');
+  off.width=GW; off.height=GH;
+  const octx=off.getContext('2d',{willReadFrequently:true});
+  const enc=gifEncoder(GW,GH,8);
+  const total=48, every=700;          // ~34s of growth packed into ~4s
+  let n=0;
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    octx.drawImage(canvas,0,0,GW,GH);
+    enc.add(octx.getImageData(0,0,GW,GH).data);
+    n++;
+    btn.textContent='◷ '+(total-n);
+    if(n<total){ setTimeout(grab,every); return; }
+    btn.textContent='◍ packing';
+    setTimeout(()=>{
+      const blob=new Blob([enc.finish()],{type:'image/gif'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-culture-lapse-'+Date.now().toString(36)+'.gif';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='◷ Lapse';
+    },30);
+  };
+  grab();
+}
+
 function recordGIF(){
   const btn=document.getElementById('btnGif');
   if(btn.disabled) return;
@@ -1025,6 +1058,7 @@ document.getElementById('btnClear').addEventListener('click',clearDish);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
 document.getElementById('btnGif').addEventListener('click',recordGIF);
+document.getElementById('btnLapse').addEventListener('click',recordTimelapse);
 document.getElementById('btnLink').addEventListener('click',copyPermalink);
 document.getElementById('btnSave').addEventListener('click',saveDish);
 document.getElementById('btnOpen').addEventListener('click',openDish);

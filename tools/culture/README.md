@@ -86,3 +86,10 @@ generator can, so **⤓ Dish** writes the culture itself — every cell and
 filament, plus the studio settings — to a small JSON file, and **⤒ Open**
 reads one back. A `.json` dish dropped straight onto the canvas loads
 too. This is the tool's equivalent of a permalink.
+
+## Timelapse
+
+**◷ Lapse** samples one frame every 700ms for 48 frames — roughly 34
+seconds of growth packed into a ~4 second loop. Growth in this tool
+unfolds over a much longer arc than the 3s GIF capture assumes, so the
+slow sample is what actually shows a colony developing.

@@ -235,6 +235,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
             </div>
           </div>
           <div class="param">
+            <div class="lab"><span class="name">Input</span></div>
+            <div class="seg" id="segInput" role="group" aria-label="beam source">
+              <button data-in="osc" class="is-active">Oscillators</button>
+              <button data-in="mic">Line in ▸ mic</button>
+            </div>
+          </div>
+          <div class="param">
             <div class="lab"><span class="name">External</span></div>
             <div class="seg" id="segCtl" role="group" aria-label="external control">
               <button data-ctl="off" class="is-active">Off</button>
@@ -328,6 +335,16 @@ function params(){
 
 /* ═══════════════════ SIGNAL ═══════════════════ */
 function signal(th,p){
+  if(scopeIn.on&&scopeIn.buf){
+    const b=scopeIn.buf, L=b.length;
+    /* sweep the buffer with theta; the delay sets the second axis */
+    const d=Math.max(1,Math.round(L/(8+p.fy*10)));
+    const i=((th*L*0.02)|0)%L;
+    const g=1.6+p.harm*2.4;
+    const x=b[(i%L+L)%L]*g;
+    const y=b[((i+d)%L+L)%L]*g;
+    return [Math.max(-1.6,Math.min(1.6,x)),Math.max(-1.6,Math.min(1.6,y))];
+  }
   const [p1,p2,p3,p4]=scope.ph;
   const h=p.harm*0.6;
   const fmx=Math.sin(th*0.037+p3)*p.fm*0.55;
@@ -336,6 +353,40 @@ function signal(th,p){
   const x=(Math.sin(p.fx*th+p1+fmx)+h*Math.sin(scope.m2x*p.fx*th*0.5+p3))/(1+h);
   const y=(Math.sin(fy*th+p2+fmy)+h*Math.sin(scope.m2y*fy*th*0.5+p4))/(1+h);
   return [x,y];
+}
+
+/* ═══════════════════ LINE IN ═══════════════════
+   With input set to Mic the beam plots the actual incoming waveform
+   instead of the synthesised pair, which is what a real X/Y scope does.
+   A microphone is mono, so the second axis is the same signal delayed —
+   a phase-space embedding, which is the standard way to get a Lissajous
+   figure out of one channel and still shows genuine harmonic structure. */
+let scopeIn={on:false,an:null,buf:null,stream:null,ctx:null};
+async function scopeInput(mode){
+  if(mode!=='mic'){
+    scopeIn.on=false;
+    if(scopeIn.stream) scopeIn.stream.getTracks().forEach(t=>t.stop());
+    scopeIn.stream=null;
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const actx=scopeIn.ctx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended') await actx.resume();
+    const an=actx.createAnalyser();
+    an.fftSize=2048;
+    actx.createMediaStreamSource(stream).connect(an);
+    scopeIn={on:true,an,buf:new Float32Array(an.fftSize),stream,ctx:actx};
+    flashStatus('line in live_');
+  }catch{
+    scopeIn.on=false;
+    document.querySelectorAll('#segInput button').forEach(b=>b.classList.toggle('is-active',b.dataset.in==='osc'));
+    flashStatus('no input access_');
+  }
+}
+function pullInput(){
+  if(!scopeIn.on||!scopeIn.an) return;
+  scopeIn.an.getFloatTimeDomainData(scopeIn.buf);
 }
 
 /* ═══════════════════ RENDER ═══════════════════ */
@@ -465,6 +516,7 @@ function audioSync(p){
 let lastT=performance.now();
 function frame(tNow){
   const p=params();
+  pullInput();
   fitCanvas();
   const size=canvas.width;
   if(trailInitNeeded){
@@ -796,6 +848,7 @@ function wireSeg(segId,attr,onPick){
   });
 }
 wireSeg('segCtl','ctl',extControl);
+wireSeg('segInput','in',scopeInput);
 wireSeg('segPalette','pal',v=>{
   state.palette=v;
   canvas.style.background=PALETTES[v].bg;

@@ -76,3 +76,12 @@ input and maps continuous-controller *n* to the *n*th slider; `Gamepad`
 maps stick axis *n* the same way. Values are written through each
 slider's own input event, so everything already wired to that slider
 still runs — this needs no per-tool knowledge of what the controls mean.
+
+## Line in
+
+**Input** switches the beam from the synthesised pair to the actual
+incoming waveform, which is what a real X/Y scope does. A microphone is
+mono, so the second axis is the same signal delayed — a phase-space
+embedding, the standard way to get a Lissajous figure from one channel
+while still showing genuine harmonic structure. Freq Y sets the delay
+and Harmonics acts as input gain in this mode.
