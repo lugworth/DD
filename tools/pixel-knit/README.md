@@ -72,3 +72,11 @@ from a CDN, so the tool stays dependency-free: colour is quantised to a
 6·6·6 cube plus a 40-step grey ramp with an ordered dither, then LZW
 packed. Capture is downscaled to 480px on the long edge; the pack step
 takes a second or two at the end.
+
+## Lower-plate blend
+
+**Lower blend** decides how the motif meets the texture on the lower
+plate. `Knockout` is the original hard punch-out; `Multiply`, `Screen`
+and `Difference` let the motif interact with the texture underneath
+instead of replacing it, which widens the expressive range a long way
+for one control.
