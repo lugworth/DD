@@ -90,3 +90,21 @@ permission grant, and any failure quietly falls back to no mic.
 
 Multi-touch: each finger now carries its own stamp throttle, so two
 hands splash colonies at full rate instead of halving each other.
+
+## GPU dot engine (opt-in)
+
+**Dot engine** moves the dot rasterisation to a WebGL2 fragment shader.
+Only that pass moves: the Life simulation stays on the CPU, because it
+costs about a quarter of a millisecond per generation and it owns
+births, audio, pulses and touch — none of which want a round trip
+through a texture. What is actually expensive is drawing tens of
+thousands of individually coloured dots each frame, and that is pure
+per-pixel arithmetic.
+
+The shader renders into a canvas the existing compositor treats exactly
+like the CPU layer, so bloom, abyss, glass sheen and vignette are
+untouched by the choice. CPU remains the default, and a missing WebGL2
+context or a shader that will not compile reverts to it.
+
+The Life step itself also got faster: the two wrapping columns are now
+handled separately, so the interior needs no modulo per neighbour.

@@ -246,6 +246,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-mic="on">Mic ▸ vitality</button>
             </div>
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">Dot engine</span><span class="val" id="engineTag">cpu</span></div>
+            <div class="seg" id="segEngine" role="group" aria-label="dot rendering engine">
+              <button data-eng="cpu" class="is-active">CPU</button>
+              <button data-eng="gpu">GPU ▸ WebGL2</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -308,6 +315,7 @@ const state={
   palette:'phosphor',
   playing:true,
   sound:false,
+  dotEngine:'cpu',
   gen:0,
 };
 const sliders=['density','vitality','decay','tempo','grid','diffusion','glow','dotsize','ripples'];
@@ -400,19 +408,33 @@ function emitPulse(cx,cy,r,amp){
 function step(p){
   const {N,alive,next,u}=sim;
   sim.births=0;
+  /* the two wrapping columns are handled separately so the interior —
+     which is almost every cell — needs no modulo per neighbour */
+  const cell=(y0,ym,yp,x,xm,xp)=>{
+    const n=alive[ym+xm]+alive[ym+x]+alive[ym+xp]
+           +alive[y0+xm]           +alive[y0+xp]
+           +alive[yp+xm]+alive[yp+x]+alive[yp+xp];
+    const a=alive[y0+x];
+    const born=!a&&n===3, survive=a&&(n===2||n===3);
+    next[y0+x]=(born||survive)?1:0;
+    if(born){ sim.births++; u[y0+x]+=0.5; }        // life pushes the water up
+    else if(a&&!survive) u[y0+x]-=0.2;             // death pulls it under
+  };
   for(let y=0;y<N;y++){
     const ym=((y-1+N)%N)*N, y0=y*N, yp=((y+1)%N)*N;
-    for(let x=0;x<N;x++){
-      const xm=(x-1+N)%N, xp=(x+1)%N;
-      const n=alive[ym+xm]+alive[ym+x]+alive[ym+xp]
-             +alive[y0+xm]           +alive[y0+xp]
-             +alive[yp+xm]+alive[yp+x]+alive[yp+xp];
-      const a=alive[y0+x];
+    cell(y0,ym,yp,0,N-1,1);
+    for(let x=1;x<N-1;x++){
+      const i=y0+x;
+      const n=alive[ym+x-1]+alive[ym+x]+alive[ym+x+1]
+             +alive[i-1]              +alive[i+1]
+             +alive[yp+x-1]+alive[yp+x]+alive[yp+x+1];
+      const a=alive[i];
       const born=!a&&n===3, survive=a&&(n===2||n===3);
-      next[y0+x]=(born||survive)?1:0;
-      if(born){ sim.births++; u[y0+x]+=0.5; }      // life pushes the water up
-      else if(a&&!survive) u[y0+x]-=0.2;           // death pulls it under
+      next[i]=(born||survive)?1:0;
+      if(born){ sim.births++; u[i]+=0.5; }
+      else if(a&&!survive) u[i]-=0.2;
     }
+    cell(y0,ym,yp,N-1,N-2,0);
   }
   sim.next=sim.alive; sim.alive=next;
   /* now and then a colony speaks — a transmission ripples outward */
@@ -528,6 +550,140 @@ function drawDots(g,size,p,pal,tNow){
   }
 }
 
+/* ═══════════════════ GPU DOT PASS (opt-in) ═══════════════════
+   Only the dot rasterisation moves to the GPU. The simulation stays on
+   the CPU exactly as it is — it costs about a quarter of a millisecond
+   a generation and it owns births, audio, pulses and touch, none of
+   which want a round trip through a texture. What is expensive is
+   drawing tens of thousands of individually coloured dots every frame,
+   and that is pure per-pixel arithmetic.
+
+   The shader is a line-by-line transcription of drawDots(), and it
+   renders into a canvas the existing compositor then treats exactly
+   like the CPU 'layer', so bloom, abyss, sheen and vignette are
+   untouched. CPU stays the default; any failure reverts to it. */
+const gdots={ok:false,tried:false,gl:null,cv:null,prog:null,tex:null,buf:null,N:0,vao:null};
+
+const GD_VERT=`#version 300 es
+in vec2 aPos;
+void main(){ gl_Position=vec4(aPos,0.0,1.0); }`;
+
+const GD_FRAG=`#version 300 es
+precision highp float;
+uniform sampler2D uCell;     // r=energy g=heat b=wave
+uniform float uN,uSize,uDot,uAmt,uT1,uT2;
+uniform vec3 uDim,uBright,uHot,uTouch,uSpectral;
+out vec4 outColor;
+void main(){
+  float cs=uSize/uN;
+  vec2 px=vec2(gl_FragCoord.x, uSize-gl_FragCoord.y);   // image-space, row 0 at top
+  vec2 cell=floor(px/cs);
+  if(cell.x<0.0||cell.y<0.0||cell.x>=uN||cell.y>=uN){ outColor=vec4(0.0); return; }
+  vec3 c=texture(uCell,(cell+0.5)/uN).rgb;
+  float e0=c.r, h=c.g, w=c.b*c.r;
+  if(e0<0.03){ outColor=vec4(0.0); return; }
+  float x=cell.x, y=cell.y;
+  float und=(sin(uT1+x*0.42+y*0.23)+sin(uT2-x*0.17+y*0.51))*0.25+0.5;
+  float e=e0*(1.0-uAmt*0.4+uAmt*0.4*und)+max(0.0,w)*uAmt;
+  e=min(e,1.2);
+  vec3 col = e>0.985 ? mix(uBright,uHot,min(1.0,(e-0.985)*5.0)) : mix(uDim,uBright,e);
+  float sp=min(1.0,abs(w)*uAmt*0.9);
+  if(sp>0.05) col=mix(col,uSpectral,sp*0.45);
+  if(h>0.02) col=mix(col,uTouch,min(1.0,h*1.4));
+  float r=cs*uDot*0.5;
+  float rr=r*(0.55+0.45*min(1.0,e))*(1.0+uAmt*(und-0.5)*0.5+max(-0.3,w)*uAmt*0.7);
+  if(rr<=0.0){ outColor=vec4(0.0); return; }
+  vec2 centre=(cell+0.5)*cs;
+  float dist=length(px-centre);
+  float cov=clamp(rr-dist+0.5,0.0,1.0);            // 1px feather ≈ canvas antialiasing
+  if(cov<=0.0){ outColor=vec4(0.0); return; }
+  outColor=vec4(min(col,vec3(255.0))/255.0*cov,cov);
+}`;
+
+function gdotsInit(){
+  if(gdots.tried) return gdots.ok;
+  gdots.tried=true;
+  try{
+    const cv=document.createElement('canvas');
+    const gl=cv.getContext('webgl2',{antialias:false,premultipliedAlpha:true});
+    if(!gl){ console.warn('[colony-display] no webgl2'); return false; }
+    if(!gl.getExtension('EXT_color_buffer_float')&&!gl.getExtension('OES_texture_float_linear')){
+      /* float textures are only sampled here, not rendered to, so this is
+         advisory — carry on and let the shader compile decide */
+    }
+    const mk=(t,src)=>{
+      const s=gl.createShader(t); gl.shaderSource(s,src); gl.compileShader(s);
+      if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){ console.warn('[colony-display] shader:',gl.getShaderInfoLog(s)); return null; }
+      return s;
+    };
+    const vs=mk(gl.VERTEX_SHADER,GD_VERT), fs=mk(gl.FRAGMENT_SHADER,GD_FRAG);
+    if(!vs||!fs) return false;
+    const pr=gl.createProgram();
+    gl.attachShader(pr,vs); gl.attachShader(pr,fs); gl.linkProgram(pr);
+    if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){ console.warn('[colony-display] link:',gl.getProgramInfoLog(pr)); return false; }
+    const vao=gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const b=gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER,b);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+    const loc=gl.getAttribLocation(pr,'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+    gdots.gl=gl; gdots.cv=cv; gdots.prog=pr; gdots.vao=vao;
+    gdots.tex=gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D,gdots.tex);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gdots.ok=true;
+    return true;
+  }catch(e){ console.warn('[colony-display] gpu init threw',e); return false; }
+}
+function gdotsDraw(size,p,pal,tNow){
+  const gl=gdots.gl, N=sim.N;
+  if(gdots.cv.width!==size){ gdots.cv.width=gdots.cv.height=size; }
+  if(gdots.N!==N||!gdots.buf){ gdots.buf=new Float32Array(N*N*3); gdots.N=N; }
+  const {energy,heat,u}=sim, buf=gdots.buf;
+  for(let i=0,n=N*N;i<n;i++){ buf[i*3]=energy[i]; buf[i*3+1]=heat[i]; buf[i*3+2]=u[i]; }
+  gl.bindTexture(gl.TEXTURE_2D,gdots.tex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB32F,N,N,0,gl.RGB,gl.FLOAT,buf);
+  gl.bindVertexArray(gdots.vao);
+  gl.viewport(0,0,size,size);
+  gl.clearColor(0,0,0,0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(gdots.prog);
+  const U=n=>gl.getUniformLocation(gdots.prog,n);
+  gl.uniform1i(U('uCell'),0);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,gdots.tex);
+  gl.uniform1f(U('uN'),N);
+  gl.uniform1f(U('uSize'),size);
+  gl.uniform1f(U('uDot'),p.dotsize);
+  gl.uniform1f(U('uAmt'),p.ripples);
+  gl.uniform1f(U('uT1'),tNow*0.0016);
+  gl.uniform1f(U('uT2'),tNow*0.0011);
+  gl.uniform3f(U('uDim'),...pal.dim);
+  gl.uniform3f(U('uBright'),...pal.bright);
+  gl.uniform3f(U('uHot'),...pal.hot);
+  gl.uniform3f(U('uTouch'),...pal.touch);
+  gl.uniform3f(U('uSpectral'),...pal.spectral);
+  gl.drawArrays(gl.TRIANGLES,0,3);
+}
+function useGPUDots(){ return state.dotEngine==='gpu' && gdots.ok; }
+function setDotEngine(v){
+  if(v==='gpu'&&!gdotsInit()){
+    state.dotEngine='cpu';
+    document.querySelectorAll('#segEngine button').forEach(b=>b.classList.toggle('is-active',b.dataset.eng==='cpu'));
+    document.getElementById('engineTag').textContent='cpu · unavailable';
+    flashStatus('webgl2 unavailable — staying on cpu_');
+    return;
+  }
+  state.dotEngine=v;
+  document.getElementById('engineTag').textContent=v;
+}
+
 /* the abyss — dim palette murk drifting slowly beneath the dots */
 const abyss=document.createElement('canvas');
 abyss.width=abyss.height=16;
@@ -559,20 +715,29 @@ function render(g,size,p,tNow){
   g.fillStyle=pal.bg; g.fillRect(0,0,size,size);
   drawAbyss(g,size,p,pal,tNow);
 
-  if(layer.width!==size){ layer.width=layer.height=size; }
-  drawDots(lctx,size,p,pal,tNow);
+  /* the dot pass renders either on the CPU into `layer` or on the GPU
+     into its own canvas; everything downstream treats them the same */
+  let dots;
+  if(useGPUDots()){
+    gdotsDraw(size,p,pal,tNow);
+    dots=gdots.cv;
+  }else{
+    if(layer.width!==size){ layer.width=layer.height=size; }
+    drawDots(lctx,size,p,pal,tNow);
+    dots=layer;
+  }
 
   /* crisp pass fades out as diffusion rises; blurred pass grows.
      the bloom breathes on a slow heartbeat — the device is alive */
   const dif=p.diffusion;
   if(dif<0.98){
     g.globalAlpha=1-dif*0.85;
-    g.drawImage(layer,0,0);
+    g.drawImage(dots,0,0);
   }
   g.globalAlpha=Math.min(1,(0.25+p.glow*0.8+dif*0.6)*(0.86+0.14*Math.sin(tNow*0.0009)));
   g.globalCompositeOperation='lighter';
   g.filter=`blur(${(2+p.glow*8+dif*26)*(size/1080)}px)`;
-  g.drawImage(layer,0,0);
+  g.drawImage(dots,0,0);
   g.filter='none';
   g.globalCompositeOperation='source-over';
   g.globalAlpha=1;
@@ -678,7 +843,7 @@ function recordClip(){
 function serializeState(){
   const vals={};
   sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
-  return {seed:state.seed,palette:state.palette,sound:state.sound,vals};
+  return {seed:state.seed,palette:state.palette,sound:state.sound,dotEngine:state.dotEngine,vals};
 }
 function applyState(s){
   state.seed=s.seed; state.palette=s.palette; state.sound=!!s.sound;
@@ -689,6 +854,10 @@ function applyState(s){
   });
   document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
   document.querySelectorAll('#segSound button').forEach(b=>b.classList.toggle('is-active',b.dataset.snd===(state.sound?'on':'off')));
+  if(s.dotEngine){
+    document.querySelectorAll('#segEngine button').forEach(b=>b.classList.toggle('is-active',b.dataset.eng===s.dotEngine));
+    setDotEngine(s.dotEngine);
+  }
   canvas.style.background=PALETTES[state.palette].bg;
   reseed(params());
   updateSeedDisplay();
@@ -919,6 +1088,7 @@ function wireSeg(segId,attr,onPick){
 }
 wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
 wireSeg('segMic','mic',v=>{ micToggle(v==='on'); });
+wireSeg('segEngine','eng',setDotEngine);
 wireSeg('segSound','snd',v=>{
   state.sound=v==='on';
   if(state.sound&&audio&&audio.ctx.state==='suspended') audio.ctx.resume();
