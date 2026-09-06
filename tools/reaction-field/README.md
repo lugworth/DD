@@ -70,3 +70,21 @@ from a CDN, so the tool stays dependency-free: colour is quantised to a
 6·6·6 cube plus a 40-step grey ramp with an ordered dither, then LZW
 packed. Capture is downscaled to 480px on the long edge; the pack step
 takes a second or two at the end.
+
+## GPU engine (opt-in)
+
+**Engine** switches the simulation between the original CPU path and a
+WebGL2 port that runs the field in a pair of ping-ponged float textures.
+The GPU path renders into the same internal canvas the CPU path writes,
+so export, record and GIF capture are unaffected by the choice.
+
+CPU stays the default. Every failure mode — no WebGL2, no float render
+targets, a shader that will not compile or link, an incomplete
+framebuffer — flips the control back to CPU rather than showing you a
+broken sheet.
+
+The shader is a faithful transcription of the CPU step: same 9-point
+laplacian, same anisotropy weights, same substrate boundary ring, and
+deliberately *unclamped*, because B overshoots 1.0 transiently where a
+blob is seeded and clamping would give the two engines subtly different
+dynamics. Run side by side from the same seed they should agree.
