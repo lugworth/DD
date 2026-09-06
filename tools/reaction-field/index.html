@@ -240,6 +240,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
             </div>
           </div>
           <div class="param">
+            <div class="lab"><span class="name">Engine</span><span class="val" id="engineTag">cpu</span></div>
+            <div class="seg" id="segEngine" role="group" aria-label="simulation engine">
+              <button data-eng="cpu" class="is-active">CPU</button>
+              <button data-eng="gpu">GPU ▸ WebGL2</button>
+            </div>
+          </div>
+          <div class="param">
             <div class="lab"><span class="name">Format</span></div>
             <div class="seg" id="segFormat" role="group" aria-label="format">
               <button data-fmt="square" class="is-active">1:1 Square</button>
@@ -297,6 +304,7 @@ const state={
   palette:'ferro',
   format:'square',
   playing:true,
+  engine:'cpu',
   gen:0,
 };
 const sliders=['feed','kill','diffusion','aniso','morph','rim','agitate','speed','relief','gloss','light','detail'];
@@ -390,6 +398,7 @@ function reseed(p){
   img=simCtx.createImageData(W,H);
   state.gen=0;
   dirty=true;
+  if(useGPU()) gpuUpload();          // both engines start from the same culture
 }
 
 /* agitation — occasional droplets of B rain onto the field, keeping it alive */
@@ -508,6 +517,16 @@ let dirty=true;
 function frame(){
   const p=params();
   fitCanvas();
+  if(useGPU()){
+    const t0=performance.now();
+    if(state.playing){ gpuAgitate(p); gpuFrame(p,p.speed); dirty=true; }
+    else if(dirty){ gpuFrame(p,0); }        // restage the shading for a param tweak
+    if(state.playing) document.getElementById('statMs').textContent=(performance.now()-t0).toFixed(1)+'ms';
+    if(dirty){ blit(); dirty=false; }
+    document.getElementById('statGen').textContent=state.gen;
+    requestAnimationFrame(frame);
+    return;
+  }
   if(state.playing){
     const t0=performance.now();
     agitate(p);
@@ -566,11 +585,267 @@ function recordClip(){
   setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
 }
 
+/* ═══════════════════ GPU ENGINE (opt-in) ═══════════════════
+   A WebGL2 port of the same Gray-Scott step and emboss shading, running
+   the field in a pair of ping-ponged float textures. It renders into
+   simCanvas exactly like the CPU path, so export, record and GIF capture
+   need to know nothing about it.
+
+   The CPU path remains the default and is left completely intact: every
+   failure below (no WebGL2, no float render targets, a shader that will
+   not compile or link, an incomplete framebuffer) flips the engine back
+   to CPU rather than degrading. What it cannot catch is a shader that
+   compiles and still draws the wrong thing — check the two engines look
+   alike before trusting a long GPU run. */
+const gpu={ok:false,tried:false,gl:null,cv:null,stepProg:null,shadeProg:null,
+            tex:[null,null],fbo:[null,null],maps:null,cur:0,W:0,H:0,vao:null};
+
+function glShader(gl,type,src){
+  const s=gl.createShader(type);
+  gl.shaderSource(s,src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){
+    console.warn('[reaction-field] shader failed:',gl.getShaderInfoLog(s));
+    gl.deleteShader(s); return null;
+  }
+  return s;
+}
+function glProgram(gl,vsSrc,fsSrc){
+  const vs=glShader(gl,gl.VERTEX_SHADER,vsSrc), fs=glShader(gl,gl.FRAGMENT_SHADER,fsSrc);
+  if(!vs||!fs) return null;
+  const pr=gl.createProgram();
+  gl.attachShader(pr,vs); gl.attachShader(pr,fs); gl.linkProgram(pr);
+  if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){
+    console.warn('[reaction-field] link failed:',gl.getProgramInfoLog(pr));
+    return null;
+  }
+  return pr;
+}
+
+const GL_VERT=`#version 300 es
+in vec2 aPos;
+void main(){ gl_Position=vec4(aPos,0.0,1.0); }`;
+
+/* image-space uv: row 0 is the top, matching the CPU arrays */
+const GL_STEP=`#version 300 es
+precision highp float;
+uniform sampler2D uState;
+uniform sampler2D uMaps;
+uniform vec2 uTexel;
+uniform float uDA,uDB,uWx,uWy;
+out vec4 outColor;
+vec2 S(vec2 uv){ return texture(uState,uv).rg; }
+void main(){
+  vec2 uv=vec2(gl_FragCoord.x*uTexel.x, 1.0-gl_FragCoord.y*uTexel.y);
+  if(uv.x<uTexel.x*1.5||uv.y<uTexel.y*1.5||uv.x>1.0-uTexel.x*1.5||uv.y>1.0-uTexel.y*1.5){
+    outColor=vec4(1.0,0.0,0.0,1.0);         // boundary ring stays substrate
+    return;
+  }
+  vec2 c=S(uv);
+  vec2 l=S(uv-vec2(uTexel.x,0.0)), r=S(uv+vec2(uTexel.x,0.0));
+  vec2 u=S(uv-vec2(0.0,uTexel.y)), d=S(uv+vec2(0.0,uTexel.y));
+  vec2 lu=S(uv+vec2(-uTexel.x,-uTexel.y)), ru=S(uv+vec2(uTexel.x,-uTexel.y));
+  vec2 ld=S(uv+vec2(-uTexel.x, uTexel.y)), rd=S(uv+vec2(uTexel.x, uTexel.y));
+  vec2 lap=(l+r)*uWx+(u+d)*uWy+(lu+ru+ld+rd)*0.05-c;
+  float a=c.r, b=c.g, abb=a*b*b;
+  vec2 fk=texture(uMaps,uv).rg;
+  float na=a+(uDA*lap.r-abb+fk.r*(1.0-a));
+  float nb=b+(uDB*lap.g+abb-(fk.r+fk.g)*b);
+  /* deliberately unclamped: B overshoots 1.0 transiently where a fresh
+     blob is seeded, and the CPU reference lets it, so clamping here
+     would quietly give the two engines different dynamics */
+  outColor=vec4(na,nb,0.0,1.0);
+}`;
+
+const GL_SHADE=`#version 300 es
+precision highp float;
+uniform sampler2D uState;
+uniform vec2 uTexel;
+uniform float uDepth,uSpecPow,uSpecAmt,uInvert;
+uniform vec3 uL,uBg,uMat,uSpec;
+out vec4 outColor;
+float hgt(vec2 uv){
+  float a=texture(uState,uv).r;
+  return clamp(((1.0-a)-0.22)*1.9,0.0,1.0);
+}
+void main(){
+  vec2 uv=vec2(gl_FragCoord.x*uTexel.x, 1.0-gl_FragCoord.y*uTexel.y);
+  float h=hgt(uv);
+  float gx=(hgt(uv+vec2(uTexel.x,0.0))-hgt(uv-vec2(uTexel.x,0.0)))*uDepth;
+  float gy=(hgt(uv+vec2(0.0,uTexel.y))-hgt(uv-vec2(0.0,uTexel.y)))*uDepth;
+  float nl=sqrt(gx*gx+gy*gy+1.0);
+  vec3 n=vec3(-gx/nl,-gy/nl,1.0/nl);
+  float diff=max(dot(n,uL),0.0);
+  vec3 hv=normalize(vec3(uL.x,uL.y,uL.z+1.0));
+  float spec=max(dot(n,hv),0.0);
+  spec=pow(spec,uSpecPow)*uSpecAmt*h;
+  float m = h<0.12 ? (h/0.12)*h : h;
+  float lit=mix(diff,0.35+0.65*diff,uInvert);
+  vec3 col=uBg+(uMat*lit-uBg)*m+uSpec*spec;
+  outColor=vec4(clamp(col/255.0,0.0,1.0),1.0);
+}`;
+
+function gpuInit(){
+  if(gpu.tried) return gpu.ok;
+  gpu.tried=true;
+  try{
+    const cv=document.createElement('canvas');
+    const gl=cv.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true});
+    if(!gl){ console.warn('[reaction-field] no webgl2'); return false; }
+    if(!gl.getExtension('EXT_color_buffer_float')){
+      console.warn('[reaction-field] no float render targets');
+      return false;
+    }
+    const stepProg=glProgram(gl,GL_VERT,GL_STEP);
+    const shadeProg=glProgram(gl,GL_VERT,GL_SHADE);
+    if(!stepProg||!shadeProg) return false;
+    const vao=gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const buf=gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+    const loc=gl.getAttribLocation(stepProg,'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+    gpu.gl=gl; gpu.cv=cv; gpu.stepProg=stepProg; gpu.shadeProg=shadeProg; gpu.vao=vao;
+    gpu.ok=true;
+    return true;
+  }catch(e){
+    console.warn('[reaction-field] gpu init threw',e);
+    return false;
+  }
+}
+function gpuTexture(gl,W,H,data){
+  const t=gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,W,H,0,gl.RGBA,gl.FLOAT,data);
+  return t;
+}
+/* mirror the CPU arrays into GPU textures — called after every reseed
+   or map rebuild so both engines always start from the same culture */
+function gpuUpload(){
+  if(!gpu.ok) return false;
+  const gl=gpu.gl, {W,H,A,B,Fm,Km}=sim;
+  gpu.cv.width=W; gpu.cv.height=H;
+  gpu.W=W; gpu.H=H;
+  const state4=new Float32Array(W*H*4), maps4=new Float32Array(W*H*4);
+  for(let i=0;i<W*H;i++){
+    state4[i*4]=A[i]; state4[i*4+1]=B[i]; state4[i*4+3]=1;
+    maps4[i*4]=Fm[i]; maps4[i*4+1]=Km[i]; maps4[i*4+3]=1;
+  }
+  [gpu.tex[0],gpu.tex[1],gpu.maps].forEach(t=>t&&gl.deleteTexture(t));
+  [gpu.fbo[0],gpu.fbo[1]].forEach(f=>f&&gl.deleteFramebuffer(f));
+  gpu.tex[0]=gpuTexture(gl,W,H,state4);
+  gpu.tex[1]=gpuTexture(gl,W,H,null);
+  gpu.maps=gpuTexture(gl,W,H,maps4);
+  for(let i=0;i<2;i++){
+    const f=gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER,f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,gpu.tex[i],0);
+    if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE){
+      console.warn('[reaction-field] framebuffer incomplete');
+      gpu.ok=false;
+      return false;
+    }
+    gpu.fbo[i]=f;
+  }
+  gpu.cur=0;
+  return true;
+}
+/* feed/kill/morph/rim rebuild the maps but must not disturb a running
+   culture, so the map texture refreshes on its own */
+function gpuUploadMaps(){
+  if(!gpu.ok||!gpu.maps||gpu.W!==sim.W||gpu.H!==sim.H) return;
+  const gl=gpu.gl, {W,H,Fm,Km}=sim;
+  const maps4=new Float32Array(W*H*4);
+  for(let i=0;i<W*H;i++){ maps4[i*4]=Fm[i]; maps4[i*4+1]=Km[i]; maps4[i*4+3]=1; }
+  gl.bindTexture(gl.TEXTURE_2D,gpu.maps);
+  gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,W,H,gl.RGBA,gl.FLOAT,maps4);
+}
+/* agitation writes straight into the live texture, same as the CPU path
+   pokes the array */
+function gpuAgitate(p){
+  if(sim.agRnd()>p.agitate*0.4) return;
+  const gl=gpu.gl, {W,H}=gpu;
+  const r=2+Math.floor(sim.agRnd()*3), d=r*2+1;
+  const x=Math.max(1,Math.min(W-d-1,(sim.agRnd()*W)|0));
+  const y=Math.max(1,Math.min(H-d-1,(sim.agRnd()*H)|0));
+  const patch=new Float32Array(d*d*4);
+  for(let i=0;i<d*d;i++){ patch[i*4]=0.3; patch[i*4+1]=1; patch[i*4+3]=1; }
+  gl.bindTexture(gl.TEXTURE_2D,gpu.tex[gpu.cur]);
+  gl.texSubImage2D(gl.TEXTURE_2D,0,x,y,d,d,gl.RGBA,gl.FLOAT,patch);
+}
+function gpuFrame(p,iters){
+  const gl=gpu.gl, {W,H}=gpu;
+  gl.bindVertexArray(gpu.vao);
+  gl.viewport(0,0,W,H);
+  gl.useProgram(gpu.stepProg);
+  const sk=p.aniso*0.42;
+  gl.uniform2f(gl.getUniformLocation(gpu.stepProg,'uTexel'),1/W,1/H);
+  gl.uniform1f(gl.getUniformLocation(gpu.stepProg,'uDA'),1.0);
+  gl.uniform1f(gl.getUniformLocation(gpu.stepProg,'uDB'),p.diffusion);
+  gl.uniform1f(gl.getUniformLocation(gpu.stepProg,'uWx'),0.2*(1+sk));
+  gl.uniform1f(gl.getUniformLocation(gpu.stepProg,'uWy'),0.2*(1-sk));
+  gl.uniform1i(gl.getUniformLocation(gpu.stepProg,'uState'),0);
+  gl.uniform1i(gl.getUniformLocation(gpu.stepProg,'uMaps'),1);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,gpu.maps);
+  for(let i=0;i<iters;i++){
+    const src=gpu.cur, dst=1-gpu.cur;
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,gpu.tex[src]);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,gpu.fbo[dst]);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    gpu.cur=dst;
+    state.gen++;
+  }
+  /* shade to the default framebuffer, then hand the pixels to simCanvas
+     so every downstream consumer stays unchanged */
+  const pal=PALETTES[p.palette];
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.useProgram(gpu.shadeProg);
+  gl.viewport(0,0,W,H);
+  const lx=Math.cos(p.light), ly=Math.sin(p.light), lz=0.85;
+  const ll=Math.sqrt(lx*lx+ly*ly+lz*lz);
+  gl.uniform2f(gl.getUniformLocation(gpu.shadeProg,'uTexel'),1/W,1/H);
+  gl.uniform1f(gl.getUniformLocation(gpu.shadeProg,'uDepth'),2.2+p.relief*9);
+  gl.uniform1f(gl.getUniformLocation(gpu.shadeProg,'uSpecPow'),6+p.gloss*26);
+  gl.uniform1f(gl.getUniformLocation(gpu.shadeProg,'uSpecAmt'),p.gloss*1.15);
+  gl.uniform1f(gl.getUniformLocation(gpu.shadeProg,'uInvert'),pal.invert?1:0);
+  gl.uniform3f(gl.getUniformLocation(gpu.shadeProg,'uL'),lx/ll,ly/ll,lz/ll);
+  gl.uniform3f(gl.getUniformLocation(gpu.shadeProg,'uBg'),...pal.bgc);
+  gl.uniform3f(gl.getUniformLocation(gpu.shadeProg,'uMat'),...pal.material);
+  gl.uniform3f(gl.getUniformLocation(gpu.shadeProg,'uSpec'),...pal.specular);
+  gl.uniform1i(gl.getUniformLocation(gpu.shadeProg,'uState'),0);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,gpu.tex[gpu.cur]);
+  gl.drawArrays(gl.TRIANGLES,0,3);
+  simCtx.drawImage(gpu.cv,0,0);
+}
+function useGPU(){ return state.engine==='gpu' && gpu.ok; }
+function setEngine(v){
+  if(v==='gpu'){
+    if(!gpuInit()||!gpuUpload()){
+      state.engine='cpu';
+      document.querySelectorAll('#segEngine button').forEach(b=>b.classList.toggle('is-active',b.dataset.eng==='cpu'));
+      document.getElementById('engineTag').textContent='cpu · unavailable';
+      flashStatus('webgl2 unavailable — staying on cpu_');
+      return;
+    }
+    state.engine='gpu';
+    document.getElementById('engineTag').textContent='gpu';
+  }else{
+    state.engine='cpu';
+    document.getElementById('engineTag').textContent='cpu';
+  }
+  dirty=true;
+}
+
 /* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════ */
 function serializeState(){
   const vals={};
   sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
-  return {seed:state.seed,palette:state.palette,format:state.format,vals};
+  return {seed:state.seed,palette:state.palette,format:state.format,engine:state.engine,vals};
 }
 function applyState(s){
   state.seed=s.seed; state.palette=s.palette; state.format=s.format;
@@ -583,6 +858,12 @@ function applyState(s){
   document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===state.format));
   reseed(params());
   updateSeedDisplay();
+  /* routed through setEngine so a link asking for GPU on a machine
+     without WebGL2 quietly lands on CPU instead of failing */
+  if(s.engine){
+    document.querySelectorAll('#segEngine button').forEach(b=>b.classList.toggle('is-active',b.dataset.eng===s.engine));
+    setEngine(s.engine);
+  }
 }
 function encodeState(s){
   const json=JSON.stringify(s||serializeState());
@@ -759,7 +1040,7 @@ sliders.forEach(id=>{
     syncSlider(el);
     const p=params();
     if(id==='detail'){ reseed(p); }
-    else if(id==='feed'||id==='kill'||id==='morph'||id==='rim'){ buildMaps(p); }
+    else if(id==='feed'||id==='kill'||id==='morph'||id==='rim'){ buildMaps(p); gpuUploadMaps(); }
     /* diffusion / aniso / agitate / relief / gloss / light / speed apply instantly in the loop */
     dirty=true;
   });
@@ -777,6 +1058,7 @@ function wireSeg(segId,attr,onPick){
     pushHistory();
   });
 }
+wireSeg('segEngine','eng',setEngine);
 wireSeg('segPalette','pal',v=>{ state.palette=v; dirty=true; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; reseed(params()); });
 
