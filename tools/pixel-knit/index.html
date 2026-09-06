@@ -291,6 +291,8 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnPlay">❚❚ Pause</button>
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnLink" title="copy a link to these settings (texture/subject not included)">⧉ Copy Link</button>
+        <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -845,6 +847,98 @@ function recordClip(){
   setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
 }
 
+/* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════
+   No seed/RNG in this tool — state is texture+subject images (which
+   can't round-trip through a URL) plus the style params below. The
+   permalink/undo history therefore covers style only; a shared link
+   restores the look but the recipient still drops in their own image. */
+const extraFields=['invert','outline'];      // checkboxes
+const textFields=['cap1','cap2'];             // text inputs
+function serializeState(){
+  const vals={}, checks={}, texts={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  extraFields.forEach(id=>{ checks[id]=document.getElementById(id).checked; });
+  textFields.forEach(id=>{ texts[id]=document.getElementById(id).value; });
+  return {paper:state.paper,layout:state.layout,sym:state.sym,vals,checks,texts};
+}
+function applyState(s){
+  state.paper=s.paper; state.layout=s.layout; state.sym=s.sym;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  extraFields.forEach(id=>{ if(s.checks[id]!==undefined) document.getElementById(id).checked=s.checks[id]; });
+  textFields.forEach(id=>{ if(s.texts[id]!==undefined) document.getElementById(id).value=s.texts[id]; });
+  document.querySelectorAll('#segSym button').forEach(b=>b.classList.toggle('is-active',b.dataset.sym===state.sym));
+  document.querySelectorAll('#segLayout button').forEach(b=>b.classList.toggle('is-active',b.dataset.lay===state.layout));
+  document.querySelectorAll('#segPaper button').forEach(b=>b.classList.toggle('is-active',b.dataset.paper===state.paper));
+  canvas.style.background=PAPERS[state.paper].bg;
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('settings link copied (drop your own image)_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=ART_W*2; off.height=ART_H*2;
+  const g=off.getContext('2d');
+  g.setTransform(2,0,0,2,0,0);
+  render(g,ART_W,ART_H,p,clock);
+  off.toBlob(async blob=>{
+    if(!blob) return;
+    const file=new File([blob],'digidelic-knit-'+Date.now().toString(36)+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — pixel knit'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+  paintPlate(canvas.width,canvas.height,p);
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
@@ -859,8 +953,11 @@ function syncSlider(el){
 sliders.forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('input',()=>syncSlider(el));
+  el.addEventListener('change',pushHistory);
   syncSlider(el);
 });
+extraFields.forEach(id=>document.getElementById(id).addEventListener('change',pushHistory));
+textFields.forEach(id=>document.getElementById(id).addEventListener('change',pushHistory));
 
 function wireSeg(segId,attr,onPick){
   const seg=document.getElementById(segId);
@@ -869,6 +966,7 @@ function wireSeg(segId,attr,onPick){
     seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
     btn.classList.add('is-active');
     onPick(btn.dataset[attr]);
+    pushHistory();
   });
 }
 wireSeg('segSym','sym',v=>{ state.sym=v; });
@@ -884,14 +982,24 @@ document.getElementById('btnPlay').addEventListener('click',()=>{
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
+document.getElementById('btnLink').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('keydown',ev=>{
   if(ev.target.closest('input')) return;
   if(ev.key==='e') exportPNG();
   if(ev.key==='p') document.getElementById('btnPlay').click();
+  if((ev.metaKey||ev.ctrlKey) && ev.key.toLowerCase()==='z'){ ev.preventDefault(); ev.shiftKey?redo():undo(); }
+  if((ev.metaKey||ev.ctrlKey) && ev.key.toLowerCase()==='y'){ ev.preventDefault(); redo(); }
 });
 
 /* boot */
+{
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink) applyState(fromLink);
+}
 updateSourceTag();
+pushHistory();
 requestAnimationFrame(frame);
 </script>
 </body>
