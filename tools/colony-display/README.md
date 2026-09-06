@@ -60,3 +60,12 @@ the canvas stamps colonies with ripples.
 - `▶ Export PNG` — current frame at 2160×2160
 - `⏺ Rec 6s` — 6-second WebM clip of the live animation via `MediaRecorder`,
   including audio when Sound is on
+
+## Sharing & history
+
+The seed readout is a button — click it to copy a **permalink** that
+encodes the seed and every rack setting, so a specific result is a URL.
+Opening a link restores that exact state. `Ctrl+Z` / `Ctrl+Shift+Z`
+(or `Ctrl+Y`) step through parameter **undo/redo**. On devices that
+support the Web Share API a **Share** button appears next to Export and
+hands the rendered PNG straight to the system share sheet.

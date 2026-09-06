@@ -49,3 +49,12 @@ same ratio you see).
   render.
 - `⏺ Rec 6s` — 6-second WebM clip of the live sweep via `MediaRecorder`,
   including audio when Sound is on
+
+## Sharing & history
+
+The seed readout is a button — click it to copy a **permalink** that
+encodes the seed and every rack setting, so a specific result is a URL.
+Opening a link restores that exact state. `Ctrl+Z` / `Ctrl+Shift+Z`
+(or `Ctrl+Y`) step through parameter **undo/redo**. On devices that
+support the Web Share API a **Share** button appears next to Export and
+hands the rendered PNG straight to the system share sheet.
