@@ -246,6 +246,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnPlay">❚❚ Pause</button>
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
         <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
@@ -742,6 +743,96 @@ async function shareArt(){
   },'image/png');
 }
 
+/* ═══════════════════ GIF ═══════════════════
+   GIF89a written in-file so the tool keeps its no-dependency promise:
+   a fixed 6·6·6 colour cube plus a 40-step grey ramp, ordered-dithered,
+   LZW packed. Frames are grabbed off the live canvas on a timer so the
+   UI keeps breathing, then packed in one go at the end. */
+function gifEncoder(W,H,delayCs){
+  const B=[];
+  const u8=v=>B.push(v&255), u16=v=>{B.push(v&255);B.push((v>>8)&255);},
+        st=s=>{for(let i=0;i<s.length;i++)B.push(s.charCodeAt(i));};
+  const pal=[], L=[0,51,102,153,204,255];
+  for(let r=0;r<6;r++)for(let g=0;g<6;g++)for(let b=0;b<6;b++)pal.push([L[r],L[g],L[b]]);
+  for(let i=0;i<40;i++){const v=Math.round(i*255/39);pal.push([v,v,v]);}
+  st('GIF89a');u16(W);u16(H);u8(0xF7);u8(0);u8(0);
+  for(const c of pal){u8(c[0]);u8(c[1]);u8(c[2]);}
+  u8(0x21);u8(0xFF);u8(11);st('NETSCAPE2.0');u8(3);u8(1);u16(0);u8(0);
+  const BAY=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  return {
+    add(rgba){
+      const idx=new Uint8Array(W*H);
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+        const p=(y*W+x)*4, d=(BAY[y&3][x&3]/16-0.5)*51;
+        const r=Math.max(0,Math.min(255,rgba[p]+d));
+        const g=Math.max(0,Math.min(255,rgba[p+1]+d));
+        const b=Math.max(0,Math.min(255,rgba[p+2]+d));
+        let best=Math.round(r/51)*36+Math.round(g/51)*6+Math.round(b/51);
+        if(Math.max(r,g,b)-Math.min(r,g,b)<26){           // neutrals read better off the grey ramp
+          const lum=(r+g+b)/3, gi=216+Math.round(lum/255*39), c=pal[best];
+          if(Math.abs(pal[gi][0]-lum)<Math.abs((c[0]+c[1]+c[2])/3-lum)) best=gi;
+        }
+        idx[y*W+x]=best;
+      }
+      u8(0x21);u8(0xF9);u8(4);u8(4);u16(delayCs);u8(0);u8(0);
+      u8(0x2C);u16(0);u16(0);u16(W);u16(H);u8(0);u8(8);
+      const out=[];
+      let cur=0,bits=0,size=9,next=258,dict=new Map();
+      const emit=c=>{cur|=c<<bits;bits+=size;while(bits>=8){out.push(cur&255);cur>>=8;bits-=8;}};
+      emit(256);
+      let pre=idx[0];
+      for(let i=1;i<idx.length;i++){
+        const k=idx[i], key=pre*4096+k, f=dict.get(key);
+        if(f!==undefined){pre=f;continue;}
+        emit(pre);
+        if(next<4096){ dict.set(key,next++); if(next>(1<<size)&&size<12) size++; }
+        else{ emit(256); dict=new Map(); next=258; size=9; }
+        pre=k;
+      }
+      emit(pre); emit(257);
+      if(bits>0) out.push(cur&255);
+      for(let i=0;i<out.length;i+=255){
+        const n=Math.min(255,out.length-i);
+        u8(n);
+        for(let j=0;j<n;j++) u8(out[i+j]);
+      }
+      u8(0);
+    },
+    finish(){ u8(0x3B); return new Uint8Array(B); },
+  };
+}
+function recordGIF(){
+  const btn=document.getElementById('btnGif');
+  if(btn.disabled) return;
+  const GW=Math.min(480,canvas.width);
+  const GH=Math.max(1,Math.round(GW*canvas.height/canvas.width));
+  const off=document.createElement('canvas');
+  off.width=GW; off.height=GH;
+  const octx=off.getContext('2d',{willReadFrequently:true});
+  const enc=gifEncoder(GW,GH,8);
+  const total=36;
+  let n=0;
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    octx.drawImage(canvas,0,0,GW,GH);
+    enc.add(octx.getImageData(0,0,GW,GH).data);
+    n++;
+    btn.textContent='● '+(total-n);
+    if(n<total){ setTimeout(grab,80); return; }
+    btn.textContent='◍ packing';
+    setTimeout(()=>{
+      const blob=new Blob([enc.finish()],{type:'image/gif'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-colony-'+Date.now().toString(36)+'.gif';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='◉ GIF 3s';
+    },30);
+  };
+  grab();
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
@@ -798,6 +889,7 @@ document.getElementById('btnPlay').addEventListener('click',()=>{
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
+document.getElementById('btnGif').addEventListener('click',recordGIF);
 document.getElementById('seedReadout').addEventListener('click',copyPermalink);
 if(navigator.share) document.getElementById('btnShare').hidden=false;
 document.getElementById('btnShare').addEventListener('click',shareArt);
