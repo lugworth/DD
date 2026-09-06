@@ -58,3 +58,12 @@ and Inkscape do not.
 Two caveats: canvas blend modes have no SVG equivalent and are dropped,
 and text is emitted as `<text>` with a font reference rather than
 outlines, so a machine without Space Grotesk will substitute a fallback.
+
+## Seamless tile
+
+**⧉ Tile** exports a 2×2 block with the plate mirrored across both axes,
+which repeats seamlessly because every edge meets its own reflection —
+the way textile and wallpaper repeats are usually built. It is a
+*mirrored* repeat, not a translational one: the patch grid is not
+generated on a torus, so it cannot wrap by translation without
+regenerating the composition.

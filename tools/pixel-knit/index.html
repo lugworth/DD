@@ -267,6 +267,15 @@ footer .fill{flex:1;border-right:0;text-align:right}
             </div>
           </div>
           <div class="param">
+            <div class="lab"><span class="name">Lower blend</span></div>
+            <div class="seg" id="segBlend" role="group" aria-label="lower plate blend">
+              <button data-blend="knockout" class="is-active">Knockout</button>
+              <button data-blend="multiply">Multiply</button>
+              <button data-blend="screen">Screen</button>
+              <button data-blend="difference">Difference</button>
+            </div>
+          </div>
+          <div class="param">
             <div class="lab"><span class="name">Paper</span></div>
             <div class="seg" id="segPaper" role="group" aria-label="paper">
               <button data-paper="bone" class="is-active">Bone</button>
@@ -321,7 +330,7 @@ const PAPERS={
 
 /* ═══════════════════ STATE ═══════════════════ */
 const state={
-  paper:'bone', layout:'split', sym:'none',
+  paper:'bone', layout:'split', sym:'none', blend:'knockout',
   playing:true, frame:0, stitches:0,
   tex:null,                       // {el, w, h, name}  — HTMLImageElement
   sub:null,                       // {el, w, h, name, kind:'video'|'image'}
@@ -337,7 +346,7 @@ function params(){
     outline:document.getElementById('outline').checked,
     cap1:document.getElementById('cap1').value,
     cap2:document.getElementById('cap2').value,
-    paper:state.paper, layout:state.layout, sym:state.sym,
+    paper:state.paper, layout:state.layout, sym:state.sym, blend:state.blend,
   };
 }
 
@@ -632,6 +641,9 @@ function render(g,W,H,p,t){
   g.save();
   g.beginPath(); g.rect(botRect.x,botRect.y,botRect.w,botRect.h); g.clip();
   g.drawImage(plate,botRect.x,botRect.y,botRect.w,botRect.h,botRect.x,botRect.y,botRect.w,botRect.h);
+  /* 'knockout' is the original hard punch-out; the others let the motif
+     interact with the texture underneath instead of replacing it */
+  if(p.blend!=='knockout') g.globalCompositeOperation=p.blend;
   drawMotif(g,mask,N,botBox,p,'solid',p.paper==='acid'?'#eaff00':'#ffffff');
   g.restore();
 
@@ -860,10 +872,10 @@ function serializeState(){
   sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
   extraFields.forEach(id=>{ checks[id]=document.getElementById(id).checked; });
   textFields.forEach(id=>{ texts[id]=document.getElementById(id).value; });
-  return {paper:state.paper,layout:state.layout,sym:state.sym,vals,checks,texts};
+  return {paper:state.paper,layout:state.layout,sym:state.sym,blend:state.blend,vals,checks,texts};
 }
 function applyState(s){
-  state.paper=s.paper; state.layout=s.layout; state.sym=s.sym;
+  state.paper=s.paper; state.layout=s.layout; state.sym=s.sym; state.blend=s.blend||'knockout';
   sliders.forEach(id=>{
     if(s.vals[id]===undefined) return;
     const el=document.getElementById(id);
@@ -874,6 +886,7 @@ function applyState(s){
   document.querySelectorAll('#segSym button').forEach(b=>b.classList.toggle('is-active',b.dataset.sym===state.sym));
   document.querySelectorAll('#segLayout button').forEach(b=>b.classList.toggle('is-active',b.dataset.lay===state.layout));
   document.querySelectorAll('#segPaper button').forEach(b=>b.classList.toggle('is-active',b.dataset.paper===state.paper));
+  document.querySelectorAll('#segBlend button').forEach(b=>b.classList.toggle('is-active',b.dataset.blend===state.blend));
   canvas.style.background=PAPERS[state.paper].bg;
 }
 function encodeState(s){
@@ -1062,6 +1075,7 @@ function wireSeg(segId,attr,onPick){
 }
 wireSeg('segSym','sym',v=>{ state.sym=v; });
 wireSeg('segLayout','lay',v=>{ state.layout=v; });
+wireSeg('segBlend','blend',v=>{ state.blend=v; });
 wireSeg('segPaper','paper',v=>{ state.paper=v; canvas.style.background=PAPERS[v].bg; });
 
 document.getElementById('btnPlay').addEventListener('click',()=>{

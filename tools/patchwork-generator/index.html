@@ -291,6 +291,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnRegen">⟳ Regenerate</button>
         <button id="btnSvg" title="export scalable vector">⬡ SVG</button>
+        <button id="btnTile" title="export a seamless 2×2 mirrored repeat tile">⧉ Tile</button>
         <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
@@ -625,6 +626,38 @@ function requestDraw(){
 }
 
 /* ═══════════════════ EXPORT ═══════════════════ */
+/* ═══════════════════ SEAMLESS TILE ═══════════════════
+   The patch grid is not generated on a torus, so it cannot repeat by
+   translation — but a 2×2 block with the plate mirrored across both
+   axes tiles seamlessly by construction, because every edge meets its
+   own reflection. That is how repeat patterns are usually built for
+   textile and wallpaper anyway. */
+function exportTile(){
+  const p=params();
+  const H=artHeight(p.format);
+  const S=1;                           // each quadrant at 1080 → 2160 tile
+  const W2=ART_W*S, H2=H*S;
+  const off=document.createElement('canvas');
+  off.width=W2*2; off.height=H2*2;
+  const g=off.getContext('2d');
+  const quad=(sx,sy,tx,ty)=>{
+    g.save();
+    g.setTransform(sx*S,0,0,sy*S,tx,ty);
+    render(g,ART_W,H,p,state.seed);
+    g.restore();
+  };
+  quad( 1, 1, 0,     0    );           // as drawn
+  quad(-1, 1, W2*2,  0    );           // mirrored across x
+  quad( 1,-1, 0,     H2*2 );           // mirrored across y
+  quad(-1,-1, W2*2,  H2*2 );           // both
+  off.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-patch-tile-'+state.seed.toString(16).padStart(8,'0')+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
 function exportPNG(){
   const p=params();
   const H=artHeight(p.format);
@@ -913,6 +946,7 @@ document.getElementById('btnRandom').addEventListener('click',regenerate);
 document.getElementById('btnRegen').addEventListener('click',regenerate);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnSvg').addEventListener('click',exportSVG);
+document.getElementById('btnTile').addEventListener('click',exportTile);
 document.getElementById('seedReadout').addEventListener('click',copyPermalink);
 if(navigator.share) document.getElementById('btnShare').hidden=false;
 document.getElementById('btnShare').addEventListener('click',shareArt);
