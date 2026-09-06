@@ -214,7 +214,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <div class="sect">
           <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
           <div class="seed-row">
-            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <div class="seed-read" id="seedReadout" title="click to copy shareable link" style="cursor:pointer"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
             <button id="btnRandom" title="new random seed">⟳ Random</button>
           </div>
         </div>
@@ -290,6 +290,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
 
       <div class="actions">
         <button id="btnRegen">⟳ Regenerate</button>
+        <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -642,6 +643,86 @@ function exportPNG(){
 }
 
 /* ═══════════════════ WIRING ═══════════════════ */
+function serializeState(){
+  const vals={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  return {seed:state.seed,palette:state.palette,format:state.format,vals};
+}
+function applyState(s){
+  state.seed=s.seed; state.palette=s.palette; state.format=s.format;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
+  document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===state.format));
+  requestDraw();
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('link copied_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const H=artHeight(p.format);
+  const off=document.createElement('canvas');
+  off.width=ART_W*2; off.height=H*2;
+  const octx=off.getContext('2d');
+  octx.setTransform(2,0,0,2,0,0);
+  render(octx,ART_W,H,p,state.seed);
+  off.toBlob(async blob=>{
+    if(!blob) return;
+    const file=new File([blob],'digidelic-patch-'+state.seed.toString(16).padStart(8,'0')+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — patchwork generator'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+}
+
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
   el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
@@ -657,6 +738,7 @@ function syncSlider(el){
 sliders.forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
+  el.addEventListener('change',pushHistory);
   syncSlider(el);
 });
 
@@ -668,20 +750,34 @@ function wireSeg(segId,attr,onPick){
     btn.classList.add('is-active');
     onPick(btn.dataset[attr]);
     requestDraw();
+    pushHistory();
   });
 }
 wireSeg('segPalette','pal',v=>{ state.palette=v; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; });
 
-function regenerate(){ state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); }
+function regenerate(){ state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); pushHistory(); }
 document.getElementById('btnRandom').addEventListener('click',regenerate);
 document.getElementById('btnRegen').addEventListener('click',regenerate);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('seedReadout').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('resize',requestDraw);
 window.addEventListener('keydown',e=>{
-  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); }
-  if(e.key==='e' && !e.target.closest('input')) exportPNG();
+  if(e.target.closest('input')) return;
+  if(e.key===' ' && !e.target.closest('button')){ e.preventDefault(); regenerate(); }
+  if(e.key==='e') exportPNG();
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); }
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); }
 });
+
+/* boot */
+{
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink) applyState(fromLink);
+}
+pushHistory();
 
 draw();
 </script>
