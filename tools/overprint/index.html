@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Tools" name="Overprint" subtitle="Generative riso press — exotic plate engines overprinted in misregistered spot inks" viewport="1280x720" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>digidelic — overprint</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--black-soft); color:var(--white);
+  font-family:var(--font-mono); font-size:12px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,0,0,.12) 1px,rgba(0,0,0,.12) 2px);
+}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:#0d0d0b}
+::-webkit-scrollbar-thumb{background:#2a2a26}
+::selection{background:var(--yellow);color:var(--black)}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);background:var(--black);flex:none}
+.brand{display:flex;align-items:center;gap:12px;padding:0 20px;border-right:1px solid var(--border)}
+.brand .mark{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:-.02em;text-transform:lowercase}
+.brand .mark em{font-style:normal;color:var(--yellow)}
+.title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
+.title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
+.head-coords .live{color:var(--green)}
+.head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.15}}
+
+main{display:flex;flex:1;min-height:0}
+.stage{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;padding:32px;background:var(--black-soft)}
+.stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
+.corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
+.corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
+.frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
+.frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
+canvas#art{display:block;background:#0a0a0a;cursor:crosshair;touch-action:none}
+.stage .hint{
+  position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+  color:var(--white-dim);font-size:10px;letter-spacing:.2em;text-transform:uppercase;pointer-events:none;
+}
+
+.rack{width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
+.rack-scroll{flex:1;overflow-y:auto;min-height:0}
+.sect{border-bottom:1px solid var(--border);padding:14px 18px 18px}
+.sect-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sect-head h2{font-family:var(--font-display);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.2em}
+.sect-head .coord{color:var(--white-dim);font-size:9px;letter-spacing:.18em}
+
+.seed-row{display:flex;gap:8px}
+.seed-read{
+  flex:1;display:flex;align-items:center;justify-content:space-between;
+  border:1px solid var(--border);padding:0 12px;height:36px;
+  font-size:12px;letter-spacing:.08em;color:var(--white-soft);background:var(--black-panel);
+}
+.seed-read .k{color:var(--white-dim);font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+.seed-read .v{color:var(--cyan)}
+
+button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;color:var(--white);border:1px solid var(--border-hi);
+  height:36px;padding:0 14px;cursor:pointer;
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap),border-color var(--d-fast) var(--e-snap);
+}
+button:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--yellow);color:var(--black);border-color:var(--yellow);font-weight:600}
+button.primary:hover{background:var(--white);border-color:var(--white)}
+button:disabled{opacity:.5;cursor:default}
+:where(button,input,[tabindex]):focus-visible{outline:2px solid var(--yellow);outline-offset:1px}
+
+.param{margin-bottom:14px}
+.param:last-child{margin-bottom:0}
+.param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
+  --p:50%;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
+  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+}
+input[type=range]:hover::-webkit-slider-thumb,
+input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+
+.seg{display:flex;flex-wrap:wrap;border:1px solid var(--border-hi)}
+.seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em;min-width:0;padding:0 6px}
+.seg button:last-child{border-right:0}
+.seg button.is-active{background:var(--yellow);color:var(--black);font-weight:600}
+.seg button.is-active:hover{background:var(--yellow);color:var(--black)}
+
+.plate-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.plate-chip{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  border:1px solid var(--border);background:var(--black-panel);padding:0 10px;height:30px;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--white-soft);cursor:pointer;
+}
+.plate-chip:hover{border-color:var(--border-hi);color:var(--white)}
+.plate-chip .swatch{width:12px;height:12px;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+.plate-chip .eng{flex:1;text-align:left}
+.plate-chip .re{color:var(--white-dim);font-size:9px}
+
+.actions{display:flex;gap:8px;padding:16px 18px;border-top:1px solid var(--border);background:var(--black);flex-wrap:wrap}
+.actions button{flex:1;height:42px;min-width:86px}
+
+footer{
+  flex:none;display:flex;gap:0;border-top:1px solid var(--border);background:var(--black);
+  font-size:10px;letter-spacing:.16em;color:var(--white-dim);
+}
+footer .cell{padding:7px 16px;border-right:1px solid var(--border);text-transform:lowercase}
+footer .cell b{color:var(--white-soft);font-weight:400}
+footer .fill{flex:1;border-right:0;text-align:right}
+
+@media (max-width:860px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  .rack{width:100%;border-left:0;border-top:1px solid var(--border)}
+  .stage{padding:20px;min-height:60vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand"><span class="mark">digi<em>delic</em></span></div>
+    <div class="title-block">
+      <h1>Overprint</h1>
+      <div class="sub">generative riso press · eight plate engines</div>
+    </div>
+    <div class="head-coords">
+      <span>A1.2</span><span>X.06</span><span id="headPlates">4C</span><span class="live">press</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="canvas preview">
+      <span class="corner tl">PLATE ▶ STOCK</span>
+      <span class="corner tr">B6</span>
+      <span class="corner bl" id="cornerSeed">seed —</span>
+      <span class="corner br" id="cornerEngines">—</span>
+      <div class="frame"><canvas id="art"></canvas></div>
+      <span class="hint">click the sheet ▶ re-roll the nearest plate</span>
+    </section>
+
+    <aside class="rack" aria-label="parameter rack">
+      <div class="rack-scroll">
+
+        <div class="sect">
+          <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
+          <div class="seed-row">
+            <div class="seed-read" id="seedReadout" title="click to copy shareable link" style="cursor:pointer"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <button id="btnRandom" title="new press run">⟳ Reseed</button>
+          </div>
+          <div class="plate-list" id="plateList"></div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Plates</h2><span class="coord">S.01</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Plate count</span><span class="val" data-val="plates"></span></div>
+            <input type="range" id="plates" min="1" max="4" step="1" value="3">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Engine pool</span></div>
+            <div class="seg" id="segPool" role="group" aria-label="engine pool">
+              <button data-pool="auto" class="is-active">Auto</button>
+              <button data-pool="bio">Bio</button>
+              <button data-pool="wave">Wave</button>
+              <button data-pool="tech">Tech</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Density</span><span class="val" data-val="density"></span></div>
+            <input type="range" id="density" min="0" max="100" step="1" value="55">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Complexity</span><span class="val" data-val="complexity"></span></div>
+            <input type="range" id="complexity" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Scale</span><span class="val" data-val="scale"></span></div>
+            <input type="range" id="scale" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Growth</span><span class="val" data-val="growth"></span></div>
+            <input type="range" id="growth" min="20" max="200" step="5" value="90">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Press</h2><span class="coord">S.02</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Misregistration</span><span class="val" data-val="misreg"></span></div>
+            <input type="range" id="misreg" min="0" max="100" step="1" value="34">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Screen freq</span><span class="val" data-val="freq"></span></div>
+            <input type="range" id="freq" min="30" max="170" step="1" value="86">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Ink density</span><span class="val" data-val="opacity"></span></div>
+            <input type="range" id="opacity" min="20" max="100" step="1" value="82">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Paper grain</span><span class="val" data-val="grain"></span></div>
+            <input type="range" id="grain" min="0" max="100" step="1" value="38">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Margin</span><span class="val" data-val="margin"></span></div>
+            <input type="range" id="margin" min="0" max="130" step="2" value="64">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Trim marks</span></div>
+            <div class="seg" id="segMarks" role="group" aria-label="trim marks">
+              <button data-marks="on" class="is-active">On</button>
+              <button data-marks="off">Off</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Ink set</span></div>
+            <div class="seg" id="segInk" role="group" aria-label="ink set">
+              <button data-ink="riso" class="is-active">Riso</button>
+              <button data-ink="process">CMYK</button>
+              <button data-ink="digidelic">Digidelic</button>
+              <button data-ink="mono">Mono</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Format</span></div>
+            <div class="seg" id="segFormat" role="group" aria-label="format">
+              <button data-fmt="square" class="is-active">1:1</button>
+              <button data-fmt="portrait">4:5</button>
+              <button data-fmt="poster">2:3</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button id="btnRegen">⟳ Re-press</button>
+        <button id="btnShare" hidden>⇪ Share</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="cell">sys <b>overprint v1.0</b></div>
+    <div class="cell">plates <b id="statPlates">0</b></div>
+    <div class="cell">bake <b id="statBake">0ms</b></div>
+    <div class="cell">press <b id="statPress">0ms</b></div>
+    <div class="cell fill">stock loaded · awaiting impression_</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════ RNG ═══════════════════ */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+const TAU=Math.PI*2;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+
+/* value noise + fbm — shared substrate for several engines */
+function makeNoise(rnd){
+  const perm=new Uint8Array(512);
+  const src=new Uint8Array(256);
+  for(let i=0;i<256;i++) src[i]=i;
+  for(let i=255;i>0;i--){ const j=(rnd()*(i+1))|0; const t=src[i]; src[i]=src[j]; src[j]=t; }
+  for(let i=0;i<512;i++) perm[i]=src[i&255];
+  const fade=t=>t*t*t*(t*(t*6-15)+10);
+  const grad=(h,x,y)=>{
+    switch(h&3){
+      case 0: return x+y;
+      case 1: return -x+y;
+      case 2: return x-y;
+      default: return -x-y;
+    }
+  };
+  const n2=(x,y)=>{
+    const X=Math.floor(x)&255, Y=Math.floor(y)&255;
+    const xf=x-Math.floor(x), yf=y-Math.floor(y);
+    const u=fade(xf), v=fade(yf);
+    const aa=perm[perm[X]+Y], ab=perm[perm[X]+Y+1];
+    const ba=perm[perm[X+1]+Y], bb=perm[perm[X+1]+Y+1];
+    const x1=lerp(grad(aa,xf,yf),grad(ba,xf-1,yf),u);
+    const x2=lerp(grad(ab,xf,yf-1),grad(bb,xf-1,yf-1),u);
+    return lerp(x1,x2,v);
+  };
+  return {
+    n2,
+    fbm(x,y,oct,gain){
+      let amp=1,freq=1,sum=0,norm=0;
+      for(let i=0;i<oct;i++){ sum+=n2(x*freq,y*freq)*amp; norm+=amp; amp*=gain; freq*=2; }
+      return sum/norm;
+    }
+  };
+}
+
+/* ═══════════════════ INK SETS ═══════════════════
+   Real riso/process separations: each ink carries its own screen
+   angle, the way a print shop offsets screens to dodge moiré. */
+const INKS={
+  riso:{
+    paper:'#f3eee1', blend:'multiply', dark:false,
+    inks:[
+      {name:'fluoro pink', hex:'#ff48b0', angle:15},
+      {name:'federal blue',hex:'#0069b4', angle:75},
+      {name:'yellow',      hex:'#ffd400', angle:0},
+      {name:'black',       hex:'#1c1a18', angle:45},
+    ],
+  },
+  process:{
+    paper:'#fbfbf9', blend:'multiply', dark:false,
+    inks:[
+      {name:'cyan',   hex:'#00a8e0', angle:15},
+      {name:'magenta',hex:'#e5007d', angle:75},
+      {name:'yellow', hex:'#ffed00', angle:0},
+      {name:'key',    hex:'#141414', angle:45},
+    ],
+  },
+  digidelic:{
+    paper:'#050505', blend:'screen', dark:true,
+    inks:[
+      {name:'electric yellow',hex:'#eaff00', angle:15},
+      {name:'hot pink',       hex:'#ff2d87', angle:75},
+      {name:'biolume green',  hex:'#39ff6a', angle:0},
+      {name:'data cyan',      hex:'#00d9ff', angle:45},
+    ],
+  },
+  mono:{
+    paper:'#efe9dc', blend:'multiply', dark:false,
+    inks:[
+      {name:'ink',      hex:'#151313', angle:45},
+      {name:'warm grey',hex:'#6d6459', angle:15},
+      {name:'vermilion',hex:'#c8402a', angle:75},
+      {name:'bone',     hex:'#9a9384', angle:0},
+    ],
+  },
+};
+
+/* ═══════════════════ ENGINE REGISTRY ═══════════════════ */
+const POOLS={
+  bio:  ['physarum','dla','contour'],
+  wave: ['quasicrystal','superformula','sortfield'],
+  tech: ['weave','typering'],
+};
+POOLS.auto=[...POOLS.bio,...POOLS.wave,...POOLS.tech];
+
+/* ═══════════════════ STATE ═══════════════════ */
+const state={
+  seed:(Math.random()*0xffffffff)>>>0,
+  ink:'riso',
+  format:'square',
+  pool:'auto',
+  marks:true,
+};
+const sliders=['plates','density','complexity','scale','growth','misreg','freq','opacity','grain','margin'];
+function params(){
+  const g=id=>parseFloat(document.getElementById(id).value);
+  return {
+    plates:g('plates')|0,
+    density:g('density')/100, complexity:g('complexity')/100,
+    scale:g('scale')/100, growth:g('growth')|0,
+    misreg:g('misreg')/100, freq:g('freq')|0,
+    opacity:g('opacity')/100, grain:g('grain')/100, margin:g('margin')|0,
+    ink:state.ink, format:state.format, pool:state.pool, marks:state.marks,
+  };
+}
+
+const ART_W=1080;
+function artHeight(fmt){ return fmt==='portrait'?1350:fmt==='poster'?1620:1080; }
+
+/* ═══════════════════ PLATE ENGINES ═══════════════════
+   Each engine paints opaque black coverage on a transparent plate
+   raster. The press later reads that coverage as ink density and
+   re-screens it into halftone dots, so engines never deal in colour. */
+
+/* — physarum: slime-mould agents sense a pheromone trail, steer toward
+     the strongest reading, deposit, and the trail diffuses + decays.
+     Produces the vein/network structures the feed is full of. */
+function engPhysarum(mctx,W,H,rnd,p){
+  const TW=W>>1, TH=H>>1;                 // trail runs at half res for speed
+  const trail=new Float32Array(TW*TH);
+  const next=new Float32Array(TW*TH);
+  const n=Math.round(900+p.density*5200);
+  const steps=p.growth;
+  const sensAng=0.28+p.complexity*1.15;
+  const sensDist=2.5+p.scale*11;
+  const turn=0.22+p.complexity*0.85;
+  const speed=0.7+p.scale*1.5;
+  const ax=new Float32Array(n), ay=new Float32Array(n), ah=new Float32Array(n);
+  const startR=Math.min(TW,TH)*(0.30+p.scale*0.24);
+  for(let i=0;i<n;i++){
+    const a=rnd()*TAU, r=Math.sqrt(rnd())*startR;
+    ax[i]=TW/2+Math.cos(a)*r; ay[i]=TH/2+Math.sin(a)*r; ah[i]=rnd()*TAU;
+  }
+  const sample=(x,y)=>{
+    const xi=((x|0)%TW+TW)%TW, yi=((y|0)%TH+TH)%TH;
+    return trail[yi*TW+xi];
+  };
+  for(let s=0;s<steps;s++){
+    for(let i=0;i<n;i++){
+      const h=ah[i], x=ax[i], y=ay[i];
+      const f =sample(x+Math.cos(h)*sensDist,           y+Math.sin(h)*sensDist);
+      const l =sample(x+Math.cos(h-sensAng)*sensDist,   y+Math.sin(h-sensAng)*sensDist);
+      const r2=sample(x+Math.cos(h+sensAng)*sensDist,   y+Math.sin(h+sensAng)*sensDist);
+      let nh=h;
+      if(f>l&&f>r2){ /* hold course */ }
+      else if(l>r2) nh=h-turn*(0.5+rnd()*0.5);
+      else if(r2>l) nh=h+turn*(0.5+rnd()*0.5);
+      else nh=h+(rnd()-0.5)*turn*2;
+      ah[i]=nh;
+      let nx=x+Math.cos(nh)*speed, ny=y+Math.sin(nh)*speed;
+      nx=(nx%TW+TW)%TW; ny=(ny%TH+TH)%TH;
+      ax[i]=nx; ay[i]=ny;
+      trail[(ny|0)*TW+(nx|0)]+=1;
+    }
+    if(s%2===0){                          // diffuse on alternate steps — same look, half the cost
+      for(let y=0;y<TH;y++){
+        const y0=y*TW, ym=((y-1+TH)%TH)*TW, yp=((y+1)%TH)*TW;
+        for(let x=0;x<TW;x++){
+          const xm=(x-1+TW)%TW, xp=(x+1)%TW;
+          next[y0+x]=(trail[y0+x]*0.4+(trail[y0+xm]+trail[y0+xp]+trail[ym+x]+trail[yp+x])*0.15)*0.965;
+        }
+      }
+      trail.set(next);
+    }else{
+      for(let i=0;i<trail.length;i++) trail[i]*=0.985;
+    }
+  }
+  let max=0.0001;
+  for(let i=0;i<trail.length;i++) if(trail[i]>max) max=trail[i];
+  const img=mctx.createImageData(W,H);
+  const d=img.data;
+  const gamma=0.30+p.complexity*0.32;
+  for(let y=0;y<H;y++){
+    const ty=(y>>1)*TW;
+    for(let x=0;x<W;x++){
+      const v=Math.pow(clamp(trail[ty+(x>>1)]/max,0,1),gamma);
+      const i=(y*W+x)*4;
+      d[i]=d[i+1]=d[i+2]=0;
+      d[i+3]=(clamp(v*1.9,0,1)*255)|0;
+    }
+  }
+  mctx.putImageData(img,0,0);
+}
+
+/* — quasicrystal: sum N plane waves at irrational-ish angles. The
+     interference is aperiodic, which is why it never tiles and why it
+     reads like the moiré/oil-slick references. */
+function engQuasicrystal(mctx,W,H,rnd,p){
+  const waves=3+Math.round(p.complexity*7);
+  const freq=(0.05+p.scale*0.30);
+  const phase=[], ca=[], sa=[];
+  const spin=rnd()*TAU;
+  for(let i=0;i<waves;i++){
+    const a=spin+i*Math.PI/waves+(rnd()-0.5)*0.12;
+    ca.push(Math.cos(a)); sa.push(Math.sin(a));
+    phase.push(rnd()*TAU);
+  }
+  const levels=1+Math.round(p.density*6);
+  /* normalise by sqrt(waves): summing N random-phase cosines is a random
+     walk, so dividing by N would flatten contrast as waves climb. */
+  const norm=Math.sqrt(waves*1.6);
+  const bias=0.74-p.density*0.62;                       // how much of the field takes ink
+  const img=mctx.createImageData(W,H);
+  const d=img.data;
+  const cx=W/2, cy=H/2;
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const dx=(x-cx)*freq, dy=(y-cy)*freq;
+      let s=0;
+      for(let i=0;i<waves;i++) s+=Math.cos(dx*ca[i]+dy*sa[i]+phase[i]);
+      let v=Math.abs(s)/norm;                           // ridge distance, aperiodic
+      v=clamp((v-bias)/(1-bias),0,1);
+      v=Math.round(v*levels)/levels;                    // posterised ink steps
+      const i2=(y*W+x)*4;
+      d[i2]=d[i2+1]=d[i2+2]=0;
+      d[i2+3]=(v*255)|0;
+    }
+  }
+  mctx.putImageData(img,0,0);
+}
+
+/* — diffusion-limited aggregation: random walkers freeze on contact,
+     growing dendrites. Frost, corrosion, lightning. */
+function engDLA(mctx,W,H,rnd,p){
+  const GW=W>>1, GH=H>>1;
+  const grid=new Uint8Array(GW*GH);
+  const cx=GW>>1, cy=GH>>1;
+  const target=Math.round(1400+p.density*11000);
+  const maxR=Math.min(GW,GH)*0.48;
+  let placed=0, radius=3, budget=9_000_000;
+  const arms=1+Math.round(p.complexity*5);
+  for(let a=0;a<arms;a++){                              // seed a few nuclei, not just one
+    const ang=(a/arms)*TAU+rnd()*0.4;
+    const r=a===0?0:Math.min(GW,GH)*0.16*p.scale;
+    grid[((cy+Math.sin(ang)*r)|0)*GW+((cx+Math.cos(ang)*r)|0)]=1;
+  }
+  const stick=0.35+p.complexity*0.6;
+  while(placed<target&&budget>0){
+    const a=rnd()*TAU;
+    const sr=Math.min(maxR,radius+6);
+    let x=(cx+Math.cos(a)*sr)|0, y=(cy+Math.sin(a)*sr)|0;
+    for(let step=0;step<2600;step++){
+      budget--;
+      if(budget<=0) break;
+      x+=((rnd()*3)|0)-1; y+=((rnd()*3)|0)-1;
+      const dx=x-cx, dy=y-cy;
+      const rr=Math.sqrt(dx*dx+dy*dy);
+      if(rr>sr*1.9||x<1||y<1||x>=GW-1||y>=GH-1) break;
+      if((grid[y*GW+x-1]||grid[y*GW+x+1]||grid[(y-1)*GW+x]||grid[(y+1)*GW+x])&&rnd()<stick){
+        grid[y*GW+x]=1; placed++;
+        if(rr>radius) radius=rr;
+        break;
+      }
+    }
+  }
+  const img=mctx.createImageData(W,H);
+  const d=img.data;
+  for(let y=0;y<H;y++){
+    const gy=(y>>1)*GW;
+    for(let x=0;x<W;x++){
+      const i=(y*W+x)*4;
+      d[i]=d[i+1]=d[i+2]=0;
+      d[i+3]=grid[gy+(x>>1)]?255:0;
+    }
+  }
+  mctx.putImageData(img,0,0);
+}
+
+/* — contour: marching squares over fbm, stacked at many thresholds.
+     Topographic plates; the blobSketch outline language. */
+function engContour(mctx,W,H,rnd,p){
+  const noise=makeNoise(rnd);
+  const G=40+Math.round(p.density*120);
+  const cw=W/G, ch=H/G;
+  const f=0.9+p.scale*4.5;
+  const oct=2+Math.round(p.complexity*4);
+  const field=new Float32Array((G+1)*(G+1));
+  const warp=p.complexity*1.4;
+  for(let y=0;y<=G;y++)for(let x=0;x<=G;x++){
+    const u=x/G*f, v=y/G*f;
+    const wx=warp?noise.fbm(u+5.2,v+1.3,2,0.5)*warp:0;
+    const wy=warp?noise.fbm(u+9.7,v+4.1,2,0.5)*warp:0;
+    field[y*(G+1)+x]=noise.fbm(u+wx,v+wy,oct,0.55);
+  }
+  const levels=3+Math.round(p.density*16);
+  mctx.strokeStyle='#000';
+  mctx.lineWidth=Math.max(1,(0.8+p.scale*2.4));
+  mctx.lineJoin='round';
+  mctx.beginPath();
+  const at=(x,y)=>field[y*(G+1)+x];
+  for(let L=0;L<levels;L++){
+    const t=-0.5+ (L+0.5)/levels;
+    for(let y=0;y<G;y++)for(let x=0;x<G;x++){
+      const a=at(x,y), b=at(x+1,y), c=at(x+1,y+1), e=at(x,y+1);
+      const idx=(a>t?8:0)|(b>t?4:0)|(c>t?2:0)|(e>t?1:0);
+      if(idx===0||idx===15) continue;
+      const X=x*cw, Y=y*ch;
+      const top   =[X+cw*((t-a)/(b-a||1e-6)), Y];
+      const right =[X+cw, Y+ch*((t-b)/(c-b||1e-6))];
+      const bottom=[X+cw*((t-e)/(c-e||1e-6)), Y+ch];
+      const left  =[X, Y+ch*((t-a)/(e-a||1e-6))];
+      const seg=(m,n)=>{ mctx.moveTo(m[0],m[1]); mctx.lineTo(n[0],n[1]); };
+      switch(idx){
+        case 1: case 14: seg(left,bottom); break;
+        case 2: case 13: seg(bottom,right); break;
+        case 3: case 12: seg(left,right); break;
+        case 4: case 11: seg(top,right); break;
+        case 6: case 9:  seg(top,bottom); break;
+        case 7: case 8:  seg(left,top); break;
+        case 5: seg(left,top); seg(bottom,right); break;
+        case 10: seg(left,bottom); seg(top,right); break;
+      }
+    }
+  }
+  mctx.stroke();
+}
+
+/* — superformula (Gielis): one polar equation that collapses stars,
+     gears, petals and lozenges into a single parameter space. */
+function engSuper(mctx,W,H,rnd,p){
+  const count=1+Math.round(p.density*8);
+  const cx=W/2, cy=H/2;
+  const maxR=Math.min(W,H)*(0.16+p.scale*0.34);
+  mctx.fillStyle='#000';
+  mctx.strokeStyle='#000';
+  for(let k=0;k<count;k++){
+    const m=2+Math.round(rnd()*(4+p.complexity*18));
+    const n1=0.3+rnd()*(0.4+p.complexity*3.2);
+    const n2=0.3+rnd()*2.4, n3=0.3+rnd()*2.4;
+    const a=1, b=1;
+    const R=maxR*(0.32+rnd()*0.85)/(1+k*0.06);
+    const ox=cx+(rnd()-0.5)*W*0.44*p.density;
+    const oy=cy+(rnd()-0.5)*H*0.44*p.density;
+    const spin=rnd()*TAU;
+    const outline=rnd()<0.45;
+    const steps=520;
+    mctx.beginPath();
+    for(let i=0;i<=steps;i++){
+      const th=i/steps*TAU;
+      const t1=Math.pow(Math.abs(Math.cos(m*th/4)/a),n2);
+      const t2=Math.pow(Math.abs(Math.sin(m*th/4)/b),n3);
+      const r=Math.pow(t1+t2,-1/n1);
+      if(!isFinite(r)) continue;
+      const rr=clamp(r,0,6)*R;
+      const x=ox+Math.cos(th+spin)*rr, y=oy+Math.sin(th+spin)*rr;
+      if(i===0) mctx.moveTo(x,y); else mctx.lineTo(x,y);
+    }
+    mctx.closePath();
+    if(outline){ mctx.lineWidth=1+p.scale*4; mctx.stroke(); }
+    else mctx.fill('evenodd');
+  }
+}
+
+/* — sortfield: pixel-sorting. Rows are cut into runs wherever a noise
+     mask crosses threshold, and each run is re-ordered by luminance,
+     which is exactly the datamosh smear in the reference grid. */
+function engSortField(mctx,W,H,rnd,p){
+  const SW=W>>1, SH=H>>1;
+  const noise=makeNoise(rnd);
+  const f=1.2+p.scale*5;
+  const src=new Float32Array(SW*SH);
+  for(let y=0;y<SH;y++)for(let x=0;x<SW;x++){
+    src[y*SW+x]=noise.fbm(x/SW*f,y/SH*f,2+Math.round(p.complexity*4),0.55)*0.5+0.5;
+  }
+  const thr=0.30+ (1-p.density)*0.26;   // stays under the fbm ceiling so density 0 still inks
+  const img=mctx.createImageData(W,H);
+  const d=img.data;
+  const bucket=[];
+  for(let y=0;y<SH;y++){
+    let x=0;
+    while(x<SW){
+      if(src[y*SW+x]<thr){ x++; continue; }
+      let end=x;
+      while(end<SW&&src[y*SW+end]>=thr) end++;
+      bucket.length=0;
+      for(let i=x;i<end;i++) bucket.push(src[y*SW+i]);
+      bucket.sort((a,b)=>a-b);
+      for(let i=x;i<end;i++){
+        const v=bucket[i-x];
+        const alpha=clamp((v-thr)/(1-thr),0,1);
+        const a8=(Math.pow(alpha,0.6)*255)|0;
+        for(let sy=0;sy<2;sy++)for(let sx=0;sx<2;sx++){
+          const px=(( (y*2+sy)*W + (i*2+sx) )*4);
+          d[px]=d[px+1]=d[px+2]=0;
+          d[px+3]=a8;
+        }
+      }
+      x=end;
+    }
+  }
+  mctx.putImageData(img,0,0);
+}
+
+/* — weave: adjacency-constrained tile collapse. Every tile carries
+     four edge connectors and may only sit beside tiles whose facing
+     connector matches, so the sheet resolves into continuous circuitry
+     rather than noise. A deliberately small WFC. */
+function engWeave(mctx,W,H,rnd,p){
+  const G=5+Math.round(p.density*22);
+  const cw=W/G, ch=H/G;
+  /* connectors: [N,E,S,W] as 0|1 */
+  const TILES=[
+    {c:[0,0,0,0], draw:(g,s)=>{ if(rnd()<0.5){g.fillRect(s*0.34,s*0.34,s*0.32,s*0.32);} }},
+    {c:[1,1,0,0], draw:(g,s)=>{ g.beginPath(); g.moveTo(s/2,0); g.quadraticCurveTo(s/2,s/2,s,s/2); g.stroke(); }},
+    {c:[0,1,1,0], draw:(g,s)=>{ g.beginPath(); g.moveTo(s,s/2); g.quadraticCurveTo(s/2,s/2,s/2,s); g.stroke(); }},
+    {c:[0,0,1,1], draw:(g,s)=>{ g.beginPath(); g.moveTo(s/2,s); g.quadraticCurveTo(s/2,s/2,0,s/2); g.stroke(); }},
+    {c:[1,0,0,1], draw:(g,s)=>{ g.beginPath(); g.moveTo(0,s/2); g.quadraticCurveTo(s/2,s/2,s/2,0); g.stroke(); }},
+    {c:[1,0,1,0], draw:(g,s)=>{ g.beginPath(); g.moveTo(s/2,0); g.lineTo(s/2,s); g.stroke(); }},
+    {c:[0,1,0,1], draw:(g,s)=>{ g.beginPath(); g.moveTo(0,s/2); g.lineTo(s,s/2); g.stroke(); }},
+    {c:[1,1,1,1], draw:(g,s)=>{ g.beginPath(); g.moveTo(s/2,0); g.lineTo(s/2,s); g.moveTo(0,s/2); g.lineTo(s,s/2); g.stroke();
+                                g.beginPath(); g.arc(s/2,s/2,s*0.17,0,TAU); g.stroke(); }},
+    {c:[1,0,1,1], draw:(g,s)=>{ g.beginPath(); g.moveTo(s/2,0); g.lineTo(s/2,s); g.moveTo(0,s/2); g.lineTo(s/2,s/2); g.stroke();
+                                g.fillRect(s/2-s*0.09,s/2-s*0.09,s*0.18,s*0.18); }},
+    {c:[0,1,1,1], draw:(g,s)=>{ g.beginPath(); g.moveTo(0,s/2); g.lineTo(s,s/2); g.moveTo(s/2,s/2); g.lineTo(s/2,s); g.stroke(); }},
+    {c:[1,1,0,1], draw:(g,s)=>{ g.beginPath(); g.moveTo(0,s/2); g.lineTo(s,s/2); g.moveTo(s/2,0); g.lineTo(s/2,s/2); g.stroke(); }},
+    {c:[1,1,1,0], draw:(g,s)=>{ g.beginPath(); g.moveTo(s/2,0); g.lineTo(s/2,s); g.moveTo(s/2,s/2); g.lineTo(s,s/2); g.stroke();
+                                g.beginPath(); g.arc(s*0.78,s/2,s*0.1,0,TAU); g.fill(); }},
+  ];
+  const chosen=new Array(G*G).fill(null);
+  for(let y=0;y<G;y++)for(let x=0;x<G;x++){
+    const up   = y>0 ? chosen[(y-1)*G+x] : null;
+    const left = x>0 ? chosen[y*G+x-1]   : null;
+    const options=TILES.filter(t=>
+      (up===null   || t.c[0]===up.c[2]) &&
+      (left===null || t.c[3]===left.c[1]) &&
+      (y<G-1       || true) && (x<G-1 || true)
+    );
+    const pool=options.length?options:TILES;
+    chosen[y*G+x]=pool[(rnd()*pool.length)|0];
+  }
+  mctx.strokeStyle='#000'; mctx.fillStyle='#000';
+  mctx.lineWidth=Math.max(1.2,cw*(0.06+p.scale*0.16));
+  mctx.lineCap='round';
+  for(let y=0;y<G;y++)for(let x=0;x<G;x++){
+    mctx.save();
+    mctx.translate(x*cw,y*ch);
+    mctx.scale(cw/100,ch/100);
+    chosen[y*G+x].draw(mctx,100);
+    mctx.restore();
+  }
+}
+
+/* — typering: concentric rings of set type, letter by letter around
+     each arc. The BROADCAST poster, generatively. */
+function engTypering(mctx,W,H,rnd,p){
+  const WORDS=['OVERPRINT','TRANSMISSION','SIGNAL LOST','NO CARRIER','PLATE','IMPRESSION',
+               'DIGIDELIC','FREQUENCY','REGISTER','OFFSET','A1.2','X.06','0x4F3A','NIGHT GARDEN',
+               'PRESS RUN','SPOT COLOUR','HALFTONE','MOIRÉ','SEPARATION','STOCK'];
+  const cx=W/2, cy=H/2;
+  const rings=2+Math.round(p.density*9);
+  const maxR=Math.min(W,H)*(0.2+p.scale*0.32);
+  mctx.fillStyle='#000';
+  mctx.textBaseline='middle';
+  for(let r=0;r<rings;r++){
+    const t=(r+1)/rings;
+    const radius=maxR*t;
+    const size=Math.max(7,(maxR*0.16)*(1-t*0.55)*(0.6+p.complexity*1.1));
+    mctx.font='700 '+size.toFixed(1)+'px "Space Grotesk", system-ui, sans-serif';
+    let text='';
+    const target=Math.max(8,Math.round(TAU*radius/(size*0.62)));
+    while(text.length<target) text+=WORDS[(rnd()*WORDS.length)|0]+'  ·  ';
+    text=text.slice(0,target);
+    const dir=rnd()<0.5?1:-1;
+    let ang=rnd()*TAU;
+    for(const ch of text){
+      const w=mctx.measureText(ch).width;
+      const step=(w/radius)*dir;
+      mctx.save();
+      mctx.translate(cx+Math.cos(ang)*radius, cy+Math.sin(ang)*radius);
+      mctx.rotate(ang+(dir>0?Math.PI/2:-Math.PI/2));
+      mctx.fillText(ch,-w/2,0);
+      mctx.restore();
+      ang+=step;
+    }
+    if(rnd()<0.5){
+      mctx.strokeStyle='#000';
+      mctx.lineWidth=Math.max(0.8,size*0.05);
+      mctx.beginPath();
+      mctx.arc(cx,cy,radius+size*0.75,0,TAU);
+      mctx.stroke();
+    }
+  }
+}
+
+const ENGINES={
+  physarum:engPhysarum, quasicrystal:engQuasicrystal, dla:engDLA, contour:engContour,
+  superformula:engSuper, sortfield:engSortField, weave:engWeave, typering:engTypering,
+};
+const ENGINE_LABEL={
+  physarum:'physarum', quasicrystal:'quasicrystal', dla:'aggregation', contour:'contour',
+  superformula:'superformula', sortfield:'pixel sort', weave:'tile collapse', typering:'type ring',
+};
+
+/* ═══════════════════ PLATE BAKING ═══════════════════ */
+const canvas=document.getElementById('art');
+const ctx=canvas.getContext('2d');
+let plates=[];          // {engine, cv, data, ink, jitter:[dx,dy], sub}
+let bakeMs=0, pressMs=0;
+
+function plateSize(fmt){
+  const H=artHeight(fmt);
+  const W=560;
+  return [W,Math.round(W*H/ART_W)];
+}
+
+function bakePlates(p,only){
+  const t0=performance.now();
+  const [PW,PH]=plateSize(p.format);
+  const pool=POOLS[p.pool]||POOLS.auto;
+  const base=mulberry32(state.seed);
+  const picks=[];
+  for(let i=0;i<p.plates;i++) picks.push(pool[(base()*pool.length)|0]);
+  if(plates.length!==p.plates) only=undefined;
+  for(let i=0;i<p.plates;i++){
+    if(only!==undefined&&only!==i&&plates[i]&&plates[i].w===PW&&plates[i].h===PH){ continue; }
+    const sub=(only===i&&plates[i])?((plates[i].sub+1)>>>0):0;
+    const rnd=mulberry32((state.seed^Math.imul(i+1,0x9E3779B1)^Math.imul(sub+1,0x85EBCA6B))>>>0);
+    const engine=(only===i&&plates[i])?pool[(rnd()*pool.length)|0]:picks[i];
+    const cv=document.createElement('canvas');
+    cv.width=PW; cv.height=PH;
+    const mctx=cv.getContext('2d',{willReadFrequently:true});
+    mctx.clearRect(0,0,PW,PH);
+    ENGINES[engine](mctx,PW,PH,rnd,p);
+    plates[i]={
+      engine, cv, w:PW, h:PH, sub,
+      data:mctx.getImageData(0,0,PW,PH).data,
+      jitter:[(rnd()-0.5)*2,(rnd()-0.5)*2],
+      angleJit:(rnd()-0.5)*8,
+    };
+  }
+  plates.length=p.plates;
+  bakeMs=performance.now()-t0;
+  renderPlateList();
+}
+
+/* ═══════════════════ THE PRESS ═══════════════════
+   Coverage is re-screened as a rotated halftone lattice per ink, at
+   that ink's own screen angle, with a misregistration offset. Dots are
+   drawn vectorially at output resolution, so exports stay crisp even
+   though the plate raster itself is modest. */
+function screenPlate(g,plate,W,H,inkDef,p,scale){
+  const {data,w:PW,h:PH,jitter,angleJit}=plate;
+  const cell=Math.max(2.2,(W/p.freq));
+  const ang=(inkDef.angle+angleJit*p.misreg)*Math.PI/180;
+  const ca=Math.cos(ang), sa=Math.sin(ang);
+  const off=p.misreg*14*scale;
+  const dx=jitter[0]*off, dy=jitter[1]*off;
+  const diag=Math.sqrt(W*W+H*H);
+  const N=Math.ceil(diag/cell/2)+2;
+  const cx=W/2, cy=H/2;
+  const sx=PW/W, sy=PH/H;
+  const rmax=cell*0.62;
+  g.fillStyle=inkDef.hex;
+  g.globalAlpha=p.opacity;
+  g.beginPath();
+  for(let v=-N;v<=N;v++){
+    for(let u=-N;u<=N;u++){
+      const x=cx+(u*cell)*ca-(v*cell)*sa;
+      const y=cy+(u*cell)*sa+(v*cell)*ca;
+      if(x<-cell||y<-cell||x>W+cell||y>H+cell) continue;
+      const mx=((x-dx)*sx)|0, my=((y-dy)*sy)|0;
+      if(mx<0||my<0||mx>=PW||my>=PH) continue;
+      const a=data[(my*PW+mx)*4+3]/255;
+      if(a<0.035) continue;
+      const r=rmax*Math.sqrt(a);
+      if(r<0.28) continue;
+      g.moveTo(x+r,y);
+      g.arc(x,y,r,0,TAU);
+    }
+  }
+  g.fill();
+  g.globalAlpha=1;
+}
+
+function drawGrain(g,W,H,p,rnd){
+  if(p.grain<=0.01) return;
+  const cells=Math.round(120+p.grain*220);
+  const step=W/cells;
+  g.save();
+  g.globalAlpha=p.grain*0.16;
+  g.fillStyle='#000';
+  for(let y=0;y<H;y+=step){
+    for(let x=0;x<W;x+=step){
+      if(rnd()<0.5) continue;
+      g.fillRect(x,y,step*0.9,step*0.9);
+    }
+  }
+  g.restore();
+}
+
+function drawMarks(g,W,H,p,set){
+  const m=Math.max(18,p.margin*0.62);
+  g.save();
+  g.strokeStyle=set.dark?'rgba(255,255,255,.5)':'rgba(0,0,0,.62)';
+  g.fillStyle=g.strokeStyle;
+  g.lineWidth=1.1;
+  const cross=(x,y)=>{
+    const s=9;
+    g.beginPath();
+    g.moveTo(x-s,y); g.lineTo(x+s,y);
+    g.moveTo(x,y-s); g.lineTo(x,y+s);
+    g.stroke();
+    g.beginPath(); g.arc(x,y,4.2,0,TAU); g.stroke();
+  };
+  cross(m,m); cross(W-m,m); cross(m,H-m); cross(W-m,H-m);
+  /* colour bar along the foot — one chip per plate, print-shop style */
+  const chip=Math.min(26,(W-m*2)/12);
+  let bx=m;
+  plates.forEach((pl,i)=>{
+    g.globalAlpha=0.92;
+    g.fillStyle=set.inks[i%set.inks.length].hex;
+    g.fillRect(bx,H-m-chip,chip,chip);
+    bx+=chip+4;
+  });
+  g.globalAlpha=1;
+  g.fillStyle=set.dark?'rgba(255,255,255,.55)':'rgba(0,0,0,.55)';
+  g.font='500 11px "Geist Mono", ui-monospace, monospace';
+  g.textBaseline='alphabetic';
+  const tag=plates.map(pl=>ENGINE_LABEL[pl.engine]).join(' · ');
+  g.fillText(tag,bx+6,H-m-chip*0.28);
+  g.fillText('0x'+state.seed.toString(16).padStart(8,'0'),m,m-10);
+  g.restore();
+}
+
+function press(g,W,H,p){
+  const t0=performance.now();
+  const set=INKS[p.ink];
+  const rnd=mulberry32((state.seed^0xC0FFEE)>>>0);
+  g.save();
+  g.fillStyle=set.paper;
+  g.fillRect(0,0,W,H);
+  const m=p.margin*(W/ART_W);
+  g.save();
+  g.beginPath();
+  g.rect(m,m,W-m*2,H-m*2);
+  g.clip();
+  g.globalCompositeOperation=set.blend;
+  const scale=W/ART_W;
+  plates.forEach((plate,i)=>{
+    screenPlate(g,plate,W,H,set.inks[i%set.inks.length],p,scale);
+  });
+  g.restore();
+  drawGrain(g,W,H,p,rnd);
+  if(p.marks) drawMarks(g,W,H,p,set);
+  g.restore();
+  pressMs=performance.now()-t0;
+  document.getElementById('statBake').textContent=bakeMs.toFixed(0)+'ms';
+  document.getElementById('statPress').textContent=pressMs.toFixed(0)+'ms';
+  document.getElementById('statPlates').textContent=plates.length;
+  document.getElementById('headPlates').textContent=plates.length+'C';
+  document.getElementById('cornerEngines').textContent=plates.map(pl=>ENGINE_LABEL[pl.engine]).join(' / ');
+}
+
+/* the render entry point the export/share helpers share */
+function render(g,W,H,p){ press(g,W,H,p); }
+
+/* ═══════════════════ CANVAS FIT + DRAW ═══════════════════ */
+function fitCanvas(){
+  const H=artHeight(state.format);
+  const stage=document.querySelector('.stage');
+  const availW=stage.clientWidth-80, availH=stage.clientHeight-80;
+  const scale=Math.min(availW/ART_W,availH/H,1);
+  canvas.style.width=(ART_W*scale)+'px';
+  canvas.style.height=(H*scale)+'px';
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const bw=Math.round(ART_W*scale*dpr), bh=Math.round(H*scale*dpr);
+  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; }
+}
+let rafPending=false;
+function draw(){
+  rafPending=false;
+  const p=params();
+  fitCanvas();
+  const H=artHeight(p.format);
+  ctx.setTransform(canvas.width/ART_W,0,0,canvas.height/H,0,0);
+  press(ctx,ART_W,H,p);
+  updateSeedDisplay();
+}
+function requestDraw(){ if(!rafPending){ rafPending=true; requestAnimationFrame(draw); } }
+function rebake(only){ bakePlates(params(),only); requestDraw(); }
+/* Baking a physarum or DLA plate is hundreds of ms, so a structural
+   slider drag has to coalesce instead of baking on every input tick. */
+let bakeTimer=null;
+function scheduleRebake(){
+  clearTimeout(bakeTimer);
+  bakeTimer=setTimeout(()=>{ bakeTimer=null; rebake(); },150);
+}
+
+function renderPlateList(){
+  const list=document.getElementById('plateList');
+  const set=INKS[state.ink];
+  list.innerHTML='';
+  plates.forEach((pl,i)=>{
+    const row=document.createElement('div');
+    row.className='plate-chip';
+    row.title='re-roll this plate';
+    row.innerHTML='<span class="swatch" style="background:'+set.inks[i%set.inks.length].hex+'"></span>'+
+                  '<span class="eng">'+ENGINE_LABEL[pl.engine]+'</span>'+
+                  '<span class="re">⟳</span>';
+    row.addEventListener('click',()=>{ rebake(i); pushHistory(); });
+    list.appendChild(row);
+  });
+}
+
+/* ═══════════════════ EXPORT ═══════════════════ */
+function exportPNG(){
+  const p=params();
+  const H=artHeight(p.format);
+  const off=document.createElement('canvas');
+  off.width=ART_W*2; off.height=H*2;
+  const octx=off.getContext('2d');
+  octx.setTransform(2,0,0,2,0,0);
+  press(octx,ART_W,H,p);
+  off.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='digidelic-overprint-'+state.seed.toString(16).padStart(8,'0')+'.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+
+/* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════ */
+function serializeState(){
+  const vals={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  return {seed:state.seed,ink:state.ink,format:state.format,pool:state.pool,marks:state.marks,vals};
+}
+function applyState(s){
+  state.seed=s.seed; state.ink=s.ink; state.format=s.format; state.pool=s.pool; state.marks=!!s.marks;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  document.querySelectorAll('#segInk button').forEach(b=>b.classList.toggle('is-active',b.dataset.ink===state.ink));
+  document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===state.format));
+  document.querySelectorAll('#segPool button').forEach(b=>b.classList.toggle('is-active',b.dataset.pool===state.pool));
+  document.querySelectorAll('#segMarks button').forEach(b=>b.classList.toggle('is-active',b.dataset.marks===(state.marks?'on':'off')));
+  rebake();
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('link copied_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const H=artHeight(p.format);
+  const off=document.createElement('canvas');
+  off.width=ART_W*2; off.height=H*2;
+  const octx=off.getContext('2d');
+  octx.setTransform(2,0,0,2,0,0);
+  press(octx,ART_W,H,p);
+  off.toBlob(async blob=>{
+    if(!blob) return;
+    const file=new File([blob],'digidelic-overprint-'+state.seed.toString(16).padStart(8,'0')+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — overprint'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+}
+
+/* ═══════════════════ WIRING ═══════════════════ */
+const STRUCTURAL=new Set(['plates','density','complexity','scale','growth']);
+function syncSlider(el){
+  const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
+  el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
+  const out=document.querySelector('.val[data-val="'+el.id+'"]');
+  if(!out) return;
+  if(['density','complexity','scale','misreg','opacity','grain'].includes(el.id)) out.textContent=v+'%';
+  else if(el.id==='freq') out.textContent=v+'lpi';
+  else if(el.id==='margin') out.textContent=v+'px';
+  else if(el.id==='growth') out.textContent=v+' it';
+  else out.textContent=v;
+}
+sliders.forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{
+    syncSlider(el);
+    if(STRUCTURAL.has(id)) scheduleRebake(); else requestDraw();
+  });
+  el.addEventListener('change',pushHistory);
+  syncSlider(el);
+});
+
+function wireSeg(segId,attr,onPick){
+  const seg=document.getElementById(segId);
+  seg.addEventListener('click',e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    onPick(btn.dataset[attr]);
+    pushHistory();
+  });
+}
+wireSeg('segPool','pool',v=>{ state.pool=v; rebake(); });
+wireSeg('segInk','ink',v=>{ state.ink=v; canvas.style.background=INKS[v].paper; renderPlateList(); requestDraw(); });
+wireSeg('segFormat','fmt',v=>{ state.format=v; rebake(); });
+wireSeg('segMarks','marks',v=>{ state.marks=v==='on'; requestDraw(); });
+
+function updateSeedDisplay(){
+  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
+  document.getElementById('seedHex').textContent=hex;
+  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+function newSeed(){
+  state.seed=(Math.random()*0xffffffff)>>>0;
+  rebake();
+  updateSeedDisplay();
+  pushHistory();
+}
+
+/* click the sheet to re-roll whichever plate is inked nearest the point */
+canvas.addEventListener('pointerdown',ev=>{
+  if(!plates.length) return;
+  const rect=canvas.getBoundingClientRect();
+  const H=artHeight(state.format);
+  const x=(ev.clientX-rect.left)/rect.width*ART_W;
+  const y=(ev.clientY-rect.top)/rect.height*H;
+  let best=0, bestA=-1;
+  plates.forEach((pl,i)=>{
+    const mx=((x/ART_W)*pl.w)|0, my=((y/H)*pl.h)|0;
+    if(mx<0||my<0||mx>=pl.w||my>=pl.h) return;
+    const a=pl.data[(my*pl.w+mx)*4+3];
+    if(a>bestA){ bestA=a; best=i; }
+  });
+  rebake(best);
+  pushHistory();
+  flashStatus('plate '+(best+1)+' re-rolled · '+ENGINE_LABEL[plates[best].engine]+'_');
+});
+
+document.getElementById('btnRandom').addEventListener('click',newSeed);
+document.getElementById('btnRegen').addEventListener('click',newSeed);
+document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('seedReadout').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
+window.addEventListener('resize',requestDraw);
+window.addEventListener('keydown',e=>{
+  if(e.target.closest('input')) return;
+  if(e.key===' ' && !e.target.closest('button')){ e.preventDefault(); newSeed(); }
+  if(e.key==='e') exportPNG();
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); }
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); }
+});
+
+/* boot */
+{
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink) applyState(fromLink);
+  else{
+    canvas.style.background=INKS[state.ink].paper;
+    rebake();
+  }
+  updateSeedDisplay();
+}
+pushHistory();
+</script>
+</body>
+</html>
