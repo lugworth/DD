@@ -277,6 +277,8 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <button id="btnRecord">⏺ Rec 6s</button>
         <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
         <button id="btnLink" title="copy a link to these settings">⧉ Copy Link</button>
+        <button id="btnSave" title="save the dish — cells, filaments and settings">⤓ Dish</button>
+        <button id="btnOpen" title="load a saved dish">⤒ Open</button>
         <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
@@ -731,6 +733,64 @@ function clearDish(){
   cells.length=0; fils.length=0; state.divisions=0; state.activeFil=null;
 }
 
+/* ═══════════════════ DISH SAVE / LOAD ═══════════════════
+   This tool is painted by hand, so a seed cannot reproduce a dish the
+   way it can for the seeded generators. The culture itself — every cell
+   and filament, plus the studio settings — serialises to a small JSON
+   file instead, which is this tool's equivalent of a permalink. */
+function dishToJSON(){
+  return JSON.stringify({
+    v:1,
+    settings:serializeState(),
+    cells:cells.map(c=>[+c.x.toFixed(2),+c.y.toFixed(2),+c.r.toFixed(2),c.tint]),
+    fils:fils.map(f=>({c:f.closed?1:0,t:f.tint,p:f.pts.map(q=>[+q.x.toFixed(2),+q.y.toFixed(2)])})),
+  });
+}
+function saveDish(){
+  let json;
+  try{ json=dishToJSON(); }
+  catch{ flashStatus('could not serialise dish_'); return; }
+  const blob=new Blob([json],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='digidelic-culture-'+Date.now().toString(36)+'.dish.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  flashStatus('dish saved_');
+}
+function loadDishText(txt){
+  let d;
+  try{ d=JSON.parse(txt); }catch{ flashStatus('not a dish file_'); return; }
+  if(!d||!Array.isArray(d.cells)||!Array.isArray(d.fils)){ flashStatus('not a dish file_'); return; }
+  clearDish();
+  for(const c of d.cells) cells.push({x:c[0],y:c[1],r:c[2],tint:c[3]});
+  for(const f of d.fils) fils.push({closed:!!f.c,tint:f.t,pts:f.p.map(q=>({x:q[0],y:q[1]}))});
+  if(d.settings&&d.settings.vals) applyState(d.settings);
+  flashStatus('dish loaded · '+cells.length+' cells_');
+}
+function openDish(){
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='.json,application/json';
+  inp.addEventListener('change',()=>{
+    const f=inp.files&&inp.files[0];
+    if(!f) return;
+    const rd=new FileReader();
+    rd.onload=()=>loadDishText(String(rd.result));
+    rd.readAsText(f);
+  });
+  inp.click();
+}
+/* dropping a dish file straight onto the canvas works too */
+canvas.addEventListener('dragover',ev=>{ ev.preventDefault(); });
+canvas.addEventListener('drop',ev=>{
+  const f=ev.dataTransfer&&ev.dataTransfer.files&&ev.dataTransfer.files[0];
+  if(!f||!/\.json$/i.test(f.name)) return;
+  ev.preventDefault();
+  const rd=new FileReader();
+  rd.onload=()=>loadDishText(String(rd.result));
+  rd.readAsText(f);
+});
+
 /* ═══════════════════ GIF ═══════════════════
    GIF89a written in-file so the tool keeps its no-dependency promise:
    a fixed 6·6·6 colour cube plus a 40-step grey ramp, ordered-dithered,
@@ -966,6 +1026,8 @@ document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
 document.getElementById('btnGif').addEventListener('click',recordGIF);
 document.getElementById('btnLink').addEventListener('click',copyPermalink);
+document.getElementById('btnSave').addEventListener('click',saveDish);
+document.getElementById('btnOpen').addEventListener('click',openDish);
 if(navigator.share) document.getElementById('btnShare').hidden=false;
 document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('keydown',ev=>{

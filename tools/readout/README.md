@@ -78,3 +78,10 @@ light; it round-trips through the permalink with everything else.
 **⤓ .txt** downloads the mosaic as a text file — the reliable route when
 clipboard permission is refused, or when the sheet is simply too large to
 paste.
+
+## Live camera
+
+**Camera** feeds the mosaic from the webcam instead of a dropped still.
+A `<video>` is just another source element as far as the sampler is
+concerned, so the engine is unchanged — the sheet is simply kept dirty
+while frames arrive. Off by default and needs a permission grant.

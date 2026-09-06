@@ -278,6 +278,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-fmt="916" class="wide">9:16 story</button>
             </div>
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">Tilt</span></div>
+            <div class="seg" id="segTilt" role="group" aria-label="device tilt">
+              <button data-tilt="off" class="is-active">Off</button>
+              <button data-tilt="on">Gravity ▸ device</button>
+            </div>
+          </div>
           <div class="checks">
             <label class="chk"><input type="checkbox" id="auto" checked> Auto hold</label>
             <label class="chk"><input type="checkbox" id="ring" checked> Cursor ring</label>
@@ -429,10 +436,14 @@ function spawn(p,x,y){
 function stepWater(p,dt){
   const grav=p.grav*900;
   const drag=1-(0.02+p.visc*0.12);
+  /* tilt leans the gravity vector; with tilt off these are simply 0 and 1 */
+  const gx=tilt.on?grav*tilt.gx:0;
+  const gy=tilt.on?grav*(0.55+0.45*Math.max(-1,Math.min(1,1-Math.abs(tilt.gy)))):grav;
   for(let i=drops.length-1;i>=0;i--){
     const d=drops[i];
     d.age+=dt; d.life-=dt;
-    d.vy+=grav*dt;
+    d.vx+=gx*dt;
+    d.vy+=gy*dt;
     d.vx+=Math.sin(d.age*1.7+d.ph)*d.wob*26*dt;
     d.vx*=drag; d.vy*=drag;
     d.x+=d.vx*dt; d.y+=d.vy*dt;
@@ -877,6 +888,42 @@ document.getElementById('text').addEventListener('change',pushHistory);
 document.getElementById('upper').addEventListener('change',()=>{ state.textDirty=true; });
 ['upper','ghost','auto','ring'].forEach(id=>document.getElementById(id).addEventListener('change',pushHistory));
 
+/* ═══════════════════ TILT ═══════════════════
+   On a phone, device orientation nudges the gravity vector so the pool
+   actually runs downhill as you lean the handset. Opt-in because iOS
+   requires an explicit permission gesture, and a refusal just leaves
+   gravity where the slider put it. */
+let tilt={on:false,gx:0,gy:0};
+function tiltHandler(ev){
+  if(!tilt.on) return;
+  /* gamma is left/right lean, beta front/back; clamped and softened so
+     a small wrist movement does not throw the sheet across the frame */
+  tilt.gx=Math.max(-1,Math.min(1,(ev.gamma||0)/45));
+  tilt.gy=Math.max(-1,Math.min(1,((ev.beta||0)-45)/45));
+}
+async function tiltToggle(on){
+  if(!on){
+    tilt.on=false; tilt.gx=tilt.gy=0;
+    window.removeEventListener('deviceorientation',tiltHandler);
+    return;
+  }
+  try{
+    const DOE=window.DeviceOrientationEvent;
+    if(!DOE) throw new Error('no sensor');
+    if(typeof DOE.requestPermission==='function'){
+      const res=await DOE.requestPermission();
+      if(res!=='granted') throw new Error('denied');
+    }
+    window.addEventListener('deviceorientation',tiltHandler);
+    tilt.on=true;
+    flashStatus('tilt live_');
+  }catch{
+    tilt.on=false;
+    document.querySelectorAll('#segTilt button').forEach(b=>b.classList.toggle('is-active',b.dataset.tilt==='off'));
+    flashStatus('no tilt sensor_');
+  }
+}
+
 /* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════
    The sheet itself is a live physics sim you push around with the
    pointer, so a link carries the setup — copy, style, palette,
@@ -996,6 +1043,7 @@ wireSeg('segPalette','pal',v=>{
   canvas.style.background=PALETTES[v].bg;
 });
 wireSeg('segFormat','fmt',applyFormat);
+wireSeg('segTilt','tilt',v=>tiltToggle(v==='on'));
 
 document.getElementById('btnReset').addEventListener('click',resetSheet);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
