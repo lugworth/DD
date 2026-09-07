@@ -170,7 +170,31 @@ ui_kits/
   digidelic/
     README.md
     index.html                    — full app prototype
+
+tools/                            — generative tools, one folder each
+  index.html                      — the hub: live thumbnail per tool
+  build-standalone.mjs            — bakes any page into a single file
+
+  circuit-matrix/                 — self-routing traces on an LED panel
+  colony-display/                 — phosphor Game-of-Life on glass
+  cosmogram-generator/            — esoteric celestial diagram plates
+  culture/                        — paint cells and filaments, watch them grow
+  glyph-foundry/                  — invented-alphabet specimen sheets
+  overprint/                      — riso press, eight exotic plate engines
+  patchwork-generator/            — recursive patch-grid compositions
+  pixel-echo/                     — chromatic echo stacks over a spine
+  pixel-knit/                     — texture × subject pattern sheets
+  reaction-field/                 — Gray-Scott relief, CPU or WebGL2
+  readout/                        — image or webcam → character mosaic
+  signal-scope/                   — dual-beam scope, oscillators or line in
+  surface-tension/                — press and hold; water sinks the copy
 ```
+
+Every tool shares one shell: a seeded parameter rack, PNG export, a
+permalink that encodes seed and settings, `Ctrl+Z` parameter undo, and
+Web Share where the browser has it. The animated ones add GIF and MP4
+capture, both encoded in-file so the no-dependency promise holds. Each
+tool's README covers what is particular to it.
 
 ---
 
