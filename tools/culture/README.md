@@ -93,3 +93,14 @@ too. This is the tool's equivalent of a permalink.
 seconds of growth packed into a ~4 second loop. Growth in this tool
 unfolds over a much longer arc than the 3s GIF capture assumes, so the
 slow sample is what actually shows a colony developing.
+
+## MP4 capture
+
+**▣ MP4 6s** encodes six seconds of H.264 with WebCodecs and muxes it
+here in-file — no library, keeping the tool dependency-free. MP4 plays
+inline in the places WebM does not: iOS, Twitter, Discord.
+
+The muxer writes a non-fragmented `ftyp`/`mdat`/`moov` with every sample
+in a single chunk, which keeps `stsc` and `stco` trivial and is
+perfectly legal. It needs a browser with `VideoEncoder`; without one the
+button says so and nothing else changes.

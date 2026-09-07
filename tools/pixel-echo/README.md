@@ -81,3 +81,14 @@ input and maps continuous-controller *n* to the *n*th slider; `Gamepad`
 maps stick axis *n* the same way. Values are written through each
 slider's own input event, so everything already wired to that slider
 still runs — this needs no per-tool knowledge of what the controls mean.
+
+## MP4 capture
+
+**▣ MP4 6s** encodes six seconds of H.264 with WebCodecs and muxes it
+here in-file — no library, keeping the tool dependency-free. MP4 plays
+inline in the places WebM does not: iOS, Twitter, Discord.
+
+The muxer writes a non-fragmented `ftyp`/`mdat`/`moov` with every sample
+in a single chunk, which keeps `stsc` and `stco` trivial and is
+perfectly legal. It needs a browser with `VideoEncoder`; without one the
+button says so and nothing else changes.
