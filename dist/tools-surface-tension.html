@@ -278,6 +278,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-fmt="916" class="wide">9:16 story</button>
             </div>
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">Tilt</span></div>
+            <div class="seg" id="segTilt" role="group" aria-label="device tilt">
+              <button data-tilt="off" class="is-active">Off</button>
+              <button data-tilt="on">Gravity ▸ device</button>
+            </div>
+          </div>
           <div class="checks">
             <label class="chk"><input type="checkbox" id="auto" checked> Auto hold</label>
             <label class="chk"><input type="checkbox" id="ring" checked> Cursor ring</label>
@@ -289,6 +296,10 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnReset">✕ Reset</button>
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
+        <button id="btnMp4" title="capture 6s as MP4 — plays inline where WebM does not">▣ MP4 6s</button>
+        <button id="btnLink" title="copy a link to these settings">⧉ Copy Link</button>
+        <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -317,7 +328,7 @@ const PALETTES={
 const state={
   style:'flood', palette:'crimson', fmt:'45',
   W:1080, H:1350,
-  holding:false, pointer:{x:540,y:500},
+  holding:false, pointer:{x:540,y:500}, pointers:new Map(),
   autoT:0, autoTarget:{x:540,y:500}, sunk:0,
   textDirty:true,
 };
@@ -426,10 +437,14 @@ function spawn(p,x,y){
 function stepWater(p,dt){
   const grav=p.grav*900;
   const drag=1-(0.02+p.visc*0.12);
+  /* tilt leans the gravity vector; with tilt off these are simply 0 and 1 */
+  const gx=tilt.on?grav*tilt.gx:0;
+  const gy=tilt.on?grav*(0.55+0.45*Math.max(-1,Math.min(1,1-Math.abs(tilt.gy)))):grav;
   for(let i=drops.length-1;i>=0;i--){
     const d=drops[i];
     d.age+=dt; d.life-=dt;
-    d.vy+=grav*dt;
+    d.vx+=gx*dt;
+    d.vy+=gy*dt;
     d.vx+=Math.sin(d.age*1.7+d.ph)*d.wob*26*dt;
     d.vx*=drag; d.vy*=drag;
     d.x+=d.vx*dt; d.y+=d.vy*dt;
@@ -633,11 +648,13 @@ function compose(g,W,H,p){
   /* 'sink' draws no water at all — only the copy gives way */
 
   if(p.ring&&(state.holding||p.auto)){
-    g.strokeStyle=pal.line; g.globalAlpha=0.5; g.lineWidth=1.4*k;
-    g.beginPath(); g.arc(state.pointer.x,state.pointer.y,p.drop*k*1.15,0,TAU); g.stroke();
-    g.globalAlpha=1;
-    g.fillStyle=pal.line;
-    g.beginPath(); g.arc(state.pointer.x,state.pointer.y,3.4*k,0,TAU); g.fill();
+    for(const src of pourSources()){
+      g.strokeStyle=pal.line; g.globalAlpha=0.5; g.lineWidth=1.4*k;
+      g.beginPath(); g.arc(src.x,src.y,p.drop*k*1.15,0,TAU); g.stroke();
+      g.globalAlpha=1;
+      g.fillStyle=pal.line;
+      g.beginPath(); g.arc(src.x,src.y,3.4*k,0,TAU); g.fill();
+    }
   }
 }
 
@@ -664,7 +681,11 @@ function frame(now){
   if(state.holding||(p.auto&&!state.holding)){
     emit+=(14+p.flow*46)*dt;
     const n=emit|0; emit-=n;
-    for(let i=0;i<n;i++) spawn(p,state.pointer.x,state.pointer.y);
+    /* the flow rate is shared between fingers rather than multiplied,
+       so pooling in two places costs the same as pooling in one */
+    const src=pourSources();
+    const per=Math.ceil(n/src.length);
+    for(const s of src) for(let i=0;i<per;i++) spawn(p,s.x,s.y);
   }
 
   stepWater(p,dt);
@@ -688,12 +709,27 @@ function pt(ev){
   const r=canvas.getBoundingClientRect();
   return { x:(ev.clientX-r.left)/r.width*state.W, y:(ev.clientY-r.top)/r.height*state.H };
 }
+/* every held finger is a pour point; falling back to the drifting
+   auto-pointer when nothing is held */
+function pourSources(){
+  return state.pointers.size ? [...state.pointers.values()] : [state.pointer];
+}
 canvas.addEventListener('pointerdown',ev=>{
-  state.holding=true; state.pointer=pt(ev);
+  const q=pt(ev);
+  state.pointers.set(ev.pointerId,q);
+  state.holding=true; state.pointer=q;
   canvas.setPointerCapture(ev.pointerId);
 });
-canvas.addEventListener('pointermove',ev=>{ if(state.holding) state.pointer=pt(ev); });
-['pointerup','pointercancel'].forEach(t=>canvas.addEventListener(t,()=>{ state.holding=false; }));
+canvas.addEventListener('pointermove',ev=>{
+  if(!state.pointers.has(ev.pointerId)) return;
+  const q=pt(ev);
+  state.pointers.set(ev.pointerId,q);
+  state.pointer=q;
+});
+['pointerup','pointercancel'].forEach(t=>canvas.addEventListener(t,ev=>{
+  state.pointers.delete(ev.pointerId);
+  state.holding=state.pointers.size>0;
+}));
 
 /* ═══════════════════ EXPORT / RECORD ═══════════════════ */
 function exportPNG(){
@@ -738,6 +774,208 @@ function resetSheet(){
   state.sunk=0;
 }
 
+/* ═══════════════════ MP4 ═══════════════════
+   WebCodecs encodes H.264; this muxes it. Non-fragmented ftyp/mdat/moov
+   with every sample in one chunk, which keeps stsc and stco trivial and
+   is perfectly legal. Written in-file so the tool stays dependency-free.
+   MP4 plays inline where WebM does not — iOS, Twitter, Discord. */
+function mp4Box(type,...payload){
+  let len=8;
+  for(const p of payload) len+=p.length;
+  const out=new Uint8Array(len);
+  out[0]=(len>>>24)&255; out[1]=(len>>>16)&255; out[2]=(len>>>8)&255; out[3]=len&255;
+  for(let i=0;i<4;i++) out[4+i]=type.charCodeAt(i);
+  let o=8;
+  for(const p of payload){ out.set(p,o); o+=p.length; }
+  return out;
+}
+function buildMP4(samples,opt){
+  const {width,height,fps,avcC}=opt;
+  const b=(...v)=>Uint8Array.from(v);
+  const u16=v=>b((v>>8)&255,v&255);
+  const u32=v=>b((v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255);
+  const s4=s=>Uint8Array.from([...s].map(c=>c.charCodeAt(0)));
+  const zeros=n=>new Uint8Array(n);
+  const cat=a=>{ let n=0; for(const x of a) n+=x.length;
+    const o=new Uint8Array(n); let p=0; for(const x of a){ o.set(x,p); p+=x.length; } return o; };
+  const TS=90000, dur=Math.round(TS/fps), duration=dur*samples.length;
+  const mdat=mp4Box('mdat',cat(samples.map(s=>s.data)));
+  const ftyp=mp4Box('ftyp',s4('isom'),u32(512),s4('isom'),s4('iso2'),s4('avc1'),s4('mp41'));
+  const chunkOffset=ftyp.length+8;
+  const matrix=cat([u32(0x00010000),u32(0),u32(0),u32(0),u32(0x00010000),u32(0),u32(0),u32(0),u32(0x40000000)]);
+  const mvhd=mp4Box('mvhd',b(0,0,0,0),u32(0),u32(0),u32(TS),u32(duration),
+    u32(0x00010000),u16(0x0100),zeros(10),matrix,zeros(24),u32(2));
+  const tkhd=mp4Box('tkhd',b(0,0,0,3),u32(0),u32(0),u32(1),u32(0),u32(duration),
+    zeros(8),u16(0),u16(0),u16(0),u16(0),matrix,u32(width<<16),u32(height<<16));
+  const mdhd=mp4Box('mdhd',b(0,0,0,0),u32(0),u32(0),u32(TS),u32(duration),u16(0x55C4),u16(0));
+  const hdlr=mp4Box('hdlr',b(0,0,0,0),u32(0),s4('vide'),zeros(12),s4('VideoHandler\0'));
+  const vmhd=mp4Box('vmhd',b(0,0,0,1),u16(0),u16(0),u16(0),u16(0));
+  const dinf=mp4Box('dinf',mp4Box('dref',b(0,0,0,0),u32(1),mp4Box('url ',b(0,0,0,1))));
+  const avc1=mp4Box('avc1',zeros(6),u16(1),u16(0),u16(0),zeros(12),
+    u16(width),u16(height),u32(0x00480000),u32(0x00480000),u32(0),
+    u16(1),new Uint8Array(32),u16(0x0018),u16(0xFFFF),mp4Box('avcC',avcC));
+  const stsd=mp4Box('stsd',b(0,0,0,0),u32(1),avc1);
+  const stts=mp4Box('stts',b(0,0,0,0),u32(1),u32(samples.length),u32(dur));
+  const keys=[];
+  samples.forEach((s,i)=>{ if(s.key) keys.push(i+1); });
+  const stss=mp4Box('stss',b(0,0,0,0),u32(keys.length),cat(keys.map(u32)));
+  const stsc=mp4Box('stsc',b(0,0,0,0),u32(1),u32(1),u32(samples.length),u32(1));
+  const stsz=mp4Box('stsz',b(0,0,0,0),u32(0),u32(samples.length),cat(samples.map(s=>u32(s.data.length))));
+  const stco=mp4Box('stco',b(0,0,0,0),u32(1),u32(chunkOffset));
+  const stbl=mp4Box('stbl',stsd,stts,stss,stsc,stsz,stco);
+  const moov=mp4Box('moov',mvhd,mp4Box('trak',tkhd,
+    mp4Box('mdia',mdhd,hdlr,mp4Box('minf',vmhd,dinf,stbl))));
+  return cat([ftyp,mdat,moov]);
+}
+function recordMP4(){
+  const btn=document.getElementById('btnMp4');
+  if(btn.disabled) return;
+  if(typeof VideoEncoder==='undefined'){ flashStatus('no webcodecs in this browser_'); return; }
+  /* H.264 wants even dimensions */
+  const W=Math.max(2,Math.min(1280,canvas.width)&~1);
+  const H=Math.max(2,Math.round(W*canvas.height/canvas.width)&~1);
+  const off=document.createElement('canvas');
+  off.width=W; off.height=H;
+  const octx=off.getContext('2d');
+  const fps=30, total=fps*6;
+  const samples=[];
+  let avcC=null, broken=false, n=0;
+  const reset=()=>{ btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='▣ MP4 6s'; };
+  let enc;
+  try{
+    enc=new VideoEncoder({
+      output:(chunk,meta)=>{
+        if(!avcC&&meta&&meta.decoderConfig&&meta.decoderConfig.description)
+          avcC=new Uint8Array(meta.decoderConfig.description);
+        const d=new Uint8Array(chunk.byteLength);
+        chunk.copyTo(d);
+        samples.push({data:d,key:chunk.type==='key'});
+      },
+      error:()=>{ broken=true; },
+    });
+    /* 'avc' format gives length-prefixed samples plus the avcC blob,
+       which is exactly what the muxer above expects */
+    enc.configure({codec:'avc1.42001f',width:W,height:H,bitrate:8000000,framerate:fps,avc:{format:'avc'}});
+  }catch{ flashStatus('h264 encoding unavailable_'); return; }
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    if(broken){ reset(); flashStatus('encoder failed_'); return; }
+    octx.drawImage(canvas,0,0,W,H);
+    try{
+      const frame=new VideoFrame(off,{timestamp:Math.round(n*1000000/fps),duration:Math.round(1000000/fps)});
+      enc.encode(frame,{keyFrame:n%fps===0});
+      frame.close();
+    }catch{ broken=true; }
+    n++;
+    btn.textContent='● '+Math.max(0,Math.ceil((total-n)/fps));
+    if(n<total){ setTimeout(grab,1000/fps); return; }
+    btn.textContent='◍ muxing';
+    enc.flush().then(()=>{
+      try{ enc.close(); }catch{}
+      if(broken||!avcC||!samples.length){ reset(); flashStatus('mp4 encode failed_'); return; }
+      const mp4=buildMP4(samples,{width:W,height:H,fps,avcC});
+      const blob=new Blob([mp4],{type:'video/mp4'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-surface-'+Date.now().toString(36)+'.mp4';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      reset();
+    }).catch(()=>{ reset(); flashStatus('mp4 encode failed_'); });
+  };
+  grab();
+}
+
+/* ═══════════════════ GIF ═══════════════════
+   GIF89a written in-file so the tool keeps its no-dependency promise:
+   a fixed 6·6·6 colour cube plus a 40-step grey ramp, ordered-dithered,
+   LZW packed. Frames are grabbed off the live canvas on a timer so the
+   UI keeps breathing, then packed in one go at the end. */
+function gifEncoder(W,H,delayCs){
+  const B=[];
+  const u8=v=>B.push(v&255), u16=v=>{B.push(v&255);B.push((v>>8)&255);},
+        st=s=>{for(let i=0;i<s.length;i++)B.push(s.charCodeAt(i));};
+  const pal=[], L=[0,51,102,153,204,255];
+  for(let r=0;r<6;r++)for(let g=0;g<6;g++)for(let b=0;b<6;b++)pal.push([L[r],L[g],L[b]]);
+  for(let i=0;i<40;i++){const v=Math.round(i*255/39);pal.push([v,v,v]);}
+  st('GIF89a');u16(W);u16(H);u8(0xF7);u8(0);u8(0);
+  for(const c of pal){u8(c[0]);u8(c[1]);u8(c[2]);}
+  u8(0x21);u8(0xFF);u8(11);st('NETSCAPE2.0');u8(3);u8(1);u16(0);u8(0);
+  const BAY=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  return {
+    add(rgba){
+      const idx=new Uint8Array(W*H);
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+        const p=(y*W+x)*4, d=(BAY[y&3][x&3]/16-0.5)*51;
+        const r=Math.max(0,Math.min(255,rgba[p]+d));
+        const g=Math.max(0,Math.min(255,rgba[p+1]+d));
+        const b=Math.max(0,Math.min(255,rgba[p+2]+d));
+        let best=Math.round(r/51)*36+Math.round(g/51)*6+Math.round(b/51);
+        if(Math.max(r,g,b)-Math.min(r,g,b)<26){           // neutrals read better off the grey ramp
+          const lum=(r+g+b)/3, gi=216+Math.round(lum/255*39), c=pal[best];
+          if(Math.abs(pal[gi][0]-lum)<Math.abs((c[0]+c[1]+c[2])/3-lum)) best=gi;
+        }
+        idx[y*W+x]=best;
+      }
+      u8(0x21);u8(0xF9);u8(4);u8(4);u16(delayCs);u8(0);u8(0);
+      u8(0x2C);u16(0);u16(0);u16(W);u16(H);u8(0);u8(8);
+      const out=[];
+      let cur=0,bits=0,size=9,next=258,dict=new Map();
+      const emit=c=>{cur|=c<<bits;bits+=size;while(bits>=8){out.push(cur&255);cur>>=8;bits-=8;}};
+      emit(256);
+      let pre=idx[0];
+      for(let i=1;i<idx.length;i++){
+        const k=idx[i], key=pre*4096+k, f=dict.get(key);
+        if(f!==undefined){pre=f;continue;}
+        emit(pre);
+        if(next<4096){ dict.set(key,next++); if(next>(1<<size)&&size<12) size++; }
+        else{ emit(256); dict=new Map(); next=258; size=9; }
+        pre=k;
+      }
+      emit(pre); emit(257);
+      if(bits>0) out.push(cur&255);
+      for(let i=0;i<out.length;i+=255){
+        const n=Math.min(255,out.length-i);
+        u8(n);
+        for(let j=0;j<n;j++) u8(out[i+j]);
+      }
+      u8(0);
+    },
+    finish(){ u8(0x3B); return new Uint8Array(B); },
+  };
+}
+function recordGIF(){
+  const btn=document.getElementById('btnGif');
+  if(btn.disabled) return;
+  const GW=Math.min(480,canvas.width);
+  const GH=Math.max(1,Math.round(GW*canvas.height/canvas.width));
+  const off=document.createElement('canvas');
+  off.width=GW; off.height=GH;
+  const octx=off.getContext('2d',{willReadFrequently:true});
+  const enc=gifEncoder(GW,GH,8);
+  const total=36;
+  let n=0;
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    octx.drawImage(canvas,0,0,GW,GH);
+    enc.add(octx.getImageData(0,0,GW,GH).data);
+    n++;
+    btn.textContent='● '+(total-n);
+    if(n<total){ setTimeout(grab,80); return; }
+    btn.textContent='◍ packing';
+    setTimeout(()=>{
+      const blob=new Blob([enc.finish()],{type:'image/gif'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-surface-'+Date.now().toString(36)+'.gif';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='◉ GIF 3s';
+    },30);
+  };
+  grab();
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
@@ -755,10 +993,149 @@ sliders.forEach(id=>{
     syncSlider(el);
     if(id==='tsize'||id==='track'||id==='col') state.textDirty=true;
   });
+  el.addEventListener('change',pushHistory);
   syncSlider(el);
 });
 document.getElementById('text').addEventListener('input',()=>{ state.textDirty=true; });
+document.getElementById('text').addEventListener('change',pushHistory);
 document.getElementById('upper').addEventListener('change',()=>{ state.textDirty=true; });
+['upper','ghost','auto','ring'].forEach(id=>document.getElementById(id).addEventListener('change',pushHistory));
+
+/* ═══════════════════ TILT ═══════════════════
+   On a phone, device orientation nudges the gravity vector so the pool
+   actually runs downhill as you lean the handset. Opt-in because iOS
+   requires an explicit permission gesture, and a refusal just leaves
+   gravity where the slider put it. */
+let tilt={on:false,gx:0,gy:0};
+function tiltHandler(ev){
+  if(!tilt.on) return;
+  /* gamma is left/right lean, beta front/back; clamped and softened so
+     a small wrist movement does not throw the sheet across the frame */
+  tilt.gx=Math.max(-1,Math.min(1,(ev.gamma||0)/45));
+  tilt.gy=Math.max(-1,Math.min(1,((ev.beta||0)-45)/45));
+}
+async function tiltToggle(on){
+  if(!on){
+    tilt.on=false; tilt.gx=tilt.gy=0;
+    window.removeEventListener('deviceorientation',tiltHandler);
+    return;
+  }
+  try{
+    const DOE=window.DeviceOrientationEvent;
+    if(!DOE) throw new Error('no sensor');
+    if(typeof DOE.requestPermission==='function'){
+      const res=await DOE.requestPermission();
+      if(res!=='granted') throw new Error('denied');
+    }
+    window.addEventListener('deviceorientation',tiltHandler);
+    tilt.on=true;
+    flashStatus('tilt live_');
+  }catch{
+    tilt.on=false;
+    document.querySelectorAll('#segTilt button').forEach(b=>b.classList.toggle('is-active',b.dataset.tilt==='off'));
+    flashStatus('no tilt sensor_');
+  }
+}
+
+/* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════
+   The sheet itself is a live physics sim you push around with the
+   pointer, so a link carries the setup — copy, style, palette,
+   format, every slider — not the state of the water. */
+const checkFields=['upper','ghost','auto','ring'];
+function serializeState(){
+  const vals={}, checks={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  checkFields.forEach(id=>{ checks[id]=document.getElementById(id).checked; });
+  return {style:state.style,palette:state.palette,fmt:state.fmt,
+          text:document.getElementById('text').value,vals,checks};
+}
+function applyFormat(v){
+  state.fmt=v;
+  [state.W,state.H]=FORMATS[v];
+  document.getElementById('headSize').textContent=state.W+' × '+state.H+' px';
+  document.getElementById('cornerFmt').textContent=({'45':'4:5','11':'1:1','916':'9:16'})[v];
+  state.pointer={x:state.W/2,y:state.H*0.42};
+  glyphs=[];
+  resizeLayers();
+  resetSheet();
+}
+function applyState(s){
+  state.style=s.style; state.palette=s.palette;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  checkFields.forEach(id=>{ if(s.checks[id]!==undefined) document.getElementById(id).checked=s.checks[id]; });
+  if(s.text!==undefined) document.getElementById('text').value=s.text;
+  document.querySelectorAll('#segStyle button').forEach(b=>b.classList.toggle('is-active',b.dataset.style===state.style));
+  document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
+  document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===s.fmt));
+  document.getElementById('cornerStyle').textContent='water · '+state.style;
+  canvas.style.background=PALETTES[state.palette].bg;
+  state.textDirty=true;
+  applyFormat(s.fmt);
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('settings link copied_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=state.W; off.height=state.H;
+  compose(off.getContext('2d'),state.W,state.H,p);
+  off.toBlob(async b=>{
+    if(!b) return;
+    const file=new File([b],'digidelic-surface-'+Date.now().toString(36)+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — surface tension'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+}
 
 function wireSeg(segId,attr,onPick){
   const seg=document.getElementById(segId);
@@ -767,6 +1144,7 @@ function wireSeg(segId,attr,onPick){
     seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
     btn.classList.add('is-active');
     onPick(btn.dataset[attr]);
+    pushHistory();
   });
 }
 wireSeg('segStyle','style',v=>{
@@ -777,29 +1155,34 @@ wireSeg('segPalette','pal',v=>{
   state.palette=v;
   canvas.style.background=PALETTES[v].bg;
 });
-wireSeg('segFormat','fmt',v=>{
-  [state.W,state.H]=FORMATS[v];
-  document.getElementById('headSize').textContent=state.W+' × '+state.H+' px';
-  document.getElementById('cornerFmt').textContent=({'45':'4:5','11':'1:1','916':'9:16'})[v];
-  state.pointer={x:state.W/2,y:state.H*0.42};
-  glyphs=[];
-  resizeLayers();
-  resetSheet();
-});
+wireSeg('segFormat','fmt',applyFormat);
+wireSeg('segTilt','tilt',v=>tiltToggle(v==='on'));
 
 document.getElementById('btnReset').addEventListener('click',resetSheet);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
+document.getElementById('btnGif').addEventListener('click',recordGIF);
+document.getElementById('btnMp4').addEventListener('click',recordMP4);
+document.getElementById('btnLink').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('keydown',ev=>{
   if(ev.target.closest('input,textarea')) return;
   if(ev.key==='e') exportPNG();
   if(ev.key==='r') resetSheet();
+  if((ev.metaKey||ev.ctrlKey) && ev.key.toLowerCase()==='z'){ ev.preventDefault(); ev.shiftKey?redo():undo(); }
+  if((ev.metaKey||ev.ctrlKey) && ev.key.toLowerCase()==='y'){ ev.preventDefault(); redo(); }
 });
 
 /* boot */
 resizeLayers();
 canvas.style.background=PALETTES[state.palette].bg;
 state.pointer={x:state.W/2,y:state.H*0.42};
+{
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink) applyState(fromLink);
+}
+pushHistory();
 requestAnimationFrame(frame);
 </script>
 </body>

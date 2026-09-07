@@ -173,7 +173,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <div class="sect">
           <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
           <div class="seed-row">
-            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <div class="seed-read" id="seedReadout" title="click to copy shareable link" style="cursor:pointer"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
             <button id="btnRandom" title="new random culture">⟳ Reseed</button>
           </div>
         </div>
@@ -239,6 +239,20 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-snd="on">On</button>
             </div>
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">Listen</span><span class="val" id="micLevel">—</span></div>
+            <div class="seg" id="segMic" role="group" aria-label="microphone reactive">
+              <button data-mic="off" class="is-active">Off</button>
+              <button data-mic="on">Mic ▸ vitality</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Dot engine</span><span class="val" id="engineTag">cpu</span></div>
+            <div class="seg" id="segEngine" role="group" aria-label="dot rendering engine">
+              <button data-eng="cpu" class="is-active">CPU</button>
+              <button data-eng="gpu">GPU ▸ WebGL2</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -246,6 +260,9 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnPlay">❚❚ Pause</button>
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
+        <button id="btnMp4" title="capture 6s as MP4 — plays inline where WebM does not">▣ MP4 6s</button>
+        <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -299,6 +316,7 @@ const state={
   palette:'phosphor',
   playing:true,
   sound:false,
+  dotEngine:'cpu',
   gen:0,
 };
 const sliders=['density','vitality','decay','tempo','grid','diffusion','glow','dotsize','ripples'];
@@ -391,19 +409,33 @@ function emitPulse(cx,cy,r,amp){
 function step(p){
   const {N,alive,next,u}=sim;
   sim.births=0;
+  /* the two wrapping columns are handled separately so the interior —
+     which is almost every cell — needs no modulo per neighbour */
+  const cell=(y0,ym,yp,x,xm,xp)=>{
+    const n=alive[ym+xm]+alive[ym+x]+alive[ym+xp]
+           +alive[y0+xm]           +alive[y0+xp]
+           +alive[yp+xm]+alive[yp+x]+alive[yp+xp];
+    const a=alive[y0+x];
+    const born=!a&&n===3, survive=a&&(n===2||n===3);
+    next[y0+x]=(born||survive)?1:0;
+    if(born){ sim.births++; u[y0+x]+=0.5; }        // life pushes the water up
+    else if(a&&!survive) u[y0+x]-=0.2;             // death pulls it under
+  };
   for(let y=0;y<N;y++){
     const ym=((y-1+N)%N)*N, y0=y*N, yp=((y+1)%N)*N;
-    for(let x=0;x<N;x++){
-      const xm=(x-1+N)%N, xp=(x+1)%N;
-      const n=alive[ym+xm]+alive[ym+x]+alive[ym+xp]
-             +alive[y0+xm]           +alive[y0+xp]
-             +alive[yp+xm]+alive[yp+x]+alive[yp+xp];
-      const a=alive[y0+x];
+    cell(y0,ym,yp,0,N-1,1);
+    for(let x=1;x<N-1;x++){
+      const i=y0+x;
+      const n=alive[ym+x-1]+alive[ym+x]+alive[ym+x+1]
+             +alive[i-1]              +alive[i+1]
+             +alive[yp+x-1]+alive[yp+x]+alive[yp+x+1];
+      const a=alive[i];
       const born=!a&&n===3, survive=a&&(n===2||n===3);
-      next[y0+x]=(born||survive)?1:0;
-      if(born){ sim.births++; u[y0+x]+=0.5; }      // life pushes the water up
-      else if(a&&!survive) u[y0+x]-=0.2;           // death pulls it under
+      next[i]=(born||survive)?1:0;
+      if(born){ sim.births++; u[i]+=0.5; }
+      else if(a&&!survive) u[i]-=0.2;
     }
+    cell(y0,ym,yp,N-1,N-2,0);
   }
   sim.next=sim.alive; sim.alive=next;
   /* now and then a colony speaks — a transmission ripples outward */
@@ -439,8 +471,9 @@ function audioTick(p){
       const ctx=new (window.AudioContext||window.webkitAudioContext)();
       const gain=ctx.createGain(); gain.gain.value=0.12;
       const filt=ctx.createBiquadFilter(); filt.type='lowpass';
-      filt.connect(gain); gain.connect(ctx.destination);
-      audio={ctx,filt,scale:[0,3,5,7,10,12,15,17]};
+      const dest=ctx.createMediaStreamDestination();
+      filt.connect(gain); gain.connect(ctx.destination); gain.connect(dest);
+      audio={ctx,filt,dest,scale:[0,3,5,7,10,12,15,17]};
     }
     const {ctx,filt,scale}=audio;
     if(ctx.state==='suspended') ctx.resume();
@@ -518,6 +551,140 @@ function drawDots(g,size,p,pal,tNow){
   }
 }
 
+/* ═══════════════════ GPU DOT PASS (opt-in) ═══════════════════
+   Only the dot rasterisation moves to the GPU. The simulation stays on
+   the CPU exactly as it is — it costs about a quarter of a millisecond
+   a generation and it owns births, audio, pulses and touch, none of
+   which want a round trip through a texture. What is expensive is
+   drawing tens of thousands of individually coloured dots every frame,
+   and that is pure per-pixel arithmetic.
+
+   The shader is a line-by-line transcription of drawDots(), and it
+   renders into a canvas the existing compositor then treats exactly
+   like the CPU 'layer', so bloom, abyss, sheen and vignette are
+   untouched. CPU stays the default; any failure reverts to it. */
+const gdots={ok:false,tried:false,gl:null,cv:null,prog:null,tex:null,buf:null,N:0,vao:null};
+
+const GD_VERT=`#version 300 es
+in vec2 aPos;
+void main(){ gl_Position=vec4(aPos,0.0,1.0); }`;
+
+const GD_FRAG=`#version 300 es
+precision highp float;
+uniform sampler2D uCell;     // r=energy g=heat b=wave
+uniform float uN,uSize,uDot,uAmt,uT1,uT2;
+uniform vec3 uDim,uBright,uHot,uTouch,uSpectral;
+out vec4 outColor;
+void main(){
+  float cs=uSize/uN;
+  vec2 px=vec2(gl_FragCoord.x, uSize-gl_FragCoord.y);   // image-space, row 0 at top
+  vec2 cell=floor(px/cs);
+  if(cell.x<0.0||cell.y<0.0||cell.x>=uN||cell.y>=uN){ outColor=vec4(0.0); return; }
+  vec3 c=texture(uCell,(cell+0.5)/uN).rgb;
+  float e0=c.r, h=c.g, w=c.b*c.r;
+  if(e0<0.03){ outColor=vec4(0.0); return; }
+  float x=cell.x, y=cell.y;
+  float und=(sin(uT1+x*0.42+y*0.23)+sin(uT2-x*0.17+y*0.51))*0.25+0.5;
+  float e=e0*(1.0-uAmt*0.4+uAmt*0.4*und)+max(0.0,w)*uAmt;
+  e=min(e,1.2);
+  vec3 col = e>0.985 ? mix(uBright,uHot,min(1.0,(e-0.985)*5.0)) : mix(uDim,uBright,e);
+  float sp=min(1.0,abs(w)*uAmt*0.9);
+  if(sp>0.05) col=mix(col,uSpectral,sp*0.45);
+  if(h>0.02) col=mix(col,uTouch,min(1.0,h*1.4));
+  float r=cs*uDot*0.5;
+  float rr=r*(0.55+0.45*min(1.0,e))*(1.0+uAmt*(und-0.5)*0.5+max(-0.3,w)*uAmt*0.7);
+  if(rr<=0.0){ outColor=vec4(0.0); return; }
+  vec2 centre=(cell+0.5)*cs;
+  float dist=length(px-centre);
+  float cov=clamp(rr-dist+0.5,0.0,1.0);            // 1px feather ≈ canvas antialiasing
+  if(cov<=0.0){ outColor=vec4(0.0); return; }
+  outColor=vec4(min(col,vec3(255.0))/255.0*cov,cov);
+}`;
+
+function gdotsInit(){
+  if(gdots.tried) return gdots.ok;
+  gdots.tried=true;
+  try{
+    const cv=document.createElement('canvas');
+    const gl=cv.getContext('webgl2',{antialias:false,premultipliedAlpha:true});
+    if(!gl){ console.warn('[colony-display] no webgl2'); return false; }
+    if(!gl.getExtension('EXT_color_buffer_float')&&!gl.getExtension('OES_texture_float_linear')){
+      /* float textures are only sampled here, not rendered to, so this is
+         advisory — carry on and let the shader compile decide */
+    }
+    const mk=(t,src)=>{
+      const s=gl.createShader(t); gl.shaderSource(s,src); gl.compileShader(s);
+      if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){ console.warn('[colony-display] shader:',gl.getShaderInfoLog(s)); return null; }
+      return s;
+    };
+    const vs=mk(gl.VERTEX_SHADER,GD_VERT), fs=mk(gl.FRAGMENT_SHADER,GD_FRAG);
+    if(!vs||!fs) return false;
+    const pr=gl.createProgram();
+    gl.attachShader(pr,vs); gl.attachShader(pr,fs); gl.linkProgram(pr);
+    if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){ console.warn('[colony-display] link:',gl.getProgramInfoLog(pr)); return false; }
+    const vao=gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const b=gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER,b);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+    const loc=gl.getAttribLocation(pr,'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+    gdots.gl=gl; gdots.cv=cv; gdots.prog=pr; gdots.vao=vao;
+    gdots.tex=gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D,gdots.tex);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gdots.ok=true;
+    return true;
+  }catch(e){ console.warn('[colony-display] gpu init threw',e); return false; }
+}
+function gdotsDraw(size,p,pal,tNow){
+  const gl=gdots.gl, N=sim.N;
+  if(gdots.cv.width!==size){ gdots.cv.width=gdots.cv.height=size; }
+  if(gdots.N!==N||!gdots.buf){ gdots.buf=new Float32Array(N*N*3); gdots.N=N; }
+  const {energy,heat,u}=sim, buf=gdots.buf;
+  for(let i=0,n=N*N;i<n;i++){ buf[i*3]=energy[i]; buf[i*3+1]=heat[i]; buf[i*3+2]=u[i]; }
+  gl.bindTexture(gl.TEXTURE_2D,gdots.tex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB32F,N,N,0,gl.RGB,gl.FLOAT,buf);
+  gl.bindVertexArray(gdots.vao);
+  gl.viewport(0,0,size,size);
+  gl.clearColor(0,0,0,0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(gdots.prog);
+  const U=n=>gl.getUniformLocation(gdots.prog,n);
+  gl.uniform1i(U('uCell'),0);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,gdots.tex);
+  gl.uniform1f(U('uN'),N);
+  gl.uniform1f(U('uSize'),size);
+  gl.uniform1f(U('uDot'),p.dotsize);
+  gl.uniform1f(U('uAmt'),p.ripples);
+  gl.uniform1f(U('uT1'),tNow*0.0016);
+  gl.uniform1f(U('uT2'),tNow*0.0011);
+  gl.uniform3f(U('uDim'),...pal.dim);
+  gl.uniform3f(U('uBright'),...pal.bright);
+  gl.uniform3f(U('uHot'),...pal.hot);
+  gl.uniform3f(U('uTouch'),...pal.touch);
+  gl.uniform3f(U('uSpectral'),...pal.spectral);
+  gl.drawArrays(gl.TRIANGLES,0,3);
+}
+function useGPUDots(){ return state.dotEngine==='gpu' && gdots.ok; }
+function setDotEngine(v){
+  if(v==='gpu'&&!gdotsInit()){
+    state.dotEngine='cpu';
+    document.querySelectorAll('#segEngine button').forEach(b=>b.classList.toggle('is-active',b.dataset.eng==='cpu'));
+    document.getElementById('engineTag').textContent='cpu · unavailable';
+    flashStatus('webgl2 unavailable — staying on cpu_');
+    return;
+  }
+  state.dotEngine=v;
+  document.getElementById('engineTag').textContent=v;
+}
+
 /* the abyss — dim palette murk drifting slowly beneath the dots */
 const abyss=document.createElement('canvas');
 abyss.width=abyss.height=16;
@@ -549,20 +716,29 @@ function render(g,size,p,tNow){
   g.fillStyle=pal.bg; g.fillRect(0,0,size,size);
   drawAbyss(g,size,p,pal,tNow);
 
-  if(layer.width!==size){ layer.width=layer.height=size; }
-  drawDots(lctx,size,p,pal,tNow);
+  /* the dot pass renders either on the CPU into `layer` or on the GPU
+     into its own canvas; everything downstream treats them the same */
+  let dots;
+  if(useGPUDots()){
+    gdotsDraw(size,p,pal,tNow);
+    dots=gdots.cv;
+  }else{
+    if(layer.width!==size){ layer.width=layer.height=size; }
+    drawDots(lctx,size,p,pal,tNow);
+    dots=layer;
+  }
 
   /* crisp pass fades out as diffusion rises; blurred pass grows.
      the bloom breathes on a slow heartbeat — the device is alive */
   const dif=p.diffusion;
   if(dif<0.98){
     g.globalAlpha=1-dif*0.85;
-    g.drawImage(layer,0,0);
+    g.drawImage(dots,0,0);
   }
   g.globalAlpha=Math.min(1,(0.25+p.glow*0.8+dif*0.6)*(0.86+0.14*Math.sin(tNow*0.0009)));
   g.globalCompositeOperation='lighter';
   g.filter=`blur(${(2+p.glow*8+dif*26)*(size/1080)}px)`;
-  g.drawImage(layer,0,0);
+  g.drawImage(dots,0,0);
   g.filter='none';
   g.globalCompositeOperation='source-over';
   g.globalAlpha=1;
@@ -581,6 +757,7 @@ function render(g,size,p,tNow){
 let acc=0, lastT=performance.now();
 function frame(tNow){
   const p=params();
+  { const e=micEnergy(); if(e>0) p.vitality=Math.min(1,p.vitality+e*0.85); }
   fitCanvas();
   const dt=Math.min(100,tNow-lastT); lastT=tNow;
   if(state.playing){
@@ -604,22 +781,25 @@ function canvasCell(ev){
   const y=(ev.clientY-rect.top)/rect.height*sim.N;
   return [x,y];
 }
-let touching=false, lastStamp=0;
+/* One throttle per finger, not one shared between them — with a single
+   timer two fingers halve each other's stamp rate. */
+const touches=new Map();          // pointerId → last stamp timestamp
 canvas.addEventListener('pointerdown',ev=>{
-  touching=true;
+  touches.set(ev.pointerId,0);
   const [x,y]=canvasCell(ev);
   stampBlob(x,y,4+Math.floor(sim.rnd()*3),true);
   if(state.sound) audioTick(params());
 });
 canvas.addEventListener('pointermove',ev=>{
-  if(!touching) return;
+  const last=touches.get(ev.pointerId);
+  if(last===undefined) return;
   const now=performance.now();
-  if(now-lastStamp<28) return;
-  lastStamp=now;
+  if(now-last<28) return;
+  touches.set(ev.pointerId,now);
   const [x,y]=canvasCell(ev);
   stampBlob(x,y,2+Math.floor(sim.rnd()*2),true);
 });
-window.addEventListener('pointerup',()=>{ touching=false; });
+['pointerup','pointercancel'].forEach(t=>window.addEventListener(t,ev=>touches.delete(ev.pointerId)));
 
 /* ═══════════════════ EXPORT / RECORD ═══════════════════ */
 function exportPNG(){
@@ -640,6 +820,7 @@ function recordClip(){
   const btn=document.getElementById('btnRecord');
   if(recorder) return;
   const stream=canvas.captureStream(30);
+  if(state.sound && audio) stream.addTrack(audio.dest.stream.getAudioTracks()[0]);
   const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
   const chunks=[];
@@ -657,6 +838,333 @@ function recordClip(){
   btn.classList.add('is-rec'); btn.disabled=true; btn.textContent='● recording';
   recorder.start();
   setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
+}
+
+/* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════ */
+function serializeState(){
+  const vals={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  return {seed:state.seed,palette:state.palette,sound:state.sound,dotEngine:state.dotEngine,vals};
+}
+function applyState(s){
+  state.seed=s.seed; state.palette=s.palette; state.sound=!!s.sound;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
+  document.querySelectorAll('#segSound button').forEach(b=>b.classList.toggle('is-active',b.dataset.snd===(state.sound?'on':'off')));
+  if(s.dotEngine){
+    document.querySelectorAll('#segEngine button').forEach(b=>b.classList.toggle('is-active',b.dataset.eng===s.dotEngine));
+    setDotEngine(s.dotEngine);
+  }
+  canvas.style.background=PALETTES[state.palette].bg;
+  reseed(params());
+  updateSeedDisplay();
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('link copied_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=off.height=2160;
+  render(off.getContext('2d'),2160,p,performance.now());
+  off.toBlob(async blob=>{
+    if(!blob) return;
+    const file=new File([blob],'digidelic-colony-'+state.seed.toString(16).padStart(8,'0')+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — colony display'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+}
+
+/* ═══════════════════ MP4 ═══════════════════
+   WebCodecs encodes H.264; this muxes it. Non-fragmented ftyp/mdat/moov
+   with every sample in one chunk, which keeps stsc and stco trivial and
+   is perfectly legal. Written in-file so the tool stays dependency-free.
+   MP4 plays inline where WebM does not — iOS, Twitter, Discord. */
+function mp4Box(type,...payload){
+  let len=8;
+  for(const p of payload) len+=p.length;
+  const out=new Uint8Array(len);
+  out[0]=(len>>>24)&255; out[1]=(len>>>16)&255; out[2]=(len>>>8)&255; out[3]=len&255;
+  for(let i=0;i<4;i++) out[4+i]=type.charCodeAt(i);
+  let o=8;
+  for(const p of payload){ out.set(p,o); o+=p.length; }
+  return out;
+}
+function buildMP4(samples,opt){
+  const {width,height,fps,avcC}=opt;
+  const b=(...v)=>Uint8Array.from(v);
+  const u16=v=>b((v>>8)&255,v&255);
+  const u32=v=>b((v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255);
+  const s4=s=>Uint8Array.from([...s].map(c=>c.charCodeAt(0)));
+  const zeros=n=>new Uint8Array(n);
+  const cat=a=>{ let n=0; for(const x of a) n+=x.length;
+    const o=new Uint8Array(n); let p=0; for(const x of a){ o.set(x,p); p+=x.length; } return o; };
+  const TS=90000, dur=Math.round(TS/fps), duration=dur*samples.length;
+  const mdat=mp4Box('mdat',cat(samples.map(s=>s.data)));
+  const ftyp=mp4Box('ftyp',s4('isom'),u32(512),s4('isom'),s4('iso2'),s4('avc1'),s4('mp41'));
+  const chunkOffset=ftyp.length+8;
+  const matrix=cat([u32(0x00010000),u32(0),u32(0),u32(0),u32(0x00010000),u32(0),u32(0),u32(0),u32(0x40000000)]);
+  const mvhd=mp4Box('mvhd',b(0,0,0,0),u32(0),u32(0),u32(TS),u32(duration),
+    u32(0x00010000),u16(0x0100),zeros(10),matrix,zeros(24),u32(2));
+  const tkhd=mp4Box('tkhd',b(0,0,0,3),u32(0),u32(0),u32(1),u32(0),u32(duration),
+    zeros(8),u16(0),u16(0),u16(0),u16(0),matrix,u32(width<<16),u32(height<<16));
+  const mdhd=mp4Box('mdhd',b(0,0,0,0),u32(0),u32(0),u32(TS),u32(duration),u16(0x55C4),u16(0));
+  const hdlr=mp4Box('hdlr',b(0,0,0,0),u32(0),s4('vide'),zeros(12),s4('VideoHandler\0'));
+  const vmhd=mp4Box('vmhd',b(0,0,0,1),u16(0),u16(0),u16(0),u16(0));
+  const dinf=mp4Box('dinf',mp4Box('dref',b(0,0,0,0),u32(1),mp4Box('url ',b(0,0,0,1))));
+  const avc1=mp4Box('avc1',zeros(6),u16(1),u16(0),u16(0),zeros(12),
+    u16(width),u16(height),u32(0x00480000),u32(0x00480000),u32(0),
+    u16(1),new Uint8Array(32),u16(0x0018),u16(0xFFFF),mp4Box('avcC',avcC));
+  const stsd=mp4Box('stsd',b(0,0,0,0),u32(1),avc1);
+  const stts=mp4Box('stts',b(0,0,0,0),u32(1),u32(samples.length),u32(dur));
+  const keys=[];
+  samples.forEach((s,i)=>{ if(s.key) keys.push(i+1); });
+  const stss=mp4Box('stss',b(0,0,0,0),u32(keys.length),cat(keys.map(u32)));
+  const stsc=mp4Box('stsc',b(0,0,0,0),u32(1),u32(1),u32(samples.length),u32(1));
+  const stsz=mp4Box('stsz',b(0,0,0,0),u32(0),u32(samples.length),cat(samples.map(s=>u32(s.data.length))));
+  const stco=mp4Box('stco',b(0,0,0,0),u32(1),u32(chunkOffset));
+  const stbl=mp4Box('stbl',stsd,stts,stss,stsc,stsz,stco);
+  const moov=mp4Box('moov',mvhd,mp4Box('trak',tkhd,
+    mp4Box('mdia',mdhd,hdlr,mp4Box('minf',vmhd,dinf,stbl))));
+  return cat([ftyp,mdat,moov]);
+}
+function recordMP4(){
+  const btn=document.getElementById('btnMp4');
+  if(btn.disabled) return;
+  if(typeof VideoEncoder==='undefined'){ flashStatus('no webcodecs in this browser_'); return; }
+  /* H.264 wants even dimensions */
+  const W=Math.max(2,Math.min(1280,canvas.width)&~1);
+  const H=Math.max(2,Math.round(W*canvas.height/canvas.width)&~1);
+  const off=document.createElement('canvas');
+  off.width=W; off.height=H;
+  const octx=off.getContext('2d');
+  const fps=30, total=fps*6;
+  const samples=[];
+  let avcC=null, broken=false, n=0;
+  const reset=()=>{ btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='▣ MP4 6s'; };
+  let enc;
+  try{
+    enc=new VideoEncoder({
+      output:(chunk,meta)=>{
+        if(!avcC&&meta&&meta.decoderConfig&&meta.decoderConfig.description)
+          avcC=new Uint8Array(meta.decoderConfig.description);
+        const d=new Uint8Array(chunk.byteLength);
+        chunk.copyTo(d);
+        samples.push({data:d,key:chunk.type==='key'});
+      },
+      error:()=>{ broken=true; },
+    });
+    /* 'avc' format gives length-prefixed samples plus the avcC blob,
+       which is exactly what the muxer above expects */
+    enc.configure({codec:'avc1.42001f',width:W,height:H,bitrate:8000000,framerate:fps,avc:{format:'avc'}});
+  }catch{ flashStatus('h264 encoding unavailable_'); return; }
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    if(broken){ reset(); flashStatus('encoder failed_'); return; }
+    octx.drawImage(canvas,0,0,W,H);
+    try{
+      const frame=new VideoFrame(off,{timestamp:Math.round(n*1000000/fps),duration:Math.round(1000000/fps)});
+      enc.encode(frame,{keyFrame:n%fps===0});
+      frame.close();
+    }catch{ broken=true; }
+    n++;
+    btn.textContent='● '+Math.max(0,Math.ceil((total-n)/fps));
+    if(n<total){ setTimeout(grab,1000/fps); return; }
+    btn.textContent='◍ muxing';
+    enc.flush().then(()=>{
+      try{ enc.close(); }catch{}
+      if(broken||!avcC||!samples.length){ reset(); flashStatus('mp4 encode failed_'); return; }
+      const mp4=buildMP4(samples,{width:W,height:H,fps,avcC});
+      const blob=new Blob([mp4],{type:'video/mp4'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-colony-'+Date.now().toString(36)+'.mp4';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      reset();
+    }).catch(()=>{ reset(); flashStatus('mp4 encode failed_'); });
+  };
+  grab();
+}
+
+/* ═══════════════════ GIF ═══════════════════
+   GIF89a written in-file so the tool keeps its no-dependency promise:
+   a fixed 6·6·6 colour cube plus a 40-step grey ramp, ordered-dithered,
+   LZW packed. Frames are grabbed off the live canvas on a timer so the
+   UI keeps breathing, then packed in one go at the end. */
+function gifEncoder(W,H,delayCs){
+  const B=[];
+  const u8=v=>B.push(v&255), u16=v=>{B.push(v&255);B.push((v>>8)&255);},
+        st=s=>{for(let i=0;i<s.length;i++)B.push(s.charCodeAt(i));};
+  const pal=[], L=[0,51,102,153,204,255];
+  for(let r=0;r<6;r++)for(let g=0;g<6;g++)for(let b=0;b<6;b++)pal.push([L[r],L[g],L[b]]);
+  for(let i=0;i<40;i++){const v=Math.round(i*255/39);pal.push([v,v,v]);}
+  st('GIF89a');u16(W);u16(H);u8(0xF7);u8(0);u8(0);
+  for(const c of pal){u8(c[0]);u8(c[1]);u8(c[2]);}
+  u8(0x21);u8(0xFF);u8(11);st('NETSCAPE2.0');u8(3);u8(1);u16(0);u8(0);
+  const BAY=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  return {
+    add(rgba){
+      const idx=new Uint8Array(W*H);
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+        const p=(y*W+x)*4, d=(BAY[y&3][x&3]/16-0.5)*51;
+        const r=Math.max(0,Math.min(255,rgba[p]+d));
+        const g=Math.max(0,Math.min(255,rgba[p+1]+d));
+        const b=Math.max(0,Math.min(255,rgba[p+2]+d));
+        let best=Math.round(r/51)*36+Math.round(g/51)*6+Math.round(b/51);
+        if(Math.max(r,g,b)-Math.min(r,g,b)<26){           // neutrals read better off the grey ramp
+          const lum=(r+g+b)/3, gi=216+Math.round(lum/255*39), c=pal[best];
+          if(Math.abs(pal[gi][0]-lum)<Math.abs((c[0]+c[1]+c[2])/3-lum)) best=gi;
+        }
+        idx[y*W+x]=best;
+      }
+      u8(0x21);u8(0xF9);u8(4);u8(4);u16(delayCs);u8(0);u8(0);
+      u8(0x2C);u16(0);u16(0);u16(W);u16(H);u8(0);u8(8);
+      const out=[];
+      let cur=0,bits=0,size=9,next=258,dict=new Map();
+      const emit=c=>{cur|=c<<bits;bits+=size;while(bits>=8){out.push(cur&255);cur>>=8;bits-=8;}};
+      emit(256);
+      let pre=idx[0];
+      for(let i=1;i<idx.length;i++){
+        const k=idx[i], key=pre*4096+k, f=dict.get(key);
+        if(f!==undefined){pre=f;continue;}
+        emit(pre);
+        if(next<4096){ dict.set(key,next++); if(next>(1<<size)&&size<12) size++; }
+        else{ emit(256); dict=new Map(); next=258; size=9; }
+        pre=k;
+      }
+      emit(pre); emit(257);
+      if(bits>0) out.push(cur&255);
+      for(let i=0;i<out.length;i+=255){
+        const n=Math.min(255,out.length-i);
+        u8(n);
+        for(let j=0;j<n;j++) u8(out[i+j]);
+      }
+      u8(0);
+    },
+    finish(){ u8(0x3B); return new Uint8Array(B); },
+  };
+}
+function recordGIF(){
+  const btn=document.getElementById('btnGif');
+  if(btn.disabled) return;
+  const GW=Math.min(480,canvas.width);
+  const GH=Math.max(1,Math.round(GW*canvas.height/canvas.width));
+  const off=document.createElement('canvas');
+  off.width=GW; off.height=GH;
+  const octx=off.getContext('2d',{willReadFrequently:true});
+  const enc=gifEncoder(GW,GH,8);
+  const total=36;
+  let n=0;
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    octx.drawImage(canvas,0,0,GW,GH);
+    enc.add(octx.getImageData(0,0,GW,GH).data);
+    n++;
+    btn.textContent='● '+(total-n);
+    if(n<total){ setTimeout(grab,80); return; }
+    btn.textContent='◍ packing';
+    setTimeout(()=>{
+      const blob=new Blob([enc.finish()],{type:'image/gif'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-colony-'+Date.now().toString(36)+'.gif';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='◉ GIF 3s';
+    },30);
+  };
+  grab();
+}
+
+/* ═══════════════════ LISTEN ═══════════════════
+   Optional microphone input reduced to one smoothed 0..1 energy value.
+   Off until asked for — it needs a user gesture and a permission grant —
+   and any failure silently falls back to "no mic". */
+let mic={on:false,ctx:null,an:null,data:null,energy:0,stream:null};
+async function micToggle(on){
+  if(on===mic.on) return;
+  if(!on){
+    mic.on=false;
+    if(mic.stream) mic.stream.getTracks().forEach(t=>t.stop());
+    mic.stream=null; mic.energy=0;
+    const lv=document.getElementById('micLevel'); if(lv) lv.textContent='—';
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const ctx=mic.ctx||new (window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==='suspended') await ctx.resume();
+    const an=ctx.createAnalyser();
+    an.fftSize=1024; an.smoothingTimeConstant=0.7;
+    ctx.createMediaStreamSource(stream).connect(an);
+    mic={on:true,ctx,an,data:new Uint8Array(an.frequencyBinCount),energy:0,stream};
+  }catch{
+    mic.on=false;
+    if(typeof flashStatus==='function') flashStatus('no mic — permission denied_');
+    document.querySelectorAll('#segMic button').forEach(b=>b.classList.toggle('is-active',b.dataset.mic==='off'));
+  }
+}
+function micEnergy(){
+  if(!mic.on||!mic.an) return 0;
+  mic.an.getByteFrequencyData(mic.data);
+  let sum=0;
+  for(let i=0;i<mic.data.length;i++) sum+=mic.data[i];
+  const avg=sum/mic.data.length/255;
+  mic.energy=mic.energy*0.72+avg*0.28;
+  const e=Math.min(1,mic.energy*2.4);
+  const lv=document.getElementById('micLevel');
+  if(lv) lv.textContent=Math.round(e*100)+'%';
+  return e;
 }
 
 /* ═══════════════════ WIRING ═══════════════════ */
@@ -677,6 +1185,7 @@ sliders.forEach(id=>{
     syncSlider(el);
     if(id==='grid'||id==='density') reseed(params());
   });
+  el.addEventListener('change',pushHistory);
   syncSlider(el);
 });
 
@@ -687,20 +1196,27 @@ function wireSeg(segId,attr,onPick){
     seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
     btn.classList.add('is-active');
     onPick(btn.dataset[attr]);
+    pushHistory();
   });
 }
 wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
+wireSeg('segMic','mic',v=>{ micToggle(v==='on'); });
+wireSeg('segEngine','eng',setDotEngine);
 wireSeg('segSound','snd',v=>{
   state.sound=v==='on';
   if(state.sound&&audio&&audio.ctx.state==='suspended') audio.ctx.resume();
 });
 
-function newSeed(){
-  state.seed=(Math.random()*0xffffffff)>>>0;
-  reseed(params());
+function updateSeedDisplay(){
   const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
   document.getElementById('seedHex').textContent=hex;
   document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+function newSeed(){
+  state.seed=(Math.random()*0xffffffff)>>>0;
+  reseed(params());
+  updateSeedDisplay();
+  pushHistory();
 }
 document.getElementById('btnRandom').addEventListener('click',newSeed);
 document.getElementById('btnPlay').addEventListener('click',()=>{
@@ -709,19 +1225,27 @@ document.getElementById('btnPlay').addEventListener('click',()=>{
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
+document.getElementById('btnGif').addEventListener('click',recordGIF);
+document.getElementById('btnMp4').addEventListener('click',recordMP4);
+document.getElementById('seedReadout').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('keydown',e=>{
-  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); newSeed(); }
-  if(e.key==='e' && !e.target.closest('input')) exportPNG();
-  if(e.key==='p' && !e.target.closest('input')) document.getElementById('btnPlay').click();
+  if(e.target.closest('input')) return;
+  if(e.key===' ' && !e.target.closest('button')){ e.preventDefault(); newSeed(); }
+  if(e.key==='e') exportPNG();
+  if(e.key==='p') document.getElementById('btnPlay').click();
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); }
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); }
 });
 
 /* boot */
-reseed(params());
 {
-  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
-  document.getElementById('seedHex').textContent=hex;
-  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink) applyState(fromLink); else reseed(params());
+  updateSeedDisplay();
 }
+pushHistory();
 requestAnimationFrame(frame);
 </script>
 </body>

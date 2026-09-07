@@ -168,7 +168,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <div class="sect">
           <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
           <div class="seed-row">
-            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <div class="seed-read" id="seedReadout" title="click to copy shareable link" style="cursor:pointer"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
             <button id="btnRandom" title="new phase constellation">⟳ Reseed</button>
           </div>
         </div>
@@ -234,6 +234,21 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-snd="on">On</button>
             </div>
           </div>
+          <div class="param">
+            <div class="lab"><span class="name">Input</span></div>
+            <div class="seg" id="segInput" role="group" aria-label="beam source">
+              <button data-in="osc" class="is-active">Oscillators</button>
+              <button data-in="mic">Line in ▸ mic</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">External</span></div>
+            <div class="seg" id="segCtl" role="group" aria-label="external control">
+              <button data-ctl="off" class="is-active">Off</button>
+              <button data-ctl="midi">MIDI CC</button>
+              <button data-ctl="pad">Gamepad</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -241,6 +256,9 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnPlay">❚❚ Pause</button>
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
+        <button id="btnMp4" title="capture 6s as MP4 — plays inline where WebM does not">▣ MP4 6s</button>
+        <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -318,6 +336,16 @@ function params(){
 
 /* ═══════════════════ SIGNAL ═══════════════════ */
 function signal(th,p){
+  if(scopeIn.on&&scopeIn.buf){
+    const b=scopeIn.buf, L=b.length;
+    /* sweep the buffer with theta; the delay sets the second axis */
+    const d=Math.max(1,Math.round(L/(8+p.fy*10)));
+    const i=((th*L*0.02)|0)%L;
+    const g=1.6+p.harm*2.4;
+    const x=b[(i%L+L)%L]*g;
+    const y=b[((i+d)%L+L)%L]*g;
+    return [Math.max(-1.6,Math.min(1.6,x)),Math.max(-1.6,Math.min(1.6,y))];
+  }
   const [p1,p2,p3,p4]=scope.ph;
   const h=p.harm*0.6;
   const fmx=Math.sin(th*0.037+p3)*p.fm*0.55;
@@ -326,6 +354,40 @@ function signal(th,p){
   const x=(Math.sin(p.fx*th+p1+fmx)+h*Math.sin(scope.m2x*p.fx*th*0.5+p3))/(1+h);
   const y=(Math.sin(fy*th+p2+fmy)+h*Math.sin(scope.m2y*fy*th*0.5+p4))/(1+h);
   return [x,y];
+}
+
+/* ═══════════════════ LINE IN ═══════════════════
+   With input set to Mic the beam plots the actual incoming waveform
+   instead of the synthesised pair, which is what a real X/Y scope does.
+   A microphone is mono, so the second axis is the same signal delayed —
+   a phase-space embedding, which is the standard way to get a Lissajous
+   figure out of one channel and still shows genuine harmonic structure. */
+let scopeIn={on:false,an:null,buf:null,stream:null,ctx:null};
+async function scopeInput(mode){
+  if(mode!=='mic'){
+    scopeIn.on=false;
+    if(scopeIn.stream) scopeIn.stream.getTracks().forEach(t=>t.stop());
+    scopeIn.stream=null;
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const actx=scopeIn.ctx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended') await actx.resume();
+    const an=actx.createAnalyser();
+    an.fftSize=2048;
+    actx.createMediaStreamSource(stream).connect(an);
+    scopeIn={on:true,an,buf:new Float32Array(an.fftSize),stream,ctx:actx};
+    flashStatus('line in live_');
+  }catch{
+    scopeIn.on=false;
+    document.querySelectorAll('#segInput button').forEach(b=>b.classList.toggle('is-active',b.dataset.in==='osc'));
+    flashStatus('no input access_');
+  }
+}
+function pullInput(){
+  if(!scopeIn.on||!scopeIn.an) return;
+  scopeIn.an.getFloatTimeDomainData(scopeIn.buf);
 }
 
 /* ═══════════════════ RENDER ═══════════════════ */
@@ -419,11 +481,12 @@ function render(g,size,p,tNow){
 }
 
 /* ═══════════════════ AUDIO — the plotted pair, audible ═══════════════════ */
-let audio=null;
+let audio=null, lastAudioKey=null;
 function audioSync(p){
   try{
     if(!state.sound){
       if(audio){ audio.g.gain.value=0; }
+      lastAudioKey=null;
       return;
     }
     if(!audio){
@@ -435,11 +498,15 @@ function audioSync(p){
       o1.type='sine'; o2.type='sine';
       o1.connect(p1); p1.connect(g);
       o2.connect(p2); p2.connect(g);
-      g.connect(actx.destination);
+      const dest=actx.createMediaStreamDestination();
+      g.connect(actx.destination); g.connect(dest);
       o1.start(); o2.start();
-      audio={actx,g,o1,o2};
+      audio={actx,g,o1,o2,dest};
     }
     if(audio.actx.state==='suspended') audio.actx.resume();
+    const key=p.fx+','+p.fy+','+p.detune;
+    if(key===lastAudioKey) return;
+    lastAudioKey=key;
     audio.g.gain.value=0.05;
     audio.o1.frequency.value=55*p.fx;
     audio.o2.frequency.value=55*(p.fy+p.detune*0.05);
@@ -450,6 +517,7 @@ function audioSync(p){
 let lastT=performance.now();
 function frame(tNow){
   const p=params();
+  pullInput();
   fitCanvas();
   const size=canvas.width;
   if(trailInitNeeded){
@@ -502,6 +570,7 @@ function recordClip(){
   const btn=document.getElementById('btnRecord');
   if(recorder) return;
   const stream=canvas.captureStream(30);
+  if(state.sound && audio) stream.addTrack(audio.dest.stream.getAudioTracks()[0]);
   const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
   const chunks=[];
@@ -521,6 +590,347 @@ function recordClip(){
   setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
 }
 
+/* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════ */
+function serializeState(){
+  const vals={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  return {seed:state.seed,palette:state.palette,sound:state.sound,vals};
+}
+function applyState(s){
+  state.seed=s.seed; state.palette=s.palette; state.sound=!!s.sound;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
+  document.querySelectorAll('#segSound button').forEach(b=>b.classList.toggle('is-active',b.dataset.snd===(state.sound?'on':'off')));
+  canvas.style.background=PALETTES[state.palette].bg;
+  applySeed();
+  audioSync(params());
+  updateSeedDisplay();
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('link copied_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const off=document.createElement('canvas');
+  off.width=off.height=2160;
+  const octx=off.getContext('2d');
+  render(octx,2160,p,performance.now());
+  off.toBlob(async blob=>{
+    if(!blob) return;
+    const file=new File([blob],'digidelic-scope-'+state.seed.toString(16).padStart(8,'0')+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — signal scope'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+}
+
+/* ═══════════════════ MP4 ═══════════════════
+   WebCodecs encodes H.264; this muxes it. Non-fragmented ftyp/mdat/moov
+   with every sample in one chunk, which keeps stsc and stco trivial and
+   is perfectly legal. Written in-file so the tool stays dependency-free.
+   MP4 plays inline where WebM does not — iOS, Twitter, Discord. */
+function mp4Box(type,...payload){
+  let len=8;
+  for(const p of payload) len+=p.length;
+  const out=new Uint8Array(len);
+  out[0]=(len>>>24)&255; out[1]=(len>>>16)&255; out[2]=(len>>>8)&255; out[3]=len&255;
+  for(let i=0;i<4;i++) out[4+i]=type.charCodeAt(i);
+  let o=8;
+  for(const p of payload){ out.set(p,o); o+=p.length; }
+  return out;
+}
+function buildMP4(samples,opt){
+  const {width,height,fps,avcC}=opt;
+  const b=(...v)=>Uint8Array.from(v);
+  const u16=v=>b((v>>8)&255,v&255);
+  const u32=v=>b((v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255);
+  const s4=s=>Uint8Array.from([...s].map(c=>c.charCodeAt(0)));
+  const zeros=n=>new Uint8Array(n);
+  const cat=a=>{ let n=0; for(const x of a) n+=x.length;
+    const o=new Uint8Array(n); let p=0; for(const x of a){ o.set(x,p); p+=x.length; } return o; };
+  const TS=90000, dur=Math.round(TS/fps), duration=dur*samples.length;
+  const mdat=mp4Box('mdat',cat(samples.map(s=>s.data)));
+  const ftyp=mp4Box('ftyp',s4('isom'),u32(512),s4('isom'),s4('iso2'),s4('avc1'),s4('mp41'));
+  const chunkOffset=ftyp.length+8;
+  const matrix=cat([u32(0x00010000),u32(0),u32(0),u32(0),u32(0x00010000),u32(0),u32(0),u32(0),u32(0x40000000)]);
+  const mvhd=mp4Box('mvhd',b(0,0,0,0),u32(0),u32(0),u32(TS),u32(duration),
+    u32(0x00010000),u16(0x0100),zeros(10),matrix,zeros(24),u32(2));
+  const tkhd=mp4Box('tkhd',b(0,0,0,3),u32(0),u32(0),u32(1),u32(0),u32(duration),
+    zeros(8),u16(0),u16(0),u16(0),u16(0),matrix,u32(width<<16),u32(height<<16));
+  const mdhd=mp4Box('mdhd',b(0,0,0,0),u32(0),u32(0),u32(TS),u32(duration),u16(0x55C4),u16(0));
+  const hdlr=mp4Box('hdlr',b(0,0,0,0),u32(0),s4('vide'),zeros(12),s4('VideoHandler\0'));
+  const vmhd=mp4Box('vmhd',b(0,0,0,1),u16(0),u16(0),u16(0),u16(0));
+  const dinf=mp4Box('dinf',mp4Box('dref',b(0,0,0,0),u32(1),mp4Box('url ',b(0,0,0,1))));
+  const avc1=mp4Box('avc1',zeros(6),u16(1),u16(0),u16(0),zeros(12),
+    u16(width),u16(height),u32(0x00480000),u32(0x00480000),u32(0),
+    u16(1),new Uint8Array(32),u16(0x0018),u16(0xFFFF),mp4Box('avcC',avcC));
+  const stsd=mp4Box('stsd',b(0,0,0,0),u32(1),avc1);
+  const stts=mp4Box('stts',b(0,0,0,0),u32(1),u32(samples.length),u32(dur));
+  const keys=[];
+  samples.forEach((s,i)=>{ if(s.key) keys.push(i+1); });
+  const stss=mp4Box('stss',b(0,0,0,0),u32(keys.length),cat(keys.map(u32)));
+  const stsc=mp4Box('stsc',b(0,0,0,0),u32(1),u32(1),u32(samples.length),u32(1));
+  const stsz=mp4Box('stsz',b(0,0,0,0),u32(0),u32(samples.length),cat(samples.map(s=>u32(s.data.length))));
+  const stco=mp4Box('stco',b(0,0,0,0),u32(1),u32(chunkOffset));
+  const stbl=mp4Box('stbl',stsd,stts,stss,stsc,stsz,stco);
+  const moov=mp4Box('moov',mvhd,mp4Box('trak',tkhd,
+    mp4Box('mdia',mdhd,hdlr,mp4Box('minf',vmhd,dinf,stbl))));
+  return cat([ftyp,mdat,moov]);
+}
+function recordMP4(){
+  const btn=document.getElementById('btnMp4');
+  if(btn.disabled) return;
+  if(typeof VideoEncoder==='undefined'){ flashStatus('no webcodecs in this browser_'); return; }
+  /* H.264 wants even dimensions */
+  const W=Math.max(2,Math.min(1280,canvas.width)&~1);
+  const H=Math.max(2,Math.round(W*canvas.height/canvas.width)&~1);
+  const off=document.createElement('canvas');
+  off.width=W; off.height=H;
+  const octx=off.getContext('2d');
+  const fps=30, total=fps*6;
+  const samples=[];
+  let avcC=null, broken=false, n=0;
+  const reset=()=>{ btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='▣ MP4 6s'; };
+  let enc;
+  try{
+    enc=new VideoEncoder({
+      output:(chunk,meta)=>{
+        if(!avcC&&meta&&meta.decoderConfig&&meta.decoderConfig.description)
+          avcC=new Uint8Array(meta.decoderConfig.description);
+        const d=new Uint8Array(chunk.byteLength);
+        chunk.copyTo(d);
+        samples.push({data:d,key:chunk.type==='key'});
+      },
+      error:()=>{ broken=true; },
+    });
+    /* 'avc' format gives length-prefixed samples plus the avcC blob,
+       which is exactly what the muxer above expects */
+    enc.configure({codec:'avc1.42001f',width:W,height:H,bitrate:8000000,framerate:fps,avc:{format:'avc'}});
+  }catch{ flashStatus('h264 encoding unavailable_'); return; }
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    if(broken){ reset(); flashStatus('encoder failed_'); return; }
+    octx.drawImage(canvas,0,0,W,H);
+    try{
+      const frame=new VideoFrame(off,{timestamp:Math.round(n*1000000/fps),duration:Math.round(1000000/fps)});
+      enc.encode(frame,{keyFrame:n%fps===0});
+      frame.close();
+    }catch{ broken=true; }
+    n++;
+    btn.textContent='● '+Math.max(0,Math.ceil((total-n)/fps));
+    if(n<total){ setTimeout(grab,1000/fps); return; }
+    btn.textContent='◍ muxing';
+    enc.flush().then(()=>{
+      try{ enc.close(); }catch{}
+      if(broken||!avcC||!samples.length){ reset(); flashStatus('mp4 encode failed_'); return; }
+      const mp4=buildMP4(samples,{width:W,height:H,fps,avcC});
+      const blob=new Blob([mp4],{type:'video/mp4'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-scope-'+Date.now().toString(36)+'.mp4';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      reset();
+    }).catch(()=>{ reset(); flashStatus('mp4 encode failed_'); });
+  };
+  grab();
+}
+
+/* ═══════════════════ GIF ═══════════════════
+   GIF89a written in-file so the tool keeps its no-dependency promise:
+   a fixed 6·6·6 colour cube plus a 40-step grey ramp, ordered-dithered,
+   LZW packed. Frames are grabbed off the live canvas on a timer so the
+   UI keeps breathing, then packed in one go at the end. */
+function gifEncoder(W,H,delayCs){
+  const B=[];
+  const u8=v=>B.push(v&255), u16=v=>{B.push(v&255);B.push((v>>8)&255);},
+        st=s=>{for(let i=0;i<s.length;i++)B.push(s.charCodeAt(i));};
+  const pal=[], L=[0,51,102,153,204,255];
+  for(let r=0;r<6;r++)for(let g=0;g<6;g++)for(let b=0;b<6;b++)pal.push([L[r],L[g],L[b]]);
+  for(let i=0;i<40;i++){const v=Math.round(i*255/39);pal.push([v,v,v]);}
+  st('GIF89a');u16(W);u16(H);u8(0xF7);u8(0);u8(0);
+  for(const c of pal){u8(c[0]);u8(c[1]);u8(c[2]);}
+  u8(0x21);u8(0xFF);u8(11);st('NETSCAPE2.0');u8(3);u8(1);u16(0);u8(0);
+  const BAY=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  return {
+    add(rgba){
+      const idx=new Uint8Array(W*H);
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+        const p=(y*W+x)*4, d=(BAY[y&3][x&3]/16-0.5)*51;
+        const r=Math.max(0,Math.min(255,rgba[p]+d));
+        const g=Math.max(0,Math.min(255,rgba[p+1]+d));
+        const b=Math.max(0,Math.min(255,rgba[p+2]+d));
+        let best=Math.round(r/51)*36+Math.round(g/51)*6+Math.round(b/51);
+        if(Math.max(r,g,b)-Math.min(r,g,b)<26){           // neutrals read better off the grey ramp
+          const lum=(r+g+b)/3, gi=216+Math.round(lum/255*39), c=pal[best];
+          if(Math.abs(pal[gi][0]-lum)<Math.abs((c[0]+c[1]+c[2])/3-lum)) best=gi;
+        }
+        idx[y*W+x]=best;
+      }
+      u8(0x21);u8(0xF9);u8(4);u8(4);u16(delayCs);u8(0);u8(0);
+      u8(0x2C);u16(0);u16(0);u16(W);u16(H);u8(0);u8(8);
+      const out=[];
+      let cur=0,bits=0,size=9,next=258,dict=new Map();
+      const emit=c=>{cur|=c<<bits;bits+=size;while(bits>=8){out.push(cur&255);cur>>=8;bits-=8;}};
+      emit(256);
+      let pre=idx[0];
+      for(let i=1;i<idx.length;i++){
+        const k=idx[i], key=pre*4096+k, f=dict.get(key);
+        if(f!==undefined){pre=f;continue;}
+        emit(pre);
+        if(next<4096){ dict.set(key,next++); if(next>(1<<size)&&size<12) size++; }
+        else{ emit(256); dict=new Map(); next=258; size=9; }
+        pre=k;
+      }
+      emit(pre); emit(257);
+      if(bits>0) out.push(cur&255);
+      for(let i=0;i<out.length;i+=255){
+        const n=Math.min(255,out.length-i);
+        u8(n);
+        for(let j=0;j<n;j++) u8(out[i+j]);
+      }
+      u8(0);
+    },
+    finish(){ u8(0x3B); return new Uint8Array(B); },
+  };
+}
+function recordGIF(){
+  const btn=document.getElementById('btnGif');
+  if(btn.disabled) return;
+  const GW=Math.min(480,canvas.width);
+  const GH=Math.max(1,Math.round(GW*canvas.height/canvas.width));
+  const off=document.createElement('canvas');
+  off.width=GW; off.height=GH;
+  const octx=off.getContext('2d',{willReadFrequently:true});
+  const enc=gifEncoder(GW,GH,8);
+  const total=36;
+  let n=0;
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    octx.drawImage(canvas,0,0,GW,GH);
+    enc.add(octx.getImageData(0,0,GW,GH).data);
+    n++;
+    btn.textContent='● '+(total-n);
+    if(n<total){ setTimeout(grab,80); return; }
+    btn.textContent='◍ packing';
+    setTimeout(()=>{
+      const blob=new Blob([enc.finish()],{type:'image/gif'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-scope-'+Date.now().toString(36)+'.gif';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='◉ GIF 3s';
+    },30);
+  };
+  grab();
+}
+
+/* ═══════════════════ EXTERNAL CONTROL ═══════════════════
+   MIDI continuous controllers and gamepad axes drive the rack directly:
+   CC n moves the nth slider, stick axis n likewise. Values are written
+   through the slider's own input event, so every handler already wired
+   to that slider — rebuild, redraw, readout sync — runs unchanged and
+   this needs no per-tool knowledge of what the sliders mean. */
+let extCtl={mode:'off',raf:0};
+function setSliderFromNorm(id,norm){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const min=parseFloat(el.min), max=parseFloat(el.max), step=parseFloat(el.step)||1;
+  let v=min+(max-min)*Math.max(0,Math.min(1,norm));
+  v=Math.round(v/step)*step;
+  if(parseFloat(el.value)===v) return;
+  el.value=v;
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+}
+function extFallback(){
+  extCtl.mode='off';
+  document.querySelectorAll('#segCtl button').forEach(b=>b.classList.toggle('is-active',b.dataset.ctl==='off'));
+}
+async function extControl(mode){
+  cancelAnimationFrame(extCtl.raf);
+  extCtl.mode=mode;
+  if(mode==='midi'){
+    try{
+      if(!navigator.requestMIDIAccess) throw new Error('no webmidi');
+      const access=await navigator.requestMIDIAccess();
+      let n=0;
+      for(const input of access.inputs.values()){
+        n++;
+        input.onmidimessage=ev=>{
+          if(extCtl.mode!=='midi') return;
+          const [status,cc,val]=ev.data;
+          if((status&0xF0)!==0xB0) return;              // control-change only
+          setSliderFromNorm(sliders[cc%sliders.length],val/127);
+        };
+      }
+      flashStatus(n?('midi listening · '+n+' in_'):'midi ready · no inputs_');
+    }catch{
+      extFallback();
+      flashStatus('no midi access_');
+    }
+  }else if(mode==='pad'){
+    if(!navigator.getGamepads){ extFallback(); flashStatus('no gamepad api_'); return; }
+    const poll=()=>{
+      if(extCtl.mode!=='pad') return;
+      const pad=[...(navigator.getGamepads()||[])].find(Boolean);
+      if(pad) for(let i=0;i<Math.min(pad.axes.length,sliders.length);i++)
+        setSliderFromNorm(sliders[i],(pad.axes[i]+1)/2);
+      extCtl.raf=requestAnimationFrame(poll);
+    };
+    poll();
+    flashStatus('gamepad polling_');
+  }
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
@@ -536,6 +946,7 @@ function syncSlider(el){
 sliders.forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('input',()=>{ syncSlider(el); });
+  el.addEventListener('change',pushHistory);
   syncSlider(el);
 });
 
@@ -546,8 +957,11 @@ function wireSeg(segId,attr,onPick){
     seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
     btn.classList.add('is-active');
     onPick(btn.dataset[attr]);
+    pushHistory();
   });
 }
+wireSeg('segCtl','ctl',extControl);
+wireSeg('segInput','in',scopeInput);
 wireSeg('segPalette','pal',v=>{
   state.palette=v;
   canvas.style.background=PALETTES[v].bg;
@@ -555,12 +969,16 @@ wireSeg('segPalette','pal',v=>{
 });
 wireSeg('segSound','snd',v=>{ state.sound=v==='on'; audioSync(params()); });
 
-function newSeed(){
-  state.seed=(Math.random()*0xffffffff)>>>0;
-  applySeed();
+function updateSeedDisplay(){
   const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
   document.getElementById('seedHex').textContent=hex;
   document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+function newSeed(){
+  state.seed=(Math.random()*0xffffffff)>>>0;
+  applySeed();
+  updateSeedDisplay();
+  pushHistory();
 }
 document.getElementById('btnRandom').addEventListener('click',newSeed);
 document.getElementById('btnPlay').addEventListener('click',()=>{
@@ -569,19 +987,27 @@ document.getElementById('btnPlay').addEventListener('click',()=>{
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
+document.getElementById('btnGif').addEventListener('click',recordGIF);
+document.getElementById('btnMp4').addEventListener('click',recordMP4);
+document.getElementById('seedReadout').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('keydown',e=>{
-  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); newSeed(); }
-  if(e.key==='e' && !e.target.closest('input')) exportPNG();
-  if(e.key==='p' && !e.target.closest('input')) document.getElementById('btnPlay').click();
+  if(e.target.closest('input')) return;
+  if(e.key===' ' && !e.target.closest('button')){ e.preventDefault(); newSeed(); }
+  if(e.key==='e') exportPNG();
+  if(e.key==='p') document.getElementById('btnPlay').click();
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); }
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); }
 });
 
 /* boot */
-applySeed();
 {
-  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
-  document.getElementById('seedHex').textContent=hex;
-  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink) applyState(fromLink); else applySeed();
+  updateSeedDisplay();
 }
+pushHistory();
 requestAnimationFrame(frame);
 </script>
 </body>

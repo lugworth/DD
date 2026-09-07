@@ -166,7 +166,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <div class="sect">
           <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
           <div class="seed-row">
-            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <div class="seed-read" id="seedReadout" title="click to copy shareable link" style="cursor:pointer"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
             <button id="btnRandom" title="new random seed">⟳ Random</button>
           </div>
         </div>
@@ -242,6 +242,9 @@ footer .fill{flex:1;border-right:0;text-align:right}
 
       <div class="actions">
         <button id="btnRegen">⟳ Regenerate</button>
+        <button id="btnSvg" title="export scalable vector">⬡ SVG</button>
+        <button id="btnFont" title="export the alphabet as an installable TrueType font">⤓ Font</button>
+        <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -811,7 +814,539 @@ function exportPNG(){
   },'image/png');
 }
 
+/* ═══════════════════ FONT EXPORT ═══════════════════
+   Exports the invented alphabet as a real installable TrueType file.
+   The glyph grammars already draw into a canvas context, so a recording
+   context captures their geometry, strokes are converted to filled
+   outlines (TrueType fills nonzero, so same-wound overlapping contours
+   union rather than cancel), and a small TTF writer emits the tables a
+   rasteriser actually needs. Written in-file to keep the tool's
+   no-dependency promise. */
+const FONT_EM=1000, FONT_BOX=700, FONT_PAD=150, FONT_TOP=750;
+
+function recorderCtx(){
+  const subpaths=[], out={strokes:[],fills:[]};
+  let cur=null, lw=1;
+  const push=()=>{ if(cur&&cur.pts.length>1) subpaths.push(cur); cur=null; };
+  const flat=(x,y)=>{ if(!cur) cur={pts:[],closed:false}; cur.pts.push([x,y]); };
+  return {
+    out,
+    get lineWidth(){ return lw; }, set lineWidth(v){ lw=v; },
+    set strokeStyle(v){}, set fillStyle(v){}, set lineCap(v){}, set lineJoin(v){},
+    set globalAlpha(v){}, set font(v){}, set textAlign(v){}, set textBaseline(v){},
+    set globalCompositeOperation(v){},
+    save(){}, restore(){}, setLineDash(){}, getLineDash(){return[];},
+    translate(){}, rotate(){}, scale(){}, setTransform(){}, transform(){},
+    beginPath(){ push(); subpaths.length=0; cur=null; },
+    closePath(){ if(cur) cur.closed=true; },
+    moveTo(x,y){ push(); cur={pts:[[x,y]],closed:false}; },
+    lineTo(x,y){ flat(x,y); },
+    quadraticCurveTo(cx,cy,x,y){
+      if(!cur){ cur={pts:[[cx,cy]],closed:false}; }
+      const [x0,y0]=cur.pts[cur.pts.length-1];
+      for(let i=1;i<=8;i++){
+        const t=i/8, mt=1-t;
+        flat(mt*mt*x0+2*mt*t*cx+t*t*x, mt*mt*y0+2*mt*t*cy+t*t*y);
+      }
+    },
+    bezierCurveTo(a,b,c,d,x,y){
+      if(!cur){ cur={pts:[[a,b]],closed:false}; }
+      const [x0,y0]=cur.pts[cur.pts.length-1];
+      for(let i=1;i<=10;i++){
+        const t=i/10, mt=1-t;
+        flat(mt*mt*mt*x0+3*mt*mt*t*a+3*mt*t*t*c+t*t*t*x,
+             mt*mt*mt*y0+3*mt*mt*t*b+3*mt*t*t*d+t*t*t*y);
+      }
+    },
+    arc(cx,cy,r,a0,a1,ccw){
+      let d=a1-a0;
+      if(ccw){ if(d>0) d-=Math.PI*2; } else if(d<0) d+=Math.PI*2;
+      const steps=Math.max(6,Math.ceil(Math.abs(d)/0.35));
+      if(!cur) cur={pts:[],closed:false};
+      for(let i=0;i<=steps;i++){
+        const a=a0+d*(i/steps);
+        flat(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+      }
+      if(Math.abs(d)>=Math.PI*2-1e-6&&cur) cur.closed=true;
+    },
+    ellipse(cx,cy,rx,ry,rot,a0,a1,ccw){
+      let d=a1-a0;
+      if(ccw){ if(d>0) d-=Math.PI*2; } else if(d<0) d+=Math.PI*2;
+      const steps=Math.max(6,Math.ceil(Math.abs(d)/0.35));
+      if(!cur) cur={pts:[],closed:false};
+      const c=Math.cos(rot||0), s=Math.sin(rot||0);
+      for(let i=0;i<=steps;i++){
+        const a=a0+d*(i/steps), px=rx*Math.cos(a), py=ry*Math.sin(a);
+        flat(cx+px*c-py*s, cy+px*s+py*c);
+      }
+    },
+    rect(x,y,w,h){ push(); cur={pts:[[x,y],[x+w,y],[x+w,y+h],[x,y+h]],closed:true}; push(); },
+    stroke(){ push(); for(const sp of subpaths) out.strokes.push({pts:sp.pts,closed:sp.closed,w:lw}); subpaths.length=0; },
+    fill(){ push(); for(const sp of subpaths) out.fills.push(sp.pts); subpaths.length=0; },
+    fillRect(x,y,w,h){ out.fills.push([[x,y],[x+w,y],[x+w,y+h],[x,y+h]]); },
+    strokeRect(x,y,w,h){ out.strokes.push({pts:[[x,y],[x+w,y],[x+w,y+h],[x,y+h]],closed:true,w:lw}); },
+    clearRect(){}, clip(){}, drawImage(){}, fillText(){}, measureText(t){ return {width:String(t).length*6}; },
+    createRadialGradient(){ return {addColorStop(){}}; },
+    createLinearGradient(){ return {addColorStop(){}}; },
+  };
+}
+
+function fontDisc(cx,cy,r,n){
+  const c=[];
+  for(let i=0;i<(n||8);i++){ const a=-i/(n||8)*Math.PI*2; c.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]); }
+  return c;
+}
+function strokeToContours(strokes){
+  const out=[];
+  for(const s of strokes){
+    const hw=Math.max(6,s.w/2);
+    const pts=s.pts;
+    if(pts.length===1){ out.push(fontDisc(pts[0][0],pts[0][1],hw)); continue; }
+    const segs=pts.slice();
+    if(s.closed) segs.push(pts[0]);
+    let prevA=null;
+    for(let i=0;i<segs.length-1;i++){
+      const [x0,y0]=segs[i], [x1,y1]=segs[i+1];
+      const dx=x1-x0, dy=y1-y0, len=Math.hypot(dx,dy);
+      if(len<1e-6) continue;
+      const nx=-dy/len*hw, ny=dx/len*hw;
+      out.push([[x0+nx,y0+ny],[x1+nx,y1+ny],[x1-nx,y1-ny],[x0-nx,y0-ny]]);
+      /* a round join is only needed where the path actually turns —
+         flattened arcs otherwise emit one disc per tiny segment */
+      const a=Math.atan2(dy,dx);
+      if(prevA!==null){
+        let d=Math.abs(a-prevA)%(Math.PI*2);
+        if(d>Math.PI) d=Math.PI*2-d;
+        if(d>0.3) out.push(fontDisc(x0,y0,hw,6));
+      }
+      prevA=a;
+    }
+    out.push(fontDisc(segs[0][0],segs[0][1],hw,6));
+    out.push(fontDisc(segs[segs.length-1][0],segs[segs.length-1][1],hw,6));
+  }
+  return out;
+}
+function normaliseWinding(contours){
+  return contours.map(c=>{
+    let area=0;
+    for(let i=0;i<c.length;i++){ const [x0,y0]=c[i],[x1,y1]=c[(i+1)%c.length]; area+=x0*y1-x1*y0; }
+    return area>0?c.slice().reverse():c;
+  });
+}
+
+function fontBuf(){
+  const a=[];
+  const o={a,
+    u8(v){a.push(v&255);return o;},
+    u16(v){a.push((v>>8)&255,v&255);return o;},
+    i16(v){return o.u16(v<0?v+0x10000:v);},
+    u32(v){a.push((v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255);return o;},
+    tag(s){for(let i=0;i<4;i++)a.push(s.charCodeAt(i));return o;},
+    bytes(b){for(const v of b)a.push(v&255);return o;},
+    utf16(s){for(const ch of s){const c=ch.codePointAt(0);a.push((c>>8)&255,c&255);}return o;},
+    pad4(){while(a.length%4)a.push(0);return o;},
+    get length(){return a.length;}};
+  return o;
+}
+function fontChecksum(b){
+  let s=0;
+  for(let i=0;i<b.length;i+=4){
+    const v=((b[i]||0)<<24|(b[i+1]||0)<<16|(b[i+2]||0)<<8|(b[i+3]||0))>>>0;
+    s=(s+v)>>>0;
+  }
+  return s;
+}
+function buildTTF(glyphs,meta){
+  const family=(meta&&meta.family)||'Digidelic Glyphs', style='Regular';
+  const glyfParts=[], locaOffsets=[], bboxes=[];
+  let glyfLen=0;
+  for(const g of glyphs){
+    locaOffsets.push(glyfLen);
+    const contours=(g.contours||[]).filter(c=>c.length>=3);
+    if(!contours.length){ bboxes.push([0,0,0,0]); continue; }
+    const b=fontBuf();
+    let xMin=Infinity,yMin=Infinity,xMax=-Infinity,yMax=-Infinity;
+    for(const c of contours) for(const q of c){
+      if(q[0]<xMin)xMin=q[0]; if(q[1]<yMin)yMin=q[1];
+      if(q[0]>xMax)xMax=q[0]; if(q[1]>yMax)yMax=q[1];
+    }
+    bboxes.push([Math.round(xMin),Math.round(yMin),Math.round(xMax),Math.round(yMax)]);
+    b.i16(contours.length).i16(Math.round(xMin)).i16(Math.round(yMin)).i16(Math.round(xMax)).i16(Math.round(yMax));
+    let n=0;
+    for(const c of contours){ n+=c.length; b.u16(n-1); }
+    b.u16(0);
+    for(let i=0;i<n;i++) b.u8(0x01);
+    let px=0;
+    for(const c of contours) for(const q of c){ b.i16(Math.round(q[0])-px); px=Math.round(q[0]); }
+    let py=0;
+    for(const c of contours) for(const q of c){ b.i16(Math.round(q[1])-py); py=Math.round(q[1]); }
+    b.pad4();
+    glyfParts.push(b.a); glyfLen+=b.a.length;
+  }
+  locaOffsets.push(glyfLen);
+  let glyf=[];
+  for(const part of glyfParts) glyf=glyf.concat(part);
+  const loca=fontBuf();
+  for(const off of locaOffsets) loca.u32(off);
+  const numGlyphs=glyphs.length;
+  const hmtx=fontBuf();
+  glyphs.forEach((g,i)=>{ hmtx.u16(g.advance||FONT_EM); hmtx.i16(bboxes[i][0]||0); });
+  let fxMin=0,fyMin=0,fxMax=0,fyMax=0,maxPts=0,maxCon=0;
+  glyphs.forEach((g,i)=>{
+    const bb=bboxes[i];
+    fxMin=Math.min(fxMin,bb[0]); fyMin=Math.min(fyMin,bb[1]);
+    fxMax=Math.max(fxMax,bb[2]); fyMax=Math.max(fyMax,bb[3]);
+    const cs=(g.contours||[]).filter(c=>c.length>=3);
+    maxCon=Math.max(maxCon,cs.length);
+    maxPts=Math.max(maxPts,cs.reduce((s,c)=>s+c.length,0));
+  });
+  const head=fontBuf();
+  head.u32(0x00010000).u32(0x00010000).u32(0).u32(0x5F0F3CF5).u16(0x000B).u16(FONT_EM)
+    .u32(0).u32(0).u32(0).u32(0)
+    .i16(fxMin).i16(fyMin).i16(fxMax).i16(fyMax)
+    .u16(0).u16(8).i16(2).i16(1).i16(0);
+  const hhea=fontBuf();
+  hhea.u32(0x00010000).i16(800).i16(-200).i16(0).u16(FONT_EM)
+    .i16(fxMin).i16(0).i16(fxMax)
+    .i16(1).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).u16(numGlyphs);
+  const maxp=fontBuf();
+  maxp.u32(0x00010000).u16(numGlyphs).u16(maxPts).u16(maxCon)
+    .u16(0).u16(0).u16(2).u16(0).u16(0).u16(0).u16(0).u16(0).u16(0).u16(0).u16(0);
+  const mapped=glyphs.map((g,i)=>({code:g.code,gid:i})).filter(m=>m.code>0).sort((a,b)=>a.code-b.code);
+  const segs=[];
+  for(const m of mapped){
+    const last=segs[segs.length-1];
+    if(last&&m.code===last.end+1&&m.gid===last.startGid+(m.code-last.start)) last.end=m.code;
+    else segs.push({start:m.code,end:m.code,startGid:m.gid});
+  }
+  segs.push({start:0xFFFF,end:0xFFFF,startGid:0});
+  const segCount=segs.length, sub=fontBuf();
+  sub.u16(4).u16(16+segCount*8).u16(0).u16(segCount*2);
+  const sr=2*Math.pow(2,Math.floor(Math.log2(segCount)));
+  sub.u16(sr).u16(Math.floor(Math.log2(segCount))).u16(segCount*2-sr);
+  for(const s of segs) sub.u16(s.end);
+  sub.u16(0);
+  for(const s of segs) sub.u16(s.start);
+  for(const s of segs) sub.i16(s.start===0xFFFF?1:((s.startGid-s.start)<<16>>16));
+  for(const s of segs) sub.u16(0);
+  const cmap=fontBuf();
+  cmap.u16(0).u16(1).u16(3).u16(1).u32(12).bytes(sub.a);
+  const psName=(family+'-'+style).replace(/[^\w-]/g,'');
+  const names=[[1,family],[2,style],[3,family+' '+style+' 1.0'],[4,family+' '+style],[5,'Version 1.0'],[6,psName]];
+  const strs=fontBuf(), recs=[];
+  for(const nm of names){ const off=strs.length; strs.utf16(nm[1]); recs.push({id:nm[0],off,len:strs.length-off}); }
+  const name=fontBuf();
+  name.u16(0).u16(recs.length).u16(6+recs.length*12);
+  for(const r of recs) name.u16(3).u16(1).u16(0x0409).u16(r.id).u16(r.len).u16(r.off);
+  name.bytes(strs.a);
+  const post=fontBuf();
+  post.u32(0x00030000).u32(0).i16(-100).i16(50).u32(1).u32(0).u32(0).u32(0).u32(0);
+  const os2=fontBuf();
+  os2.u16(4).i16(FONT_EM).u16(400).u16(5).u16(0)
+    .i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0)
+    .bytes([0,0,0,0,0,0,0,0,0,0]).u32(1).u32(0).u32(0).u32(0).tag('DGDL')
+    .u16(0x0040).u16(mapped.length?mapped[0].code:32).u16(mapped.length?mapped[mapped.length-1].code:32)
+    .i16(800).i16(-200).i16(200).u16(1000).u16(800)
+    .u32(0).u32(0).i16(500).i16(0).i16(0);
+  const tables=[['OS/2',os2.a],['cmap',cmap.a],['glyf',glyf],['head',head.a],['hhea',hhea.a],
+                ['hmtx',hmtx.a],['loca',loca.a],['maxp',maxp.a],['name',name.a],['post',post.a]]
+                .sort((a,b)=>a[0]<b[0]?-1:1);
+  const n=tables.length;
+  const searchRange=Math.pow(2,Math.floor(Math.log2(n)))*16;
+  const dir=fontBuf();
+  dir.u32(0x00010000).u16(n).u16(searchRange).u16(Math.floor(Math.log2(n))).u16(n*16-searchRange);
+  let offset=12+n*16;
+  const entries=[];
+  for(const t of tables){
+    const padded=t[1].slice();
+    while(padded.length%4) padded.push(0);
+    entries.push({tag:t[0],offset,length:t[1].length,padded});
+    offset+=padded.length;
+  }
+  for(const e of entries) dir.tag(e.tag).u32(fontChecksum(e.padded)).u32(e.offset).u32(e.length);
+  let font=dir.a.slice();
+  for(const e of entries) font=font.concat(e.padded);
+  const adj=(0xB1B0AFBA-fontChecksum(font))>>>0;
+  const at=entries.find(e=>e.tag==='head').offset+8;
+  font[at]=(adj>>>24)&255; font[at+1]=(adj>>>16)&255; font[at+2]=(adj>>>8)&255; font[at+3]=adj&255;
+  return new Uint8Array(font);
+}
+
+/* one glyph per character, derived from the sheet seed so a given seed
+   always yields the same alphabet — not lifted from particular cells,
+   since a font wants one form per character rather than per grid slot */
+function fontCharset(){
+  const s=[];
+  for(let c=65;c<=90;c++) s.push(c);
+  for(let c=97;c<=122;c++) s.push(c);
+  for(let c=48;c<=57;c++) s.push(c);
+  return s;
+}
+function glyphContoursFor(code,p){
+  const rnd=mulberry32((state.seed^Math.imul(code+1,0x9E3779B1))>>>0);
+  const rec=recorderCtx();
+  rec.lineWidth=Math.max(28,p.stroke*14);
+  const roll=rnd();
+  if(roll<0.62) drawAsemic(rec,rnd,p,'#000',0,0,FONT_BOX);
+  else if(roll<0.82) drawStack(rec,rnd,p,'#000',0,0,FONT_BOX);
+  else drawBauhaus(rec,rnd,p,'#000',0,0,FONT_BOX);
+  const cont=strokeToContours(rec.out.strokes).concat(rec.out.fills.filter(f=>f.length>=3));
+  /* canvas is y-down, font units are y-up */
+  const moved=cont.map(c=>c.map(q=>[q[0]+FONT_PAD,FONT_TOP-q[1]]));
+  return normaliseWinding(moved);
+}
+function exportFont(){
+  const p=params();
+  const glyphs=[{code:0,contours:[],advance:FONT_EM}];
+  for(const code of fontCharset()){
+    let contours=[];
+    try{ contours=glyphContoursFor(code,p); }catch{ contours=[]; }
+    glyphs.push({code,contours,advance:FONT_EM});
+  }
+  const withOutlines=glyphs.filter(g=>g.contours.length).length;
+  if(!withOutlines){ flashStatus('no glyph outlines to export_'); return; }
+  const ttf=buildTTF(glyphs,{family:'Digidelic '+state.seed.toString(16).slice(0,4).toUpperCase()});
+  const blob=new Blob([ttf],{type:'font/ttf'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='digidelic-glyphs-'+state.seed.toString(16).padStart(8,'0')+'.ttf';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  flashStatus(withOutlines+' glyphs exported_');
+}
+
+/* ═══════════════════ SVG EXPORT ═══════════════════
+   A context object shaped like CanvasRenderingContext2D that records SVG
+   instead of pixels, so render() can be replayed straight into a vector
+   file without the drawing code knowing anything about it. Alpha is
+   split out of rgba() into its own attribute — browsers tolerate rgba in
+   SVG, Illustrator and Inkscape do not. */
+function makeSVGCtx(W,H,bg){
+  const out=[], defs=[];
+  let uid=0;
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const mul=(m,n)=>[m[0]*n[0]+m[2]*n[1],m[1]*n[0]+m[3]*n[1],m[0]*n[2]+m[2]*n[3],m[1]*n[2]+m[3]*n[3],
+                    m[0]*n[4]+m[2]*n[5]+m[4],m[1]*n[4]+m[3]*n[5]+m[5]];
+  let st={m:[1,0,0,1,0,0],fill:'#000',stroke:'#000',lw:1,alpha:1,dash:null,
+          cap:'butt',join:'miter',font:'10px sans-serif',align:'start',base:'alphabetic',clip:null};
+  const stack=[];
+  let d='', cx=0, cy=0;
+  const num=v=>Math.round(v*1000)/1000;
+  const mtx=m=>'matrix('+m.map(num).join(' ')+')';
+  function splitPaint(v){
+    if(typeof v==='string'){
+      const m=/^rgba\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/i.exec(v);
+      if(m) return {color:'rgb('+m[1]+','+m[2]+','+m[3]+')',alpha:parseFloat(m[4])};
+    }
+    return {color:v,alpha:1};
+  }
+  function paintOf(v){
+    if(v&&typeof v==='object'&&v.__grad){
+      const id='g'+(uid++);
+      const stops=v.stops.map(s=>{
+        const c=splitPaint(s[1]);
+        return '<stop offset="'+num(s[0])+'" stop-color="'+esc(c.color)+'"'+(c.alpha<1?' stop-opacity="'+num(c.alpha)+'"':'')+'/>';
+      }).join('');
+      defs.push('<radialGradient id="'+id+'" gradientUnits="userSpaceOnUse" cx="'+num(v.x1)+'" cy="'+num(v.y1)+'" r="'+num(v.r1)+'">'+stops+'</radialGradient>');
+      return 'url(#'+id+')';
+    }
+    return v;
+  }
+  function paintAttrs(kind){
+    const a=['transform="'+mtx(st.m)+'"'];
+    if(kind==='fill'){
+      const f=splitPaint(st.fill);
+      a.push('fill="'+esc(paintOf(f.color))+'"','stroke="none"');
+      if(f.alpha<1) a.push('fill-opacity="'+num(f.alpha)+'"');
+    }else{
+      const s=splitPaint(st.stroke);
+      a.push('fill="none"','stroke="'+esc(paintOf(s.color))+'"','stroke-width="'+num(st.lw)+'"');
+      if(s.alpha<1) a.push('stroke-opacity="'+num(s.alpha)+'"');
+      if(st.dash&&st.dash.length) a.push('stroke-dasharray="'+st.dash.map(num).join(' ')+'"');
+      if(st.cap!=='butt') a.push('stroke-linecap="'+st.cap+'"');
+      if(st.join!=='miter') a.push('stroke-linejoin="'+st.join+'"');
+    }
+    if(st.alpha<1) a.push('opacity="'+num(st.alpha)+'"');
+    if(st.clip) a.push('clip-path="url(#'+st.clip+')"');
+    return a.join(' ');
+  }
+  function arcPath(x,y,rx,ry,a0,a1,ccw,rot){
+    const T=Math.PI*2;
+    let delta=a1-a0;
+    if(ccw){ if(delta>0) delta-=T*Math.ceil(delta/T); if(delta===0) delta=-T; }
+    else{ if(delta<0) delta+=T*Math.ceil(-delta/T); if(delta===0) delta=T; }
+    if(Math.abs(delta)>T) delta=delta>0?T:-T;
+    const pt=a=>{
+      const c=Math.cos(rot),s=Math.sin(rot),px=rx*Math.cos(a),py=ry*Math.sin(a);
+      return [x+px*c-py*s,y+px*s+py*c];
+    };
+    const sweep=delta>0?1:0, rd=num(rot*180/Math.PI);
+    if(Math.abs(delta)>=T-1e-9){
+      const s=pt(a0), m=pt(a0+delta/2), e=pt(a0+delta);
+      cx=e[0]; cy=e[1];
+      return 'M'+num(s[0])+' '+num(s[1])+'A'+num(rx)+' '+num(ry)+' '+rd+' 0 '+sweep+' '+num(m[0])+' '+num(m[1])
+             +'A'+num(rx)+' '+num(ry)+' '+rd+' 0 '+sweep+' '+num(e[0])+' '+num(e[1]);
+    }
+    const s=pt(a0), e=pt(a0+delta), large=Math.abs(delta)>Math.PI?1:0;
+    const head=d?'L'+num(s[0])+' '+num(s[1]):'M'+num(s[0])+' '+num(s[1]);
+    cx=e[0]; cy=e[1];
+    return head+'A'+num(rx)+' '+num(ry)+' '+rd+' '+large+' '+sweep+' '+num(e[0])+' '+num(e[1]);
+  }
+  return {
+    canvas:{width:W,height:H},
+    set fillStyle(v){st.fill=v;}, get fillStyle(){return st.fill;},
+    set strokeStyle(v){st.stroke=v;}, get strokeStyle(){return st.stroke;},
+    set lineWidth(v){st.lw=v;}, get lineWidth(){return st.lw;},
+    set globalAlpha(v){st.alpha=v;}, get globalAlpha(){return st.alpha;},
+    set lineCap(v){st.cap=v;}, set lineJoin(v){st.join=v;},
+    set font(v){st.font=v;}, get font(){return st.font;},
+    set textAlign(v){st.align=v;}, set textBaseline(v){st.base=v;},
+    set globalCompositeOperation(v){}, set imageSmoothingEnabled(v){}, set imageSmoothingQuality(v){},
+    save(){stack.push(Object.assign({},st,{m:st.m.slice(),dash:st.dash&&st.dash.slice()}));},
+    restore(){ if(stack.length) st=stack.pop(); },
+    setTransform(a,b,c,dd,e,f){st.m=[a,b,c,dd,e,f];},
+    transform(a,b,c,dd,e,f){st.m=mul(st.m,[a,b,c,dd,e,f]);},
+    translate(x,y){st.m=mul(st.m,[1,0,0,1,x,y]);},
+    scale(x,y){st.m=mul(st.m,[x,0,0,y,0,0]);},
+    rotate(a){const c=Math.cos(a),s=Math.sin(a);st.m=mul(st.m,[c,s,-s,c,0,0]);},
+    setLineDash(a){st.dash=a&&a.length?a.slice():null;},
+    getLineDash(){return st.dash||[];},
+    beginPath(){d='';},
+    closePath(){ if(d) d+='Z'; },
+    moveTo(x,y){d+='M'+num(x)+' '+num(y);cx=x;cy=y;},
+    lineTo(x,y){d+=(d?'':'M'+num(cx)+' '+num(cy))+'L'+num(x)+' '+num(y);cx=x;cy=y;},
+    quadraticCurveTo(x1,y1,x,y){d+=(d?'':'M'+num(cx)+' '+num(cy))+'Q'+num(x1)+' '+num(y1)+' '+num(x)+' '+num(y);cx=x;cy=y;},
+    bezierCurveTo(x1,y1,x2,y2,x,y){d+=(d?'':'M'+num(cx)+' '+num(cy))+'C'+num(x1)+' '+num(y1)+' '+num(x2)+' '+num(y2)+' '+num(x)+' '+num(y);cx=x;cy=y;},
+    arc(x,y,r,a0,a1,ccw){d+=arcPath(x,y,r,r,a0,a1,!!ccw,0);},
+    ellipse(x,y,rx,ry,rot,a0,a1,ccw){d+=arcPath(x,y,rx,ry,a0,a1,!!ccw,rot||0);},
+    rect(x,y,w,h){d+='M'+num(x)+' '+num(y)+'h'+num(w)+'v'+num(h)+'h'+num(-w)+'Z';},
+    fill(rule){ if(d) out.push('<path '+paintAttrs('fill')+(rule==='evenodd'?' fill-rule="evenodd"':'')+' d="'+d+'"/>'); },
+    stroke(){ if(d) out.push('<path '+paintAttrs('stroke')+' d="'+d+'"/>'); },
+    clip(){
+      if(!d) return;
+      const id='c'+(uid++);
+      defs.push('<clipPath id="'+id+'" clipPathUnits="userSpaceOnUse"><path d="'+d+'" transform="'+mtx(st.m)+'"/></clipPath>');
+      st.clip=id;
+    },
+    fillRect(x,y,w,h){ out.push('<rect '+paintAttrs('fill')+' x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'"/>'); },
+    strokeRect(x,y,w,h){ out.push('<rect '+paintAttrs('stroke')+' x="'+num(x)+'" y="'+num(y)+'" width="'+num(w)+'" height="'+num(h)+'"/>'); },
+    clearRect(){},
+    fillText(t,x,y){
+      const f=/(?:(\d+)\s+)?(?:(italic|oblique)\s+)?(?:(\d+)\s+)?([\d.]+)px\s+(.+)/.exec(st.font)||[];
+      const size=f[4]||10, fam=(f[5]||'sans-serif').replace(/"/g,"'"), weight=f[3]||f[1]||'400';
+      const anchor=st.align==='center'?'middle':(st.align==='right'||st.align==='end')?'end':'start';
+      const base=st.base==='middle'?' dominant-baseline="central"':st.base==='top'?' dominant-baseline="hanging"':'';
+      out.push('<text '+paintAttrs('fill')+' x="'+num(x)+'" y="'+num(y)+'" font-family="'+esc(fam)+'" font-size="'+num(+size)+'" font-weight="'+esc(weight)+'" text-anchor="'+anchor+'"'+base+'>'+esc(t)+'</text>');
+    },
+    measureText(t){ const f=/([\d.]+)px/.exec(st.font); const s=f?+f[1]:10; return {width:String(t).length*s*0.58}; },
+    createRadialGradient(x0,y0,r0,x1,y1,r1){ return {__grad:true,x1:x1,y1:y1,r1:r1,stops:[],addColorStop(o,c){this.stops.push([o,c]);}}; },
+    createLinearGradient(x0,y0,x1,y1){ return {__grad:true,x1:x0,y1:y0,r1:Math.hypot(x1-x0,y1-y0),stops:[],addColorStop(o,c){this.stops.push([o,c]);}}; },
+    drawImage(){}, putImageData(){},
+    getImageData(x,y,w,h){ return {data:new Uint8ClampedArray(w*h*4),width:w,height:h}; },
+    createImageData(w,h){ return {data:new Uint8ClampedArray(w*h*4),width:w,height:h}; },
+    toSVG(){
+      return '<?xml version="1.0" encoding="UTF-8"?>\n'
+        +'<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">\n'
+        +(bg?'<rect width="'+W+'" height="'+H+'" fill="'+esc(bg)+'"/>\n':'')
+        +(defs.length?'<defs>'+defs.join('')+'</defs>\n':'')
+        +out.join('\n')+'\n</svg>\n';
+    },
+  };
+}
+function exportSVG(){
+  const p=params();
+  const H=artHeight(p.format);
+  const g=makeSVGCtx(ART_W,H,PALETTES[p.palette].bg);
+  render(g,ART_W,H,p,state.seed);
+  const blob=new Blob([g.toSVG()],{type:'image/svg+xml;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='digidelic-glyphs-'+state.seed.toString(16).padStart(8,'0')+'.svg';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
+function serializeState(){
+  const vals={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  return {seed:state.seed,palette:state.palette,format:state.format,vals};
+}
+function applyState(s){
+  state.seed=s.seed; state.palette=s.palette; state.format=s.format;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
+  document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===state.format));
+  requestDraw();
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('link copied_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const H=artHeight(p.format);
+  const off=document.createElement('canvas');
+  off.width=ART_W*2; off.height=H*2;
+  const octx=off.getContext('2d');
+  octx.setTransform(2,0,0,2,0,0);
+  render(octx,ART_W,H,p,state.seed);
+  off.toBlob(async blob=>{
+    if(!blob) return;
+    const file=new File([blob],'digidelic-glyphs-'+state.seed.toString(16).padStart(8,'0')+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — glyph foundry'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+}
+
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
   el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
@@ -827,6 +1362,7 @@ function syncSlider(el){
 sliders.forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
+  el.addEventListener('change',pushHistory);
   syncSlider(el);
 });
 
@@ -838,25 +1374,37 @@ function wireSeg(segId,attr,onPick){
     btn.classList.add('is-active');
     onPick(btn.dataset[attr]);
     requestDraw();
+    pushHistory();
   });
 }
 wireSeg('segPalette','pal',v=>{ state.palette=v; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; });
 
-document.getElementById('btnRandom').addEventListener('click',()=>{
-  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
-});
-document.getElementById('btnRegen').addEventListener('click',()=>{
-  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
-});
+function regenerate(){ state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); pushHistory(); }
+document.getElementById('btnRandom').addEventListener('click',regenerate);
+document.getElementById('btnRegen').addEventListener('click',regenerate);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
+document.getElementById('btnSvg').addEventListener('click',exportSVG);
+document.getElementById('btnFont').addEventListener('click',exportFont);
+document.getElementById('seedReadout').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('resize',requestDraw);
 window.addEventListener('keydown',e=>{
-  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); state.seed=(Math.random()*0xffffffff)>>>0; requestDraw(); }
-  if(e.key==='e' && !e.target.closest('input')) exportPNG();
+  if(e.target.closest('input')) return;
+  if(e.key===' ' && !e.target.closest('button')){ e.preventDefault(); regenerate(); }
+  if(e.key==='e') exportPNG();
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); }
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); }
 });
 
-if(document.fonts&&document.fonts.ready) document.fonts.ready.then(requestDraw);
+/* boot */
+{
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink) applyState(fromLink);
+}
+pushHistory();
+
 draw();
 </script>
 </body>

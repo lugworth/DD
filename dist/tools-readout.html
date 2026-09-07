@@ -122,6 +122,12 @@ input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,
 input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
 input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
 
+input[type=text]{
+  width:100%;height:32px;background:var(--black-panel);border:1px solid var(--border);
+  color:var(--white-soft);font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;padding:0 10px;
+}
+input[type=text]:focus{outline:none;border-color:var(--yellow)}
+
 .checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px}
 .chk{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--white-soft)}
 .chk input{appearance:none;-webkit-appearance:none;width:14px;height:14px;border:1px solid var(--border-hi);background:var(--black-panel);cursor:pointer;flex:none}
@@ -214,7 +220,19 @@ footer .fill{flex:1;border-right:0;text-align:right}
               <button data-set="numeric">Numeric</button>
               <button data-set="hex">Hex</button>
               <button data-set="ramp">ASCII ramp</button>
+              <button data-set="custom">Custom</button>
             </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Camera</span></div>
+            <div class="seg" id="segCam" role="group" aria-label="webcam source">
+              <button data-cam="off" class="is-active">Off</button>
+              <button data-cam="on">Live webcam</button>
+            </div>
+          </div>
+          <div class="param" id="customRow" hidden>
+            <div class="lab"><span class="name">Custom ramp</span><span class="val">dark ▸ light</span></div>
+            <input type="text" id="customSet" value="·:+=oOX#@" spellcheck="false" aria-label="custom character ramp">
           </div>
         </div>
 
@@ -280,6 +298,9 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnReroll">⟳ Reroll</button>
         <button id="btnCopy">⧉ Copy text</button>
+        <button id="btnTxt" title="download the mosaic as a .txt file">⤓ .txt</button>
+        <button id="btnLink" title="copy a link to these settings">⧉ Copy Link</button>
+        <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -312,6 +333,13 @@ const SETS={
   hex:'0123456789ABCDEF'.split(''),
   ramp:'.:-=+*#%@'.split(''),
 };
+/* the custom set is read live from the field, ordered dark ▸ light */
+function charSet(name){
+  if(name!=='custom') return SETS[name];
+  const raw=document.getElementById('customSet').value;
+  const chars=[...raw].filter(c=>c!=='\n');
+  return chars.length?chars:SETS.ramp;
+}
 
 const state={
   palette:'ultramarine', set:'metrics', fmt:'source',
@@ -380,7 +408,7 @@ const sctx=sampler.getContext('2d',{willReadFrequently:true});
 function sourceEl(){ return state.img||demo; }
 function sourceSize(){
   const s=sourceEl();
-  return [s.naturalWidth||s.width, s.naturalHeight||s.height];
+  return [s.videoWidth||s.naturalWidth||s.width, s.videoHeight||s.naturalHeight||s.height];
 }
 function targetAspect(p){
   if(p.fmt==='11') return 1;
@@ -413,7 +441,7 @@ function buildCells(p){
     sctx.drawImage(src,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,cols,rows);
   }catch{ /* image not decodable yet */ }
   const d=sctx.getImageData(0,0,cols,rows).data;
-  const set=SETS[p.set];
+  const set=charSet(p.set);
   const cells=new Array(cols*rows);
   let inked=0;
   for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
@@ -502,6 +530,7 @@ function renderAll(g,W,H,p){
 let lastFlick=0;
 function frame(now){
   const p=params();
+  if(cam.on) markDirty();      // live frames keep arriving
   fitCanvas(p);
   const [W,H]=artSize(p);
   const sx=canvas.width/W, sy=canvas.height/H;
@@ -517,7 +546,7 @@ function frame(now){
     document.getElementById('headSize').textContent=W+' × '+H+' px';
   }else if(p.flicker>0&&now-lastFlick>70){
     lastFlick=now;
-    const set=SETS[p.set], pal=PALETTES[p.palette];
+    const set=charSet(p.set), pal=PALETTES[p.palette];
     const n=Math.max(1,Math.round(state.cols*state.rows*p.flicker*0.012));
     const cw=W/state.cols, chh=H/state.rows;
     ctx.setTransform(sx,0,0,sy,0,0);
@@ -627,6 +656,16 @@ async function copyText(){
   }
   setTimeout(()=>{ btn.textContent='⧉ Copy text'; },1600);
 }
+/* a download always works, even where clipboard permission does not —
+   and it is the only sane route for a very large sheet */
+function downloadText(){
+  const blob=new Blob([asText()],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='digidelic-readout-'+Date.now().toString(36)+'.txt';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
 
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
@@ -641,9 +680,138 @@ function syncSlider(el){
 sliders.forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('input',()=>{ syncSlider(el); if(id!=='flicker') markDirty(); });
+  el.addEventListener('change',pushHistory);
   syncSlider(el);
 });
-['invert','outlines'].forEach(id=>document.getElementById(id).addEventListener('change',markDirty));
+['invert','outlines'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('change',markDirty);
+  el.addEventListener('change',pushHistory);
+});
+
+/* ═══════════════════ WEBCAM ═══════════════════
+   A live camera feed is just another source element — drawImage samples
+   a <video> exactly like an <img> — so the mosaic engine needs no
+   changes beyond keeping the sheet marked dirty while frames arrive. */
+let cam={on:false,el:null,stream:null};
+async function camToggle(on){
+  if(!on){
+    cam.on=false;
+    if(cam.stream) cam.stream.getTracks().forEach(t=>t.stop());
+    if(cam.el===state.img){ state.img=null; state.imgName=''; }
+    cam.stream=null; cam.el=null;
+    document.getElementById('cornerSrc').textContent='source · demo bust';
+    markDirty();
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480},audio:false});
+    const v=document.createElement('video');
+    v.srcObject=stream; v.muted=true; v.playsInline=true;
+    await v.play();
+    cam={on:true,el:v,stream};
+    state.img=v; state.imgName='webcam';
+    document.getElementById('cornerSrc').textContent='source · webcam';
+    markDirty();
+    flashStatus('camera live_');
+  }catch{
+    cam.on=false;
+    document.querySelectorAll('#segCam button').forEach(b=>b.classList.toggle('is-active',b.dataset.cam==='off'));
+    flashStatus('no camera access_');
+  }
+}
+
+/* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════
+   Seed and every readout setting round-trip through the link; the
+   dropped source image does not, so a shared link opens on the demo
+   until the recipient drops their own in. */
+const checkFields=['invert','outlines'];
+function serializeState(){
+  const vals={}, checks={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  checkFields.forEach(id=>{ checks[id]=document.getElementById(id).checked; });
+  return {seed:state.seed,palette:state.palette,set:state.set,fmt:state.fmt,
+          custom:document.getElementById('customSet').value,vals,checks};
+}
+function applyState(s){
+  state.seed=s.seed; state.palette=s.palette; state.set=s.set; state.fmt=s.fmt;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  checkFields.forEach(id=>{ if(s.checks[id]!==undefined) document.getElementById(id).checked=s.checks[id]; });
+  document.querySelectorAll('#segSet button').forEach(b=>b.classList.toggle('is-active',b.dataset.set===state.set));
+  document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
+  document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===state.fmt));
+  if(s.custom!==undefined) document.getElementById('customSet').value=s.custom;
+  syncCustomRow();
+  canvas.style.background=PALETTES[state.palette].bg;
+  markDirty();
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('link copied (drop your own image)_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const [W,H]=artSize(p);
+  const off=document.createElement('canvas');
+  off.width=W*2; off.height=H*2;
+  const g=off.getContext('2d');
+  g.setTransform(2,0,0,2,0,0);
+  renderAll(g,W,H,p);
+  off.toBlob(async b=>{
+    if(!b) return;
+    const file=new File([b],'digidelic-readout-'+Date.now().toString(36)+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — readout'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+}
 
 function wireSeg(segId,attr,onPick){
   const seg=document.getElementById(segId);
@@ -653,26 +821,42 @@ function wireSeg(segId,attr,onPick){
     btn.classList.add('is-active');
     onPick(btn.dataset[attr]);
     markDirty();
+    pushHistory();
   });
 }
-wireSeg('segSet','set',v=>{ state.set=v; });
+wireSeg('segSet','set',v=>{ state.set=v; syncCustomRow(); });
+wireSeg('segCam','cam',v=>camToggle(v==='on'));
+function syncCustomRow(){ document.getElementById('customRow').hidden=state.set!=='custom'; }
+document.getElementById('customSet').addEventListener('input',markDirty);
+document.getElementById('customSet').addEventListener('change',pushHistory);
 wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
 wireSeg('segFormat','fmt',v=>{ state.fmt=v; });
 
 document.getElementById('btnReroll').addEventListener('click',()=>{
-  state.seed=(Math.random()*1e9)|0; markDirty();
+  state.seed=(Math.random()*1e9)|0; markDirty(); pushHistory();
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnCopy').addEventListener('click',copyText);
+document.getElementById('btnTxt').addEventListener('click',downloadText);
+document.getElementById('btnLink').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('keydown',ev=>{
   if(ev.target.closest('input')) return;
   if(ev.key==='e') exportPNG();
   if(ev.key==='r') document.getElementById('btnReroll').click();
+  if((ev.metaKey||ev.ctrlKey) && ev.key.toLowerCase()==='z'){ ev.preventDefault(); ev.shiftKey?redo():undo(); }
+  if((ev.metaKey||ev.ctrlKey) && ev.key.toLowerCase()==='y'){ ev.preventDefault(); redo(); }
 });
 window.addEventListener('resize',markDirty);
 
 /* boot */
 canvas.style.background=PALETTES[state.palette].bg;
+{
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink) applyState(fromLink); else syncCustomRow();
+}
+pushHistory();
 requestAnimationFrame(frame);
 </script>
 </body>

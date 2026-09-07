@@ -168,7 +168,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <div class="sect">
           <div class="sect-head"><h2>Seed</h2><span class="coord">S.00</span></div>
           <div class="seed-row">
-            <div class="seed-read"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
+            <div class="seed-read" id="seedReadout" title="click to copy shareable link" style="cursor:pointer"><span class="k">hex</span><span class="v" id="seedHex">—</span></div>
             <button id="btnRandom" title="new random culture">⟳ Reseed</button>
           </div>
         </div>
@@ -240,6 +240,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
             </div>
           </div>
           <div class="param">
+            <div class="lab"><span class="name">Engine</span><span class="val" id="engineTag">cpu</span></div>
+            <div class="seg" id="segEngine" role="group" aria-label="simulation engine">
+              <button data-eng="cpu" class="is-active">CPU</button>
+              <button data-eng="gpu">GPU ▸ WebGL2</button>
+            </div>
+          </div>
+          <div class="param">
             <div class="lab"><span class="name">Format</span></div>
             <div class="seg" id="segFormat" role="group" aria-label="format">
               <button data-fmt="square" class="is-active">1:1 Square</button>
@@ -253,6 +260,9 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnPlay">❚❚ Pause</button>
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
+        <button id="btnMp4" title="capture 6s as MP4 — plays inline where WebM does not">▣ MP4 6s</button>
+        <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -295,6 +305,7 @@ const state={
   palette:'ferro',
   format:'square',
   playing:true,
+  engine:'cpu',
   gen:0,
 };
 const sliders=['feed','kill','diffusion','aniso','morph','rim','agitate','speed','relief','gloss','light','detail'];
@@ -387,6 +398,8 @@ function reseed(p){
   simCanvas.width=W; simCanvas.height=H;
   img=simCtx.createImageData(W,H);
   state.gen=0;
+  dirty=true;
+  if(useGPU()) gpuUpload();          // both engines start from the same culture
 }
 
 /* agitation — occasional droplets of B rain onto the field, keeping it alive */
@@ -492,7 +505,7 @@ function fitCanvas(){
   canvas.style.height=(H*scale)+'px';
   const dpr=Math.min(window.devicePixelRatio||1,2);
   const bw=Math.round(ART_W*scale*dpr), bh=Math.round(H*scale*dpr);
-  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; }
+  if(canvas.width!==bw||canvas.height!==bh){ canvas.width=bw; canvas.height=bh; dirty=true; }
 }
 
 function blit(){
@@ -501,18 +514,32 @@ function blit(){
   ctx.drawImage(simCanvas,0,0,canvas.width,canvas.height);
 }
 
-let lastP=params();
+let dirty=true;
 function frame(){
   const p=params();
   fitCanvas();
+  if(useGPU()){
+    const t0=performance.now();
+    if(state.playing){ gpuAgitate(p); gpuFrame(p,p.speed); dirty=true; }
+    else if(dirty){ gpuFrame(p,0); }        // restage the shading for a param tweak
+    if(state.playing) document.getElementById('statMs').textContent=(performance.now()-t0).toFixed(1)+'ms';
+    if(dirty){ blit(); dirty=false; }
+    document.getElementById('statGen').textContent=state.gen;
+    requestAnimationFrame(frame);
+    return;
+  }
   if(state.playing){
     const t0=performance.now();
     agitate(p);
     step(p.speed,p);
     document.getElementById('statMs').textContent=(performance.now()-t0).toFixed(1)+'ms';
+    dirty=true;
   }
-  shade(p);
-  blit();
+  if(dirty){
+    shade(p);
+    blit();
+    dirty=false;
+  }
   document.getElementById('statGen').textContent=state.gen;
   requestAnimationFrame(frame);
 }
@@ -559,6 +586,552 @@ function recordClip(){
   setTimeout(()=>{ if(recorder&&recorder.state!=='inactive') recorder.stop(); },6000);
 }
 
+/* ═══════════════════ GPU ENGINE (opt-in) ═══════════════════
+   A WebGL2 port of the same Gray-Scott step and emboss shading, running
+   the field in a pair of ping-ponged float textures. It renders into
+   simCanvas exactly like the CPU path, so export, record and GIF capture
+   need to know nothing about it.
+
+   The CPU path remains the default and is left completely intact: every
+   failure below (no WebGL2, no float render targets, a shader that will
+   not compile or link, an incomplete framebuffer) flips the engine back
+   to CPU rather than degrading. What it cannot catch is a shader that
+   compiles and still draws the wrong thing — check the two engines look
+   alike before trusting a long GPU run. */
+const gpu={ok:false,tried:false,gl:null,cv:null,stepProg:null,shadeProg:null,
+            tex:[null,null],fbo:[null,null],maps:null,cur:0,W:0,H:0,vao:null};
+
+function glShader(gl,type,src){
+  const s=gl.createShader(type);
+  gl.shaderSource(s,src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){
+    console.warn('[reaction-field] shader failed:',gl.getShaderInfoLog(s));
+    gl.deleteShader(s); return null;
+  }
+  return s;
+}
+function glProgram(gl,vsSrc,fsSrc){
+  const vs=glShader(gl,gl.VERTEX_SHADER,vsSrc), fs=glShader(gl,gl.FRAGMENT_SHADER,fsSrc);
+  if(!vs||!fs) return null;
+  const pr=gl.createProgram();
+  gl.attachShader(pr,vs); gl.attachShader(pr,fs); gl.linkProgram(pr);
+  if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){
+    console.warn('[reaction-field] link failed:',gl.getProgramInfoLog(pr));
+    return null;
+  }
+  return pr;
+}
+
+const GL_VERT=`#version 300 es
+in vec2 aPos;
+void main(){ gl_Position=vec4(aPos,0.0,1.0); }`;
+
+/* image-space uv: row 0 is the top, matching the CPU arrays */
+const GL_STEP=`#version 300 es
+precision highp float;
+uniform sampler2D uState;
+uniform sampler2D uMaps;
+uniform vec2 uTexel;
+uniform float uDA,uDB,uWx,uWy;
+out vec4 outColor;
+vec2 S(vec2 uv){ return texture(uState,uv).rg; }
+void main(){
+  vec2 uv=vec2(gl_FragCoord.x*uTexel.x, 1.0-gl_FragCoord.y*uTexel.y);
+  if(uv.x<uTexel.x*1.5||uv.y<uTexel.y*1.5||uv.x>1.0-uTexel.x*1.5||uv.y>1.0-uTexel.y*1.5){
+    outColor=vec4(1.0,0.0,0.0,1.0);         // boundary ring stays substrate
+    return;
+  }
+  vec2 c=S(uv);
+  vec2 l=S(uv-vec2(uTexel.x,0.0)), r=S(uv+vec2(uTexel.x,0.0));
+  vec2 u=S(uv-vec2(0.0,uTexel.y)), d=S(uv+vec2(0.0,uTexel.y));
+  vec2 lu=S(uv+vec2(-uTexel.x,-uTexel.y)), ru=S(uv+vec2(uTexel.x,-uTexel.y));
+  vec2 ld=S(uv+vec2(-uTexel.x, uTexel.y)), rd=S(uv+vec2(uTexel.x, uTexel.y));
+  vec2 lap=(l+r)*uWx+(u+d)*uWy+(lu+ru+ld+rd)*0.05-c;
+  float a=c.r, b=c.g, abb=a*b*b;
+  vec2 fk=texture(uMaps,uv).rg;
+  float na=a+(uDA*lap.r-abb+fk.r*(1.0-a));
+  float nb=b+(uDB*lap.g+abb-(fk.r+fk.g)*b);
+  /* deliberately unclamped: B overshoots 1.0 transiently where a fresh
+     blob is seeded, and the CPU reference lets it, so clamping here
+     would quietly give the two engines different dynamics */
+  outColor=vec4(na,nb,0.0,1.0);
+}`;
+
+const GL_SHADE=`#version 300 es
+precision highp float;
+uniform sampler2D uState;
+uniform vec2 uTexel;
+uniform float uDepth,uSpecPow,uSpecAmt,uInvert;
+uniform vec3 uL,uBg,uMat,uSpec;
+out vec4 outColor;
+float hgt(vec2 uv){
+  float a=texture(uState,uv).r;
+  return clamp(((1.0-a)-0.22)*1.9,0.0,1.0);
+}
+void main(){
+  vec2 uv=vec2(gl_FragCoord.x*uTexel.x, 1.0-gl_FragCoord.y*uTexel.y);
+  float h=hgt(uv);
+  float gx=(hgt(uv+vec2(uTexel.x,0.0))-hgt(uv-vec2(uTexel.x,0.0)))*uDepth;
+  float gy=(hgt(uv+vec2(0.0,uTexel.y))-hgt(uv-vec2(0.0,uTexel.y)))*uDepth;
+  float nl=sqrt(gx*gx+gy*gy+1.0);
+  vec3 n=vec3(-gx/nl,-gy/nl,1.0/nl);
+  float diff=max(dot(n,uL),0.0);
+  vec3 hv=normalize(vec3(uL.x,uL.y,uL.z+1.0));
+  float spec=max(dot(n,hv),0.0);
+  spec=pow(spec,uSpecPow)*uSpecAmt*h;
+  float m = h<0.12 ? (h/0.12)*h : h;
+  float lit=mix(diff,0.35+0.65*diff,uInvert);
+  vec3 col=uBg+(uMat*lit-uBg)*m+uSpec*spec;
+  outColor=vec4(clamp(col/255.0,0.0,1.0),1.0);
+}`;
+
+function gpuInit(){
+  if(gpu.tried) return gpu.ok;
+  gpu.tried=true;
+  try{
+    const cv=document.createElement('canvas');
+    const gl=cv.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true});
+    if(!gl){ console.warn('[reaction-field] no webgl2'); return false; }
+    if(!gl.getExtension('EXT_color_buffer_float')){
+      console.warn('[reaction-field] no float render targets');
+      return false;
+    }
+    const stepProg=glProgram(gl,GL_VERT,GL_STEP);
+    const shadeProg=glProgram(gl,GL_VERT,GL_SHADE);
+    if(!stepProg||!shadeProg) return false;
+    const vao=gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const buf=gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+    const loc=gl.getAttribLocation(stepProg,'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+    gpu.gl=gl; gpu.cv=cv; gpu.stepProg=stepProg; gpu.shadeProg=shadeProg; gpu.vao=vao;
+    gpu.ok=true;
+    return true;
+  }catch(e){
+    console.warn('[reaction-field] gpu init threw',e);
+    return false;
+  }
+}
+function gpuTexture(gl,W,H,data){
+  const t=gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,W,H,0,gl.RGBA,gl.FLOAT,data);
+  return t;
+}
+/* mirror the CPU arrays into GPU textures — called after every reseed
+   or map rebuild so both engines always start from the same culture */
+function gpuUpload(){
+  if(!gpu.ok) return false;
+  const gl=gpu.gl, {W,H,A,B,Fm,Km}=sim;
+  gpu.cv.width=W; gpu.cv.height=H;
+  gpu.W=W; gpu.H=H;
+  const state4=new Float32Array(W*H*4), maps4=new Float32Array(W*H*4);
+  for(let i=0;i<W*H;i++){
+    state4[i*4]=A[i]; state4[i*4+1]=B[i]; state4[i*4+3]=1;
+    maps4[i*4]=Fm[i]; maps4[i*4+1]=Km[i]; maps4[i*4+3]=1;
+  }
+  [gpu.tex[0],gpu.tex[1],gpu.maps].forEach(t=>t&&gl.deleteTexture(t));
+  [gpu.fbo[0],gpu.fbo[1]].forEach(f=>f&&gl.deleteFramebuffer(f));
+  gpu.tex[0]=gpuTexture(gl,W,H,state4);
+  gpu.tex[1]=gpuTexture(gl,W,H,null);
+  gpu.maps=gpuTexture(gl,W,H,maps4);
+  for(let i=0;i<2;i++){
+    const f=gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER,f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,gpu.tex[i],0);
+    if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE){
+      console.warn('[reaction-field] framebuffer incomplete');
+      gpu.ok=false;
+      return false;
+    }
+    gpu.fbo[i]=f;
+  }
+  gpu.cur=0;
+  return true;
+}
+/* feed/kill/morph/rim rebuild the maps but must not disturb a running
+   culture, so the map texture refreshes on its own */
+function gpuUploadMaps(){
+  if(!gpu.ok||!gpu.maps||gpu.W!==sim.W||gpu.H!==sim.H) return;
+  const gl=gpu.gl, {W,H,Fm,Km}=sim;
+  const maps4=new Float32Array(W*H*4);
+  for(let i=0;i<W*H;i++){ maps4[i*4]=Fm[i]; maps4[i*4+1]=Km[i]; maps4[i*4+3]=1; }
+  gl.bindTexture(gl.TEXTURE_2D,gpu.maps);
+  gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,W,H,gl.RGBA,gl.FLOAT,maps4);
+}
+/* agitation writes straight into the live texture, same as the CPU path
+   pokes the array */
+function gpuAgitate(p){
+  if(sim.agRnd()>p.agitate*0.4) return;
+  const gl=gpu.gl, {W,H}=gpu;
+  const r=2+Math.floor(sim.agRnd()*3), d=r*2+1;
+  const x=Math.max(1,Math.min(W-d-1,(sim.agRnd()*W)|0));
+  const y=Math.max(1,Math.min(H-d-1,(sim.agRnd()*H)|0));
+  const patch=new Float32Array(d*d*4);
+  for(let i=0;i<d*d;i++){ patch[i*4]=0.3; patch[i*4+1]=1; patch[i*4+3]=1; }
+  gl.bindTexture(gl.TEXTURE_2D,gpu.tex[gpu.cur]);
+  gl.texSubImage2D(gl.TEXTURE_2D,0,x,y,d,d,gl.RGBA,gl.FLOAT,patch);
+}
+function gpuFrame(p,iters){
+  const gl=gpu.gl, {W,H}=gpu;
+  gl.bindVertexArray(gpu.vao);
+  gl.viewport(0,0,W,H);
+  gl.useProgram(gpu.stepProg);
+  const sk=p.aniso*0.42;
+  gl.uniform2f(gl.getUniformLocation(gpu.stepProg,'uTexel'),1/W,1/H);
+  gl.uniform1f(gl.getUniformLocation(gpu.stepProg,'uDA'),1.0);
+  gl.uniform1f(gl.getUniformLocation(gpu.stepProg,'uDB'),p.diffusion);
+  gl.uniform1f(gl.getUniformLocation(gpu.stepProg,'uWx'),0.2*(1+sk));
+  gl.uniform1f(gl.getUniformLocation(gpu.stepProg,'uWy'),0.2*(1-sk));
+  gl.uniform1i(gl.getUniformLocation(gpu.stepProg,'uState'),0);
+  gl.uniform1i(gl.getUniformLocation(gpu.stepProg,'uMaps'),1);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,gpu.maps);
+  for(let i=0;i<iters;i++){
+    const src=gpu.cur, dst=1-gpu.cur;
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,gpu.tex[src]);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,gpu.fbo[dst]);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    gpu.cur=dst;
+    state.gen++;
+  }
+  /* shade to the default framebuffer, then hand the pixels to simCanvas
+     so every downstream consumer stays unchanged */
+  const pal=PALETTES[p.palette];
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.useProgram(gpu.shadeProg);
+  gl.viewport(0,0,W,H);
+  const lx=Math.cos(p.light), ly=Math.sin(p.light), lz=0.85;
+  const ll=Math.sqrt(lx*lx+ly*ly+lz*lz);
+  gl.uniform2f(gl.getUniformLocation(gpu.shadeProg,'uTexel'),1/W,1/H);
+  gl.uniform1f(gl.getUniformLocation(gpu.shadeProg,'uDepth'),2.2+p.relief*9);
+  gl.uniform1f(gl.getUniformLocation(gpu.shadeProg,'uSpecPow'),6+p.gloss*26);
+  gl.uniform1f(gl.getUniformLocation(gpu.shadeProg,'uSpecAmt'),p.gloss*1.15);
+  gl.uniform1f(gl.getUniformLocation(gpu.shadeProg,'uInvert'),pal.invert?1:0);
+  gl.uniform3f(gl.getUniformLocation(gpu.shadeProg,'uL'),lx/ll,ly/ll,lz/ll);
+  gl.uniform3f(gl.getUniformLocation(gpu.shadeProg,'uBg'),...pal.bgc);
+  gl.uniform3f(gl.getUniformLocation(gpu.shadeProg,'uMat'),...pal.material);
+  gl.uniform3f(gl.getUniformLocation(gpu.shadeProg,'uSpec'),...pal.specular);
+  gl.uniform1i(gl.getUniformLocation(gpu.shadeProg,'uState'),0);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,gpu.tex[gpu.cur]);
+  gl.drawArrays(gl.TRIANGLES,0,3);
+  simCtx.drawImage(gpu.cv,0,0);
+}
+function useGPU(){ return state.engine==='gpu' && gpu.ok; }
+function setEngine(v){
+  if(v==='gpu'){
+    if(!gpuInit()||!gpuUpload()){
+      state.engine='cpu';
+      document.querySelectorAll('#segEngine button').forEach(b=>b.classList.toggle('is-active',b.dataset.eng==='cpu'));
+      document.getElementById('engineTag').textContent='cpu · unavailable';
+      flashStatus('webgl2 unavailable — staying on cpu_');
+      return;
+    }
+    state.engine='gpu';
+    document.getElementById('engineTag').textContent='gpu';
+  }else{
+    state.engine='cpu';
+    document.getElementById('engineTag').textContent='cpu';
+  }
+  dirty=true;
+}
+
+/* ═══════════════════ PERMALINK + UNDO/REDO ═══════════════════ */
+function serializeState(){
+  const vals={};
+  sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
+  return {seed:state.seed,palette:state.palette,format:state.format,engine:state.engine,vals};
+}
+function applyState(s){
+  state.seed=s.seed; state.palette=s.palette; state.format=s.format;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    el.value=s.vals[id]; syncSlider(el);
+  });
+  document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
+  document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===state.format));
+  reseed(params());
+  updateSeedDisplay();
+  /* routed through setEngine so a link asking for GPU on a machine
+     without WebGL2 quietly lands on CPU instead of failing */
+  if(s.engine){
+    document.querySelectorAll('#segEngine button').forEach(b=>b.classList.toggle('is-active',b.dataset.eng===s.engine));
+    setEngine(s.engine);
+  }
+}
+function encodeState(s){
+  const json=JSON.stringify(s||serializeState());
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeState(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(b64))));
+  }catch{ return null; }
+}
+function flashStatus(msg){
+  const el=document.querySelector('footer .fill');
+  if(!el) return;
+  const prev=el.textContent;
+  el.textContent=msg;
+  clearTimeout(flashStatus._t);
+  flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
+}
+function copyPermalink(){
+  history.replaceState(null,'','#'+encodeState());
+  (navigator.clipboard?.writeText(location.href)||Promise.reject()).then(
+    ()=>flashStatus('link copied_'),
+    ()=>flashStatus('press ctrl+c to copy_')
+  );
+}
+let hist=[], histIdx=-1, histSuppress=false;
+function pushHistory(){
+  if(histSuppress) return;
+  const snap=encodeState();
+  if(hist[histIdx]===snap) return;
+  hist=hist.slice(0,histIdx+1);
+  hist.push(snap);
+  if(hist.length>50) hist.shift();
+  histIdx=hist.length-1;
+}
+function undo(){
+  if(histIdx<=0) return;
+  histIdx--; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+function redo(){
+  if(histIdx>=hist.length-1) return;
+  histIdx++; histSuppress=true;
+  applyState(decodeState(hist[histIdx]));
+  histSuppress=false;
+}
+async function shareArt(){
+  const p=params();
+  const H=artHeight(p.format);
+  const off=document.createElement('canvas');
+  off.width=ART_W*2; off.height=H*2;
+  const octx=off.getContext('2d');
+  octx.imageSmoothingEnabled=true; octx.imageSmoothingQuality='high';
+  octx.drawImage(simCanvas,0,0,off.width,off.height);
+  off.toBlob(async blob=>{
+    if(!blob) return;
+    const file=new File([blob],'digidelic-reaction-'+state.seed.toString(16).padStart(8,'0')+'.png',{type:'image/png'});
+    try{
+      if(navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file],title:'digidelic — reaction field'});
+    }catch{ /* user cancelled or unsupported */ }
+  },'image/png');
+}
+
+/* ═══════════════════ MP4 ═══════════════════
+   WebCodecs encodes H.264; this muxes it. Non-fragmented ftyp/mdat/moov
+   with every sample in one chunk, which keeps stsc and stco trivial and
+   is perfectly legal. Written in-file so the tool stays dependency-free.
+   MP4 plays inline where WebM does not — iOS, Twitter, Discord. */
+function mp4Box(type,...payload){
+  let len=8;
+  for(const p of payload) len+=p.length;
+  const out=new Uint8Array(len);
+  out[0]=(len>>>24)&255; out[1]=(len>>>16)&255; out[2]=(len>>>8)&255; out[3]=len&255;
+  for(let i=0;i<4;i++) out[4+i]=type.charCodeAt(i);
+  let o=8;
+  for(const p of payload){ out.set(p,o); o+=p.length; }
+  return out;
+}
+function buildMP4(samples,opt){
+  const {width,height,fps,avcC}=opt;
+  const b=(...v)=>Uint8Array.from(v);
+  const u16=v=>b((v>>8)&255,v&255);
+  const u32=v=>b((v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255);
+  const s4=s=>Uint8Array.from([...s].map(c=>c.charCodeAt(0)));
+  const zeros=n=>new Uint8Array(n);
+  const cat=a=>{ let n=0; for(const x of a) n+=x.length;
+    const o=new Uint8Array(n); let p=0; for(const x of a){ o.set(x,p); p+=x.length; } return o; };
+  const TS=90000, dur=Math.round(TS/fps), duration=dur*samples.length;
+  const mdat=mp4Box('mdat',cat(samples.map(s=>s.data)));
+  const ftyp=mp4Box('ftyp',s4('isom'),u32(512),s4('isom'),s4('iso2'),s4('avc1'),s4('mp41'));
+  const chunkOffset=ftyp.length+8;
+  const matrix=cat([u32(0x00010000),u32(0),u32(0),u32(0),u32(0x00010000),u32(0),u32(0),u32(0),u32(0x40000000)]);
+  const mvhd=mp4Box('mvhd',b(0,0,0,0),u32(0),u32(0),u32(TS),u32(duration),
+    u32(0x00010000),u16(0x0100),zeros(10),matrix,zeros(24),u32(2));
+  const tkhd=mp4Box('tkhd',b(0,0,0,3),u32(0),u32(0),u32(1),u32(0),u32(duration),
+    zeros(8),u16(0),u16(0),u16(0),u16(0),matrix,u32(width<<16),u32(height<<16));
+  const mdhd=mp4Box('mdhd',b(0,0,0,0),u32(0),u32(0),u32(TS),u32(duration),u16(0x55C4),u16(0));
+  const hdlr=mp4Box('hdlr',b(0,0,0,0),u32(0),s4('vide'),zeros(12),s4('VideoHandler\0'));
+  const vmhd=mp4Box('vmhd',b(0,0,0,1),u16(0),u16(0),u16(0),u16(0));
+  const dinf=mp4Box('dinf',mp4Box('dref',b(0,0,0,0),u32(1),mp4Box('url ',b(0,0,0,1))));
+  const avc1=mp4Box('avc1',zeros(6),u16(1),u16(0),u16(0),zeros(12),
+    u16(width),u16(height),u32(0x00480000),u32(0x00480000),u32(0),
+    u16(1),new Uint8Array(32),u16(0x0018),u16(0xFFFF),mp4Box('avcC',avcC));
+  const stsd=mp4Box('stsd',b(0,0,0,0),u32(1),avc1);
+  const stts=mp4Box('stts',b(0,0,0,0),u32(1),u32(samples.length),u32(dur));
+  const keys=[];
+  samples.forEach((s,i)=>{ if(s.key) keys.push(i+1); });
+  const stss=mp4Box('stss',b(0,0,0,0),u32(keys.length),cat(keys.map(u32)));
+  const stsc=mp4Box('stsc',b(0,0,0,0),u32(1),u32(1),u32(samples.length),u32(1));
+  const stsz=mp4Box('stsz',b(0,0,0,0),u32(0),u32(samples.length),cat(samples.map(s=>u32(s.data.length))));
+  const stco=mp4Box('stco',b(0,0,0,0),u32(1),u32(chunkOffset));
+  const stbl=mp4Box('stbl',stsd,stts,stss,stsc,stsz,stco);
+  const moov=mp4Box('moov',mvhd,mp4Box('trak',tkhd,
+    mp4Box('mdia',mdhd,hdlr,mp4Box('minf',vmhd,dinf,stbl))));
+  return cat([ftyp,mdat,moov]);
+}
+function recordMP4(){
+  const btn=document.getElementById('btnMp4');
+  if(btn.disabled) return;
+  if(typeof VideoEncoder==='undefined'){ flashStatus('no webcodecs in this browser_'); return; }
+  /* H.264 wants even dimensions */
+  const W=Math.max(2,Math.min(1280,canvas.width)&~1);
+  const H=Math.max(2,Math.round(W*canvas.height/canvas.width)&~1);
+  const off=document.createElement('canvas');
+  off.width=W; off.height=H;
+  const octx=off.getContext('2d');
+  const fps=30, total=fps*6;
+  const samples=[];
+  let avcC=null, broken=false, n=0;
+  const reset=()=>{ btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='▣ MP4 6s'; };
+  let enc;
+  try{
+    enc=new VideoEncoder({
+      output:(chunk,meta)=>{
+        if(!avcC&&meta&&meta.decoderConfig&&meta.decoderConfig.description)
+          avcC=new Uint8Array(meta.decoderConfig.description);
+        const d=new Uint8Array(chunk.byteLength);
+        chunk.copyTo(d);
+        samples.push({data:d,key:chunk.type==='key'});
+      },
+      error:()=>{ broken=true; },
+    });
+    /* 'avc' format gives length-prefixed samples plus the avcC blob,
+       which is exactly what the muxer above expects */
+    enc.configure({codec:'avc1.42001f',width:W,height:H,bitrate:8000000,framerate:fps,avc:{format:'avc'}});
+  }catch{ flashStatus('h264 encoding unavailable_'); return; }
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    if(broken){ reset(); flashStatus('encoder failed_'); return; }
+    octx.drawImage(canvas,0,0,W,H);
+    try{
+      const frame=new VideoFrame(off,{timestamp:Math.round(n*1000000/fps),duration:Math.round(1000000/fps)});
+      enc.encode(frame,{keyFrame:n%fps===0});
+      frame.close();
+    }catch{ broken=true; }
+    n++;
+    btn.textContent='● '+Math.max(0,Math.ceil((total-n)/fps));
+    if(n<total){ setTimeout(grab,1000/fps); return; }
+    btn.textContent='◍ muxing';
+    enc.flush().then(()=>{
+      try{ enc.close(); }catch{}
+      if(broken||!avcC||!samples.length){ reset(); flashStatus('mp4 encode failed_'); return; }
+      const mp4=buildMP4(samples,{width:W,height:H,fps,avcC});
+      const blob=new Blob([mp4],{type:'video/mp4'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-reaction-'+Date.now().toString(36)+'.mp4';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      reset();
+    }).catch(()=>{ reset(); flashStatus('mp4 encode failed_'); });
+  };
+  grab();
+}
+
+/* ═══════════════════ GIF ═══════════════════
+   GIF89a written in-file so the tool keeps its no-dependency promise:
+   a fixed 6·6·6 colour cube plus a 40-step grey ramp, ordered-dithered,
+   LZW packed. Frames are grabbed off the live canvas on a timer so the
+   UI keeps breathing, then packed in one go at the end. */
+function gifEncoder(W,H,delayCs){
+  const B=[];
+  const u8=v=>B.push(v&255), u16=v=>{B.push(v&255);B.push((v>>8)&255);},
+        st=s=>{for(let i=0;i<s.length;i++)B.push(s.charCodeAt(i));};
+  const pal=[], L=[0,51,102,153,204,255];
+  for(let r=0;r<6;r++)for(let g=0;g<6;g++)for(let b=0;b<6;b++)pal.push([L[r],L[g],L[b]]);
+  for(let i=0;i<40;i++){const v=Math.round(i*255/39);pal.push([v,v,v]);}
+  st('GIF89a');u16(W);u16(H);u8(0xF7);u8(0);u8(0);
+  for(const c of pal){u8(c[0]);u8(c[1]);u8(c[2]);}
+  u8(0x21);u8(0xFF);u8(11);st('NETSCAPE2.0');u8(3);u8(1);u16(0);u8(0);
+  const BAY=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  return {
+    add(rgba){
+      const idx=new Uint8Array(W*H);
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+        const p=(y*W+x)*4, d=(BAY[y&3][x&3]/16-0.5)*51;
+        const r=Math.max(0,Math.min(255,rgba[p]+d));
+        const g=Math.max(0,Math.min(255,rgba[p+1]+d));
+        const b=Math.max(0,Math.min(255,rgba[p+2]+d));
+        let best=Math.round(r/51)*36+Math.round(g/51)*6+Math.round(b/51);
+        if(Math.max(r,g,b)-Math.min(r,g,b)<26){           // neutrals read better off the grey ramp
+          const lum=(r+g+b)/3, gi=216+Math.round(lum/255*39), c=pal[best];
+          if(Math.abs(pal[gi][0]-lum)<Math.abs((c[0]+c[1]+c[2])/3-lum)) best=gi;
+        }
+        idx[y*W+x]=best;
+      }
+      u8(0x21);u8(0xF9);u8(4);u8(4);u16(delayCs);u8(0);u8(0);
+      u8(0x2C);u16(0);u16(0);u16(W);u16(H);u8(0);u8(8);
+      const out=[];
+      let cur=0,bits=0,size=9,next=258,dict=new Map();
+      const emit=c=>{cur|=c<<bits;bits+=size;while(bits>=8){out.push(cur&255);cur>>=8;bits-=8;}};
+      emit(256);
+      let pre=idx[0];
+      for(let i=1;i<idx.length;i++){
+        const k=idx[i], key=pre*4096+k, f=dict.get(key);
+        if(f!==undefined){pre=f;continue;}
+        emit(pre);
+        if(next<4096){ dict.set(key,next++); if(next>(1<<size)&&size<12) size++; }
+        else{ emit(256); dict=new Map(); next=258; size=9; }
+        pre=k;
+      }
+      emit(pre); emit(257);
+      if(bits>0) out.push(cur&255);
+      for(let i=0;i<out.length;i+=255){
+        const n=Math.min(255,out.length-i);
+        u8(n);
+        for(let j=0;j<n;j++) u8(out[i+j]);
+      }
+      u8(0);
+    },
+    finish(){ u8(0x3B); return new Uint8Array(B); },
+  };
+}
+function recordGIF(){
+  const btn=document.getElementById('btnGif');
+  if(btn.disabled) return;
+  const GW=Math.min(480,canvas.width);
+  const GH=Math.max(1,Math.round(GW*canvas.height/canvas.width));
+  const off=document.createElement('canvas');
+  off.width=GW; off.height=GH;
+  const octx=off.getContext('2d',{willReadFrequently:true});
+  const enc=gifEncoder(GW,GH,8);
+  const total=36;
+  let n=0;
+  btn.disabled=true; btn.classList.add('is-rec');
+  const grab=()=>{
+    octx.drawImage(canvas,0,0,GW,GH);
+    enc.add(octx.getImageData(0,0,GW,GH).data);
+    n++;
+    btn.textContent='● '+(total-n);
+    if(n<total){ setTimeout(grab,80); return; }
+    btn.textContent='◍ packing';
+    setTimeout(()=>{
+      const blob=new Blob([enc.finish()],{type:'image/gif'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='digidelic-reaction-'+Date.now().toString(36)+'.gif';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      btn.disabled=false; btn.classList.remove('is-rec'); btn.textContent='◉ GIF 3s';
+    },30);
+  };
+  grab();
+}
+
 /* ═══════════════════ WIRING ═══════════════════ */
 function syncSlider(el){
   const min=parseFloat(el.min), max=parseFloat(el.max), v=parseFloat(el.value);
@@ -580,9 +1153,11 @@ sliders.forEach(id=>{
     syncSlider(el);
     const p=params();
     if(id==='detail'){ reseed(p); }
-    else if(id==='feed'||id==='kill'||id==='morph'||id==='rim'){ buildMaps(p); }
+    else if(id==='feed'||id==='kill'||id==='morph'||id==='rim'){ buildMaps(p); gpuUploadMaps(); }
     /* diffusion / aniso / agitate / relief / gloss / light / speed apply instantly in the loop */
+    dirty=true;
   });
+  el.addEventListener('change',pushHistory);
   syncSlider(el);
 });
 
@@ -593,17 +1168,23 @@ function wireSeg(segId,attr,onPick){
     seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
     btn.classList.add('is-active');
     onPick(btn.dataset[attr]);
+    pushHistory();
   });
 }
-wireSeg('segPalette','pal',v=>{ state.palette=v; });
+wireSeg('segEngine','eng',setEngine);
+wireSeg('segPalette','pal',v=>{ state.palette=v; dirty=true; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; reseed(params()); });
 
-function newSeed(){
-  state.seed=(Math.random()*0xffffffff)>>>0;
-  reseed(params());
+function updateSeedDisplay(){
   const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
   document.getElementById('seedHex').textContent=hex;
   document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+}
+function newSeed(){
+  state.seed=(Math.random()*0xffffffff)>>>0;
+  reseed(params());
+  updateSeedDisplay();
+  pushHistory();
 }
 document.getElementById('btnRandom').addEventListener('click',newSeed);
 document.getElementById('btnPlay').addEventListener('click',()=>{
@@ -612,19 +1193,27 @@ document.getElementById('btnPlay').addEventListener('click',()=>{
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
+document.getElementById('btnGif').addEventListener('click',recordGIF);
+document.getElementById('btnMp4').addEventListener('click',recordMP4);
+document.getElementById('seedReadout').addEventListener('click',copyPermalink);
+if(navigator.share) document.getElementById('btnShare').hidden=false;
+document.getElementById('btnShare').addEventListener('click',shareArt);
 window.addEventListener('keydown',e=>{
-  if(e.key===' ' && !e.target.closest('input,button')){ e.preventDefault(); newSeed(); }
-  if(e.key==='e' && !e.target.closest('input')) exportPNG();
-  if(e.key==='p' && !e.target.closest('input')) document.getElementById('btnPlay').click();
+  if(e.target.closest('input')) return;
+  if(e.key===' ' && !e.target.closest('button')){ e.preventDefault(); newSeed(); }
+  if(e.key==='e') exportPNG();
+  if(e.key==='p') document.getElementById('btnPlay').click();
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); }
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); }
 });
 
 /* boot */
-reseed(params());
 {
-  const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
-  document.getElementById('seedHex').textContent=hex;
-  document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+  const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
+  if(fromLink){ applyState(fromLink); }
+  else{ reseed(params()); updateSeedDisplay(); }
 }
+pushHistory();
 requestAnimationFrame(frame);
 </script>
 </body>
