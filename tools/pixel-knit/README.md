@@ -80,3 +80,26 @@ plate. `Knockout` is the original hard punch-out; `Multiply`, `Screen`
 and `Difference` let the motif interact with the texture underneath
 instead of replacing it, which widens the expressive range a long way
 for one control.
+
+## MP4 capture
+
+**▣ MP4 6s** encodes six seconds of H.264 with WebCodecs and muxes it
+here in-file — no library, keeping the tool dependency-free. MP4 plays
+inline in the places WebM does not: iOS, Twitter, Discord.
+
+The muxer writes a non-fragmented `ftyp`/`mdat`/`moov` with every sample
+in a single chunk, which keeps `stsc` and `stco` trivial and is
+perfectly legal. It needs a browser with `VideoEncoder`; without one the
+button says so and nothing else changes.
+
+## Frame scrub
+
+Once a clip is loaded, **Frame** scrubs it and the step buttons move ±1
+or ±10 frames, pausing playback so you can sit on an exact frame.
+
+This seeks the video element rather than decoding through WebCodecs
+`VideoDecoder`. VideoDecoder consumes `EncodedVideoChunk`s, so feeding
+it an arbitrary file someone drops in would mean writing both an MP4 and
+a WebM demuxer in this file — a lot of fragile binary parsing of
+untrusted input for the same visible result, since a seek already lands
+on an exact frame.

@@ -85,3 +85,14 @@ mono, so the second axis is the same signal delayed — a phase-space
 embedding, the standard way to get a Lissajous figure from one channel
 while still showing genuine harmonic structure. Freq Y sets the delay
 and Harmonics acts as input gain in this mode.
+
+## MP4 capture
+
+**▣ MP4 6s** encodes six seconds of H.264 with WebCodecs and muxes it
+here in-file — no library, keeping the tool dependency-free. MP4 plays
+inline in the places WebM does not: iOS, Twitter, Discord.
+
+The muxer writes a non-fragmented `ftyp`/`mdat`/`moov` with every sample
+in a single chunk, which keeps `stsc` and `stco` trivial and is
+perfectly legal. It needs a browser with `VideoEncoder`; without one the
+button says so and nothing else changes.
