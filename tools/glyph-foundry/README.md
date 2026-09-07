@@ -79,3 +79,24 @@ and Inkscape do not.
 Two caveats: canvas blend modes have no SVG equivalent and are dropped,
 and text is emitted as `<text>` with a font reference rather than
 outlines, so a machine without Space Grotesk will substitute a fallback.
+
+## Font export
+
+**⤓ Font** exports the invented alphabet as a real installable
+TrueType file — one glyph per character across A–Z, a–z and 0–9, derived
+from the sheet seed so a given seed always yields the same alphabet.
+(The font's glyphs come from the same generator, not lifted from
+particular cells of the sheet: a font wants one form per character
+rather than one per grid slot.)
+
+No dependency was added for this. The grammars already draw into a
+canvas context, so a recording context captures their geometry, strokes
+are converted to filled outlines, and a small TrueType writer emits the
+tables a rasteriser needs — `head hhea maxp hmtx cmap loca glyf name
+post OS/2`.
+
+Because TrueType fills with the nonzero winding rule, a stroke can be
+expressed as the union of one quad per segment plus a round join where
+the path actually turns, all wound the same direction, so the overlaps
+merge instead of cancelling. Counter-shapes (true holes) are not
+modelled — these are stroke-built display glyphs, not a text face.

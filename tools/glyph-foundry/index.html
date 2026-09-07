@@ -243,6 +243,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
       <div class="actions">
         <button id="btnRegen">⟳ Regenerate</button>
         <button id="btnSvg" title="export scalable vector">⬡ SVG</button>
+        <button id="btnFont" title="export the alphabet as an installable TrueType font">⤓ Font</button>
         <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
@@ -813,6 +814,307 @@ function exportPNG(){
   },'image/png');
 }
 
+/* ═══════════════════ FONT EXPORT ═══════════════════
+   Exports the invented alphabet as a real installable TrueType file.
+   The glyph grammars already draw into a canvas context, so a recording
+   context captures their geometry, strokes are converted to filled
+   outlines (TrueType fills nonzero, so same-wound overlapping contours
+   union rather than cancel), and a small TTF writer emits the tables a
+   rasteriser actually needs. Written in-file to keep the tool's
+   no-dependency promise. */
+const FONT_EM=1000, FONT_BOX=700, FONT_PAD=150, FONT_TOP=750;
+
+function recorderCtx(){
+  const subpaths=[], out={strokes:[],fills:[]};
+  let cur=null, lw=1;
+  const push=()=>{ if(cur&&cur.pts.length>1) subpaths.push(cur); cur=null; };
+  const flat=(x,y)=>{ if(!cur) cur={pts:[],closed:false}; cur.pts.push([x,y]); };
+  return {
+    out,
+    get lineWidth(){ return lw; }, set lineWidth(v){ lw=v; },
+    set strokeStyle(v){}, set fillStyle(v){}, set lineCap(v){}, set lineJoin(v){},
+    set globalAlpha(v){}, set font(v){}, set textAlign(v){}, set textBaseline(v){},
+    set globalCompositeOperation(v){},
+    save(){}, restore(){}, setLineDash(){}, getLineDash(){return[];},
+    translate(){}, rotate(){}, scale(){}, setTransform(){}, transform(){},
+    beginPath(){ push(); subpaths.length=0; cur=null; },
+    closePath(){ if(cur) cur.closed=true; },
+    moveTo(x,y){ push(); cur={pts:[[x,y]],closed:false}; },
+    lineTo(x,y){ flat(x,y); },
+    quadraticCurveTo(cx,cy,x,y){
+      if(!cur){ cur={pts:[[cx,cy]],closed:false}; }
+      const [x0,y0]=cur.pts[cur.pts.length-1];
+      for(let i=1;i<=8;i++){
+        const t=i/8, mt=1-t;
+        flat(mt*mt*x0+2*mt*t*cx+t*t*x, mt*mt*y0+2*mt*t*cy+t*t*y);
+      }
+    },
+    bezierCurveTo(a,b,c,d,x,y){
+      if(!cur){ cur={pts:[[a,b]],closed:false}; }
+      const [x0,y0]=cur.pts[cur.pts.length-1];
+      for(let i=1;i<=10;i++){
+        const t=i/10, mt=1-t;
+        flat(mt*mt*mt*x0+3*mt*mt*t*a+3*mt*t*t*c+t*t*t*x,
+             mt*mt*mt*y0+3*mt*mt*t*b+3*mt*t*t*d+t*t*t*y);
+      }
+    },
+    arc(cx,cy,r,a0,a1,ccw){
+      let d=a1-a0;
+      if(ccw){ if(d>0) d-=Math.PI*2; } else if(d<0) d+=Math.PI*2;
+      const steps=Math.max(6,Math.ceil(Math.abs(d)/0.35));
+      if(!cur) cur={pts:[],closed:false};
+      for(let i=0;i<=steps;i++){
+        const a=a0+d*(i/steps);
+        flat(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+      }
+      if(Math.abs(d)>=Math.PI*2-1e-6&&cur) cur.closed=true;
+    },
+    ellipse(cx,cy,rx,ry,rot,a0,a1,ccw){
+      let d=a1-a0;
+      if(ccw){ if(d>0) d-=Math.PI*2; } else if(d<0) d+=Math.PI*2;
+      const steps=Math.max(6,Math.ceil(Math.abs(d)/0.35));
+      if(!cur) cur={pts:[],closed:false};
+      const c=Math.cos(rot||0), s=Math.sin(rot||0);
+      for(let i=0;i<=steps;i++){
+        const a=a0+d*(i/steps), px=rx*Math.cos(a), py=ry*Math.sin(a);
+        flat(cx+px*c-py*s, cy+px*s+py*c);
+      }
+    },
+    rect(x,y,w,h){ push(); cur={pts:[[x,y],[x+w,y],[x+w,y+h],[x,y+h]],closed:true}; push(); },
+    stroke(){ push(); for(const sp of subpaths) out.strokes.push({pts:sp.pts,closed:sp.closed,w:lw}); subpaths.length=0; },
+    fill(){ push(); for(const sp of subpaths) out.fills.push(sp.pts); subpaths.length=0; },
+    fillRect(x,y,w,h){ out.fills.push([[x,y],[x+w,y],[x+w,y+h],[x,y+h]]); },
+    strokeRect(x,y,w,h){ out.strokes.push({pts:[[x,y],[x+w,y],[x+w,y+h],[x,y+h]],closed:true,w:lw}); },
+    clearRect(){}, clip(){}, drawImage(){}, fillText(){}, measureText(t){ return {width:String(t).length*6}; },
+    createRadialGradient(){ return {addColorStop(){}}; },
+    createLinearGradient(){ return {addColorStop(){}}; },
+  };
+}
+
+function fontDisc(cx,cy,r,n){
+  const c=[];
+  for(let i=0;i<(n||8);i++){ const a=-i/(n||8)*Math.PI*2; c.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]); }
+  return c;
+}
+function strokeToContours(strokes){
+  const out=[];
+  for(const s of strokes){
+    const hw=Math.max(6,s.w/2);
+    const pts=s.pts;
+    if(pts.length===1){ out.push(fontDisc(pts[0][0],pts[0][1],hw)); continue; }
+    const segs=pts.slice();
+    if(s.closed) segs.push(pts[0]);
+    let prevA=null;
+    for(let i=0;i<segs.length-1;i++){
+      const [x0,y0]=segs[i], [x1,y1]=segs[i+1];
+      const dx=x1-x0, dy=y1-y0, len=Math.hypot(dx,dy);
+      if(len<1e-6) continue;
+      const nx=-dy/len*hw, ny=dx/len*hw;
+      out.push([[x0+nx,y0+ny],[x1+nx,y1+ny],[x1-nx,y1-ny],[x0-nx,y0-ny]]);
+      /* a round join is only needed where the path actually turns —
+         flattened arcs otherwise emit one disc per tiny segment */
+      const a=Math.atan2(dy,dx);
+      if(prevA!==null){
+        let d=Math.abs(a-prevA)%(Math.PI*2);
+        if(d>Math.PI) d=Math.PI*2-d;
+        if(d>0.3) out.push(fontDisc(x0,y0,hw,6));
+      }
+      prevA=a;
+    }
+    out.push(fontDisc(segs[0][0],segs[0][1],hw,6));
+    out.push(fontDisc(segs[segs.length-1][0],segs[segs.length-1][1],hw,6));
+  }
+  return out;
+}
+function normaliseWinding(contours){
+  return contours.map(c=>{
+    let area=0;
+    for(let i=0;i<c.length;i++){ const [x0,y0]=c[i],[x1,y1]=c[(i+1)%c.length]; area+=x0*y1-x1*y0; }
+    return area>0?c.slice().reverse():c;
+  });
+}
+
+function fontBuf(){
+  const a=[];
+  const o={a,
+    u8(v){a.push(v&255);return o;},
+    u16(v){a.push((v>>8)&255,v&255);return o;},
+    i16(v){return o.u16(v<0?v+0x10000:v);},
+    u32(v){a.push((v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255);return o;},
+    tag(s){for(let i=0;i<4;i++)a.push(s.charCodeAt(i));return o;},
+    bytes(b){for(const v of b)a.push(v&255);return o;},
+    utf16(s){for(const ch of s){const c=ch.codePointAt(0);a.push((c>>8)&255,c&255);}return o;},
+    pad4(){while(a.length%4)a.push(0);return o;},
+    get length(){return a.length;}};
+  return o;
+}
+function fontChecksum(b){
+  let s=0;
+  for(let i=0;i<b.length;i+=4){
+    const v=((b[i]||0)<<24|(b[i+1]||0)<<16|(b[i+2]||0)<<8|(b[i+3]||0))>>>0;
+    s=(s+v)>>>0;
+  }
+  return s;
+}
+function buildTTF(glyphs,meta){
+  const family=(meta&&meta.family)||'Digidelic Glyphs', style='Regular';
+  const glyfParts=[], locaOffsets=[], bboxes=[];
+  let glyfLen=0;
+  for(const g of glyphs){
+    locaOffsets.push(glyfLen);
+    const contours=(g.contours||[]).filter(c=>c.length>=3);
+    if(!contours.length){ bboxes.push([0,0,0,0]); continue; }
+    const b=fontBuf();
+    let xMin=Infinity,yMin=Infinity,xMax=-Infinity,yMax=-Infinity;
+    for(const c of contours) for(const q of c){
+      if(q[0]<xMin)xMin=q[0]; if(q[1]<yMin)yMin=q[1];
+      if(q[0]>xMax)xMax=q[0]; if(q[1]>yMax)yMax=q[1];
+    }
+    bboxes.push([Math.round(xMin),Math.round(yMin),Math.round(xMax),Math.round(yMax)]);
+    b.i16(contours.length).i16(Math.round(xMin)).i16(Math.round(yMin)).i16(Math.round(xMax)).i16(Math.round(yMax));
+    let n=0;
+    for(const c of contours){ n+=c.length; b.u16(n-1); }
+    b.u16(0);
+    for(let i=0;i<n;i++) b.u8(0x01);
+    let px=0;
+    for(const c of contours) for(const q of c){ b.i16(Math.round(q[0])-px); px=Math.round(q[0]); }
+    let py=0;
+    for(const c of contours) for(const q of c){ b.i16(Math.round(q[1])-py); py=Math.round(q[1]); }
+    b.pad4();
+    glyfParts.push(b.a); glyfLen+=b.a.length;
+  }
+  locaOffsets.push(glyfLen);
+  let glyf=[];
+  for(const part of glyfParts) glyf=glyf.concat(part);
+  const loca=fontBuf();
+  for(const off of locaOffsets) loca.u32(off);
+  const numGlyphs=glyphs.length;
+  const hmtx=fontBuf();
+  glyphs.forEach((g,i)=>{ hmtx.u16(g.advance||FONT_EM); hmtx.i16(bboxes[i][0]||0); });
+  let fxMin=0,fyMin=0,fxMax=0,fyMax=0,maxPts=0,maxCon=0;
+  glyphs.forEach((g,i)=>{
+    const bb=bboxes[i];
+    fxMin=Math.min(fxMin,bb[0]); fyMin=Math.min(fyMin,bb[1]);
+    fxMax=Math.max(fxMax,bb[2]); fyMax=Math.max(fyMax,bb[3]);
+    const cs=(g.contours||[]).filter(c=>c.length>=3);
+    maxCon=Math.max(maxCon,cs.length);
+    maxPts=Math.max(maxPts,cs.reduce((s,c)=>s+c.length,0));
+  });
+  const head=fontBuf();
+  head.u32(0x00010000).u32(0x00010000).u32(0).u32(0x5F0F3CF5).u16(0x000B).u16(FONT_EM)
+    .u32(0).u32(0).u32(0).u32(0)
+    .i16(fxMin).i16(fyMin).i16(fxMax).i16(fyMax)
+    .u16(0).u16(8).i16(2).i16(1).i16(0);
+  const hhea=fontBuf();
+  hhea.u32(0x00010000).i16(800).i16(-200).i16(0).u16(FONT_EM)
+    .i16(fxMin).i16(0).i16(fxMax)
+    .i16(1).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).u16(numGlyphs);
+  const maxp=fontBuf();
+  maxp.u32(0x00010000).u16(numGlyphs).u16(maxPts).u16(maxCon)
+    .u16(0).u16(0).u16(2).u16(0).u16(0).u16(0).u16(0).u16(0).u16(0).u16(0).u16(0);
+  const mapped=glyphs.map((g,i)=>({code:g.code,gid:i})).filter(m=>m.code>0).sort((a,b)=>a.code-b.code);
+  const segs=[];
+  for(const m of mapped){
+    const last=segs[segs.length-1];
+    if(last&&m.code===last.end+1&&m.gid===last.startGid+(m.code-last.start)) last.end=m.code;
+    else segs.push({start:m.code,end:m.code,startGid:m.gid});
+  }
+  segs.push({start:0xFFFF,end:0xFFFF,startGid:0});
+  const segCount=segs.length, sub=fontBuf();
+  sub.u16(4).u16(16+segCount*8).u16(0).u16(segCount*2);
+  const sr=2*Math.pow(2,Math.floor(Math.log2(segCount)));
+  sub.u16(sr).u16(Math.floor(Math.log2(segCount))).u16(segCount*2-sr);
+  for(const s of segs) sub.u16(s.end);
+  sub.u16(0);
+  for(const s of segs) sub.u16(s.start);
+  for(const s of segs) sub.i16(s.start===0xFFFF?1:((s.startGid-s.start)<<16>>16));
+  for(const s of segs) sub.u16(0);
+  const cmap=fontBuf();
+  cmap.u16(0).u16(1).u16(3).u16(1).u32(12).bytes(sub.a);
+  const psName=(family+'-'+style).replace(/[^\w-]/g,'');
+  const names=[[1,family],[2,style],[3,family+' '+style+' 1.0'],[4,family+' '+style],[5,'Version 1.0'],[6,psName]];
+  const strs=fontBuf(), recs=[];
+  for(const nm of names){ const off=strs.length; strs.utf16(nm[1]); recs.push({id:nm[0],off,len:strs.length-off}); }
+  const name=fontBuf();
+  name.u16(0).u16(recs.length).u16(6+recs.length*12);
+  for(const r of recs) name.u16(3).u16(1).u16(0x0409).u16(r.id).u16(r.len).u16(r.off);
+  name.bytes(strs.a);
+  const post=fontBuf();
+  post.u32(0x00030000).u32(0).i16(-100).i16(50).u32(1).u32(0).u32(0).u32(0).u32(0);
+  const os2=fontBuf();
+  os2.u16(4).i16(FONT_EM).u16(400).u16(5).u16(0)
+    .i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0)
+    .bytes([0,0,0,0,0,0,0,0,0,0]).u32(1).u32(0).u32(0).u32(0).tag('DGDL')
+    .u16(0x0040).u16(mapped.length?mapped[0].code:32).u16(mapped.length?mapped[mapped.length-1].code:32)
+    .i16(800).i16(-200).i16(200).u16(1000).u16(800)
+    .u32(0).u32(0).i16(500).i16(0).i16(0);
+  const tables=[['OS/2',os2.a],['cmap',cmap.a],['glyf',glyf],['head',head.a],['hhea',hhea.a],
+                ['hmtx',hmtx.a],['loca',loca.a],['maxp',maxp.a],['name',name.a],['post',post.a]]
+                .sort((a,b)=>a[0]<b[0]?-1:1);
+  const n=tables.length;
+  const searchRange=Math.pow(2,Math.floor(Math.log2(n)))*16;
+  const dir=fontBuf();
+  dir.u32(0x00010000).u16(n).u16(searchRange).u16(Math.floor(Math.log2(n))).u16(n*16-searchRange);
+  let offset=12+n*16;
+  const entries=[];
+  for(const t of tables){
+    const padded=t[1].slice();
+    while(padded.length%4) padded.push(0);
+    entries.push({tag:t[0],offset,length:t[1].length,padded});
+    offset+=padded.length;
+  }
+  for(const e of entries) dir.tag(e.tag).u32(fontChecksum(e.padded)).u32(e.offset).u32(e.length);
+  let font=dir.a.slice();
+  for(const e of entries) font=font.concat(e.padded);
+  const adj=(0xB1B0AFBA-fontChecksum(font))>>>0;
+  const at=entries.find(e=>e.tag==='head').offset+8;
+  font[at]=(adj>>>24)&255; font[at+1]=(adj>>>16)&255; font[at+2]=(adj>>>8)&255; font[at+3]=adj&255;
+  return new Uint8Array(font);
+}
+
+/* one glyph per character, derived from the sheet seed so a given seed
+   always yields the same alphabet — not lifted from particular cells,
+   since a font wants one form per character rather than per grid slot */
+function fontCharset(){
+  const s=[];
+  for(let c=65;c<=90;c++) s.push(c);
+  for(let c=97;c<=122;c++) s.push(c);
+  for(let c=48;c<=57;c++) s.push(c);
+  return s;
+}
+function glyphContoursFor(code,p){
+  const rnd=mulberry32((state.seed^Math.imul(code+1,0x9E3779B1))>>>0);
+  const rec=recorderCtx();
+  rec.lineWidth=Math.max(28,p.stroke*14);
+  const roll=rnd();
+  if(roll<0.62) drawAsemic(rec,rnd,p,'#000',0,0,FONT_BOX);
+  else if(roll<0.82) drawStack(rec,rnd,p,'#000',0,0,FONT_BOX);
+  else drawBauhaus(rec,rnd,p,'#000',0,0,FONT_BOX);
+  const cont=strokeToContours(rec.out.strokes).concat(rec.out.fills.filter(f=>f.length>=3));
+  /* canvas is y-down, font units are y-up */
+  const moved=cont.map(c=>c.map(q=>[q[0]+FONT_PAD,FONT_TOP-q[1]]));
+  return normaliseWinding(moved);
+}
+function exportFont(){
+  const p=params();
+  const glyphs=[{code:0,contours:[],advance:FONT_EM}];
+  for(const code of fontCharset()){
+    let contours=[];
+    try{ contours=glyphContoursFor(code,p); }catch{ contours=[]; }
+    glyphs.push({code,contours,advance:FONT_EM});
+  }
+  const withOutlines=glyphs.filter(g=>g.contours.length).length;
+  if(!withOutlines){ flashStatus('no glyph outlines to export_'); return; }
+  const ttf=buildTTF(glyphs,{family:'Digidelic '+state.seed.toString(16).slice(0,4).toUpperCase()});
+  const blob=new Blob([ttf],{type:'font/ttf'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='digidelic-glyphs-'+state.seed.toString(16).padStart(8,'0')+'.ttf';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  flashStatus(withOutlines+' glyphs exported_');
+}
+
 /* ═══════════════════ SVG EXPORT ═══════════════════
    A context object shaped like CanvasRenderingContext2D that records SVG
    instead of pixels, so render() can be replayed straight into a vector
@@ -1083,6 +1385,7 @@ document.getElementById('btnRandom').addEventListener('click',regenerate);
 document.getElementById('btnRegen').addEventListener('click',regenerate);
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnSvg').addEventListener('click',exportSVG);
+document.getElementById('btnFont').addEventListener('click',exportFont);
 document.getElementById('seedReadout').addEventListener('click',copyPermalink);
 if(navigator.share) document.getElementById('btnShare').hidden=false;
 document.getElementById('btnShare').addEventListener('click',shareArt);
