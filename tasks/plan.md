@@ -19,7 +19,7 @@ Revamp all 13 digidelic generative tools with deeper functionality while preserv
 - [x] Checkpoint: Foundation — pilot tool builds, exports, imports, undoes, accessible.
 
 ### Phase 2: Simulation Tools (circuit-matrix, colony-display, reaction-field, signal-scope)
-- [ ] Task 2.1: circuit-matrix — add terminal routing mode with keep-out zones + SVG export of traces/pads/modules.
+- [x] Task 2.1: circuit-matrix — add terminal routing mode with keep-out zones + SVG export of traces/pads/modules.
 - [ ] Task 2.2: colony-display — add validated B/S rule editor with presets + RLE import/export with rotatable stamp placement.
 - [ ] Task 2.3: reaction-field — add interactive regime atlas with named regimes + paint/erase chemical B with style-map brushes.
 - [ ] Task 2.4: signal-scope — add dropped-audio stereo X/Y visualization + triggered time-domain/spectrum views with freeze.

@@ -197,8 +197,19 @@ footer .fill{flex:1;border-right:0;text-align:right}
             <input type="range" id="modules" min="0" max="100" step="1" value="45">
           </div>
           <div class="param">
+            <div class="lab"><span class="name">Terminal mode</span></div>
+            <div class="seg" id="segTerminal" role="group" aria-label="terminal routing mode">
+              <button data-term="auto" class="is-active">Auto</button>
+              <button data-term="terminal">Terminal</button>
+            </div>
+          </div>
+          <div class="param">
             <div class="lab"><span class="name">Turnover</span><span class="val" data-val="turnover"></span></div>
             <input type="range" id="turnover" min="0" max="100" step="1" value="40">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Keep-out zones</span><span class="val" data-val="zones"></span></div>
+            <input type="range" id="zones" min="0" max="100" step="1" value="20">
           </div>
         </div>
 
@@ -265,6 +276,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <button id="btnMp4" title="capture 6s as MP4 — plays inline where WebM does not">▣ MP4 6s</button>
         <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
+        <button id="btnExportSVG" title="export traces, pads and modules as SVG">◈ Export SVG</button>
       </div>
     </aside>
   </main>
@@ -344,16 +356,20 @@ const state={
   format:'panel',
   playing:true,
   tick:0,
+  terminalMode:'auto',
+  zones:0.20,
 };
-const sliders=['spawn','straight','pads','modules','turnover','grid','glow','dotsize','speed'];
+const sliders=['spawn','straight','pads','modules','turnover','zones','grid','glow','dotsize','speed'];
 function params(){
   const g=id=>parseFloat(document.getElementById(id).value);
   return {
     spawn:g('spawn')/100, straight:g('straight')/100,
     pads:g('pads')/100, modules:g('modules')/100, turnover:g('turnover')/100,
+    zones:g('zones')/100,
     grid:g('grid')|0, glow:g('glow')/100, dotsize:g('dotsize')/100,
     speed:g('speed'),
     palette:state.palette, format:state.format,
+    terminalMode:state.terminalMode,
   };
 }
 
@@ -404,6 +420,33 @@ function areaFree(x,y,w,h,margin){
   }
   return true;
 }
+
+/* ═══════════════════ KEEP-OUT ZONES ═══════════════════
+   zones>0 reserves a border band along the edges of the board.
+   Placement functions and walkers must stay inside this band.   */
+function zoneMargin(p){
+  return Math.max(1, Math.round(p.zones * Math.min(board.W, board.H) * 0.06));
+}
+
+function inZone(x,y,p){
+  const m=zoneMargin(p);
+  return x<=m||y<=m||x>=board.W-m-1||y>=board.H-m-1;
+}
+
+function areaFreeZone(x,y,w,h,p){
+  const m=zoneMargin(p);
+  for(let dy=-1;dy<h+1;dy++)for(let dx=-1;dx<w+1;dx++){
+    const px=x+dx, py=y+dy;
+    if(px<0||py<0||px>=board.W||py>=board.H) { if(dx>=0&&dy>=0&&dx<w&&dy<h) return false; continue; }
+    if(inZone(px,py,p)) continue;            // inside zone — allowed to place over
+    if(board.occ[py*board.W+px]) return false;
+  }
+  return true;
+}
+
+/* ═══════════════════ KEEP-OUT ZONES ═══════════════════
+   zones>0 reserves a border band along the edges of the board.
+   Placement functions and walkers must stay inside this band.   */
 function stampRect(el,x,y,w,h){
   for(let dy=0;dy<h;dy++)for(let dx=0;dx<w;dx++) claim(el,x+dx,y+dy);
 }
@@ -453,9 +496,10 @@ function spawnWalker(p,fx,fy){
   const {rnd,W,H}=board;
   let x=fx??(1+(rnd()*(W-2))|0), y=fy??(1+(rnd()*(H-2))|0);
   if(!isFree(x,y)) return;
+  if(p.terminalMode==='terminal' && inZone(x,y,p)) return;
   const el=newElement(pickColor(p),'trace');
   claim(el,x,y);
-  board.walkers.push({el,x,y,dir:(rnd()*4)|0,len:1,max:6+(rnd()*Math.max(W,H)*0.5)|0});
+  board.walkers.push({el,x,y,dir:(rnd()*4)|0,len:1,max:6+(rnd()*Math.max(W,H)*0.5)|0, terminal:p.terminalMode==='terminal'});
 }
 function stepWalker(w,p){
   const {rnd}=board;
@@ -464,7 +508,9 @@ function stepWalker(w,p){
       w.dir=(w.dir+(rnd()<0.5?1:3))%4;
     }
     const [dx,dy]=DIRS[w.dir];
-    const nx=w.x+dx, ny=w.y+dy;
+    let nx=w.x+dx, ny=w.y+dy;
+    /* terminal mode: refuse to enter the keep-out band */
+    if(p.terminalMode==='terminal' && inZone(nx,ny,p)) return false;
     if(!isFree(nx,ny)){
       /* try a turn before giving up */
       const d2=(w.dir+(rnd()<0.5?1:3))%4;
@@ -612,6 +658,93 @@ function render(g,Wpx,Hpx,p,tNow){
   g.fillStyle=vig; g.fillRect(0,0,Wpx,Hpx);
 }
 
+/* ═══════════════════ SVG EXPORT ═══════════════════ */
+function boardToSVG(p){
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg');
+  const W=board.W, H=board.H;
+  const cell=Math.min(12, Math.max(2, 540/Math.max(W,H)));
+  svg.setAttribute('width', W*cell);
+  svg.setAttribute('height', H*cell);
+  svg.setAttribute('viewBox', `0 0 ${W*cell} ${H*cell}`);
+  svg.setAttribute('xmlns', ns);
+  svg.setAttribute('font-family','monospace');
+  svg.setAttribute('text-rendering','geometricPrecision');
+  const bg=document.createElementNS(ns,'rect');
+  bg.setAttribute('width', '100%');
+  bg.setAttribute('height', '100%');
+  bg.setAttribute('fill', PALETTES[p.palette].bg);
+  svg.appendChild(bg);
+  /* traces */
+  for(const el of board.elements){
+    if(el.kind!=='trace') continue;
+    if(el.cells.length<2) continue;
+    const [cr,cg,cb]=el.color;
+    let alpha=1;
+    if(el.dying) alpha=Math.max(0,1-(performance.now()-el.dying)/900);
+    const color=`rgba(${cr|0},${cg|0},${cb|0},${alpha.toFixed(3)})`;
+    const path=document.createElementNS(ns,'path');
+    const d=el.cells.map((i,idx)=>{
+      const x=(i%W)*cell, y=(Math.floor(i/W))*cell;
+      return (idx===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1);
+    }).join(' ')+'Z';
+    path.setAttribute('d',d);
+    path.setAttribute('fill',color);
+    path.setAttribute('stroke',color);
+    path.setAttribute('stroke-width',Math.max(0.4,cell*0.18).toFixed(3));
+    path.setAttribute('stroke-linejoin','round');
+    path.setAttribute('stroke-linecap','round');
+    svg.appendChild(path);
+  }
+  /* pads and modules */
+  for(const el of board.elements){
+    if(el.kind==='trace') continue;
+    if(el.cells.length<1) continue;
+    const [cr,cg,cb]=el.color;
+    let alpha=1;
+    if(el.dying) alpha=Math.max(0,1-(performance.now()-el.dying)/900);
+    const color=`rgba(${cr|0},${cg|0},${cb|0},${alpha.toFixed(3)})`;
+    for(const i of el.cells){
+      const x=(i%W)*cell, y=(Math.floor(i/W))*cell;
+      const c=document.createElementNS(ns,'circle');
+      c.setAttribute('cx',x+cell/2);
+      c.setAttribute('cy',y+cell/2);
+      c.setAttribute('r',Math.max(0.6,cell*0.32).toFixed(3));
+      c.setAttribute('fill',color);
+      c.setAttribute('stroke','rgba(255,255,255,0.15)');
+      c.setAttribute('stroke-width',Math.max(0.3,cell*0.06).toFixed(3));
+      svg.appendChild(c);
+    }
+  }
+  /* seed and palette metadata */
+  const meta=document.createElementNS(ns,'text');
+  meta.setAttribute('x',2);
+  meta.setAttribute('y',11);
+  meta.setAttribute('fill','rgba(255,255,255,0.42)');
+  meta.setAttribute('font-size','9');
+  meta.setAttribute('letter-spacing','0.18em');
+  meta.textContent=`circuit matrix · seed ${state.seed.toString(16).toUpperCase().padStart(8,'0')} · ${p.palette} · ${board.elements.length} elements`;
+  svg.appendChild(meta);
+  return svg;
+}
+
+function exportSVG(){
+  const p=params();
+  const svg=boardToSVG(p);
+  const serializer=new XMLSerializer();
+  const svgStr=serializer.serializeToString(svg);
+  const blob=new Blob([svgStr],{type:'image/svg+xml'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`circuit-matrix-${state.seed.toString(16).padStart(8,'0')}.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  flashStatus('svg exported_');
+}
+
 /* ═══════════════════ LOOP ═══════════════════ */
 let acc=0, lastT=performance.now(), dirty=true;
 function frame(tNow){
@@ -707,8 +840,9 @@ const rack = createParameterRack({
   cornerSeedId: 'cornerSeed',
   formatSegId: 'segFormat',
   paletteSegId: 'segPalette',
+  terminalSegId: 'segTerminal',
   syncSliderCb: (el, out, v) => {
-    if(['spawn','straight','pads','modules','turnover','glow','dotsize'].includes(el.id)) out.textContent=v+'%';
+    if(['spawn','straight','pads','modules','turnover','glow','dotsize','zones'].includes(el.id)) out.textContent=v+'%';
     else if(el.id==='speed') out.textContent=v+'hz';
     else if(el.id==='grid') out.textContent=v+'px';
     else out.textContent=v;
@@ -720,6 +854,7 @@ const rack = createParameterRack({
     dirty=true;
   },
   exportPNGCb: () => exportMgr.exportPNG({ scale: 2, background: true }),
+  exportSVGCb: () => exportSVG(),
   recordClipCb: () => exportMgr.recordGIF({ duration: 3000, fps: 12 }),
   recordGIFCb: () => exportMgr.recordGIF({ duration: 3000, fps: 12 }),
   recordMP4Cb: () => exportMgr.recordMP4({ duration: 6000, fps: 30 }),
