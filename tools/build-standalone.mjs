@@ -183,13 +183,48 @@ async function build(file){
     html = html.replace(m[0], `<style>\n${css}\n</style>`);
   }
 
-  /* 4 · local scripts → inline <script> */
-  html = html.replace(/<script\b[^>]*\bsrc=("|')([^"']+\.js)\1[^>]*>\s*<\/script>/g,(m,q,src)=>{
-    if (isRemote(src)) return m;
-    const p = resolve(dir,src);
-    if (!existsSync(p)){ stats.missing++; console.warn(`  ! missing ${src}`); return m; }
-    return `<script>\n${readFileSync(p,'utf8').replace(/<\/script/gi,'<\\/script')}\n</script>`;
-  });
+  /* 4 · local scripts → inline <script> (supports ES module imports from ./shared/) */
+  function resolveSharedImports(code, baseDir) {
+    const importRegex = /import\s+([\s\S]*?)\s+from\s+(['"])(\.?\.?\/shared\/[^'"]+)\2\s*;?/g;
+    return code.replace(importRegex, (full, imports, quote, relPath) => {
+      const absPath = resolve(baseDir, relPath);
+      if (!existsSync(absPath)) {
+        stats.missing++;
+        console.warn(`  ! missing shared import ${relPath}`);
+        return full;
+      }
+      let sharedCode = readFileSync(absPath, 'utf8');
+      sharedCode = resolveSharedImports(sharedCode, dirname(absPath));
+      sharedCode = sharedCode.replace(/\bexport\s+default\s+/g, '// export default ');
+      sharedCode = sharedCode.replace(/\bexport\s+const\s+/g, 'const ');
+      sharedCode = sharedCode.replace(/\bexport\s+let\s+/g, 'let ');
+      sharedCode = sharedCode.replace(/\bexport\s+function\s+/g, 'function ');
+      sharedCode = sharedCode.replace(/\bexport\s+class\s+/g, 'class ');
+      sharedCode = sharedCode.replace(/\bexport\s+\{([^}]+)\};?/g, '// export {$1}');
+      return `// inlined from ${relPath}\n${sharedCode}`;
+    });
+  }
+
+  function inlineScripts(html, baseDir) {
+    html = html.replace(/<script\b[^>]*\bsrc=("|')([^"']+\.js)\1[^>]*>\s*<\/script>/g, (m, q, src) => {
+      if (isRemote(src)) return m;
+      const p = resolve(baseDir, src);
+      if (!existsSync(p)) { stats.missing++; console.warn(`  ! missing ${src}`); return m; }
+      let code = readFileSync(p, 'utf8');
+      code = resolveSharedImports(code, dirname(p));
+      return `<script>\n${code.replace(/<\/script/gi, '<\\/script')}\n</script>`;
+    });
+
+    html = html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/g, (m, code) => {
+      if (/<script\b[^>]*\bsrc=/i.test(m)) return m;
+      code = resolveSharedImports(code, baseDir);
+      return `<script>\n${code.replace(/<\/script/gi, '<\\/script')}\n</script>`;
+    });
+
+    return html;
+  }
+
+  html = inlineScripts(html, dir);
 
   mkdirSync(OUT,{recursive:true});
   const out = join(OUT, flatName(file));
