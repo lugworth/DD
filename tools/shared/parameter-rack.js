@@ -12,6 +12,7 @@ export function createParameterRack(config) {
     btnRandomId,
     btnPlayId,
     btnExportId,
+    btnExportSVGId,
     btnRecordId,
     btnGifId,
     btnMp4Id,
@@ -79,6 +80,7 @@ export function createParameterRack(config) {
   // Initialize segments
   if (formatSegId) wireSeg(formatSegId, 'fmt', v => { state.format = v; if (reseedCb) reseedCb(); });
   if (paletteSegId) wireSeg(paletteSegId, 'pal', v => { state.palette = v; });
+  if (terminalSegId) wireSeg(terminalSegId, 'term', v => { state.terminalMode = v; });
 
   // Buttons
   if (btnRandomId) document.getElementById(btnRandomId).addEventListener('click', newSeedCb);
@@ -87,6 +89,7 @@ export function createParameterRack(config) {
   if (btnRecordId) document.getElementById(btnRecordId).addEventListener('click', recordClipCb);
   if (btnGifId) document.getElementById(btnGifId).addEventListener('click', recordGIFCb);
   if (btnMp4Id) document.getElementById(btnMp4Id).addEventListener('click', recordMP4Cb);
+  if (btnExportSVGId) document.getElementById(btnExportSVGId).addEventListener('click', exportSVGCb);
   if (seedReadoutId) document.getElementById(seedReadoutId).addEventListener('click', copyPermalinkCb);
   if (btnShareId && navigator.share) {
     document.getElementById(btnShareId).hidden = false;
