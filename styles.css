@@ -5,7 +5,8 @@
 
    It pulls in, in order:
      1. colors_and_type.css — tokens (color, type, spacing, motion) + base element styles + motifs
-     2. glitch.css          — shared glitch layer + texture-overlay utilities
+     2. textures.css        — second-set hues, cream surface, flat .t-* primitives, stepped motion
+     3. glitch.css          — shared glitch layer + texture-overlay utilities
    (glitch.js is a behaviour layer; load it separately with <script src="glitch.js"> where needed.)
 
    For the shadcn/ui variable theme, see ui_kits/shadcn/globals.css.
@@ -13,4 +14,5 @@
    ============================================================ */
 
 @import url('colors_and_type.css');
+@import url('textures.css');
 @import url('glitch.css');

@@ -39,14 +39,22 @@
   --black-raised: #1a1a18;      /* elevated */
   --white:        #ffffff;
   --white-soft:   rgba(255,255,255,0.86);
-  --white-dim:    rgba(255,255,255,0.42);
+  /* 0.55 is the READABLE FLOOR on black (6.25:1 — AA).
+     Raised from 0.42 (3.90:1, AA-fail) after the 07-2026 contrast audit.
+     See the Accessibility card for every computed pairing. */
+  --white-dim:    rgba(255,255,255,0.55);
+  --white-faint:  rgba(255,255,255,0.35);  /* 3.00:1 — DECORATIVE ONLY, never informational text */
   --white-ghost:  rgba(255,255,255,0.12);
 
   /* ─── THE 7 HEROES (sampled from refs) ──────────────────── */
 
-  /* ELECTRIC YELLOW — Clov, WILLB, hazard (brightest primary) */
-  --yellow:       #eaff00;
-  --yellow-deep:  #d4e800;
+  /* ELECTRIC COBALT — primary action, focus ring, hero fill.
+     4.70:1 on black; black OR white label text both clear AA on it. */
+  --cobalt:       #2d6cff;
+  --cobalt-deep:  #1f52d6;   /* pressed / active */
+
+  /* ORANGE — warning signal. 6.71:1 on black. */
+  --orange:       #ff5a00;
 
   /* HOT PINK — WILLB, Clov, glitch hero, notification */
   --pink:         #ff2d87;
@@ -56,9 +64,11 @@
   --green:        #39ff6a;
   --green-deep:   #00d93d;
 
-  /* ELECTRIC BLUE — Marathon hero fill, dithered environments */
-  --blue:         #2d4cff;
-  --blue-deep:    #0018cc;
+  /* ELECTRIC BLUE — alias of cobalt. The old #2d4cff was visually
+     indistinguishable from cobalt and failed AA body text (3.59:1),
+     so the two merged. Kept as a name for the checkerboard motif. */
+  --blue:         var(--cobalt);
+  --blue-deep:    var(--cobalt-deep);
 
   /* MAGENTA — Marathon glitch, chromatic aberration */
   --magenta:      #c800ff;
@@ -89,6 +99,7 @@
   --fg:           var(--white);
   --fg-soft:      var(--white-soft);
   --fg-dim:       var(--white-dim);
+  --fg-faint:     var(--white-faint);
   --fg-ghost:     var(--white-ghost);
 
   /* Text-on-color — always inverted to black for legibility */
@@ -110,7 +121,7 @@
   --st-live:      var(--green);
   --st-alert:     var(--pink);
   --st-err:       var(--pink-hot);
-  --st-warn:      var(--yellow);
+  --st-warn:      var(--orange);   /* cobalt is not a hazard signal — warning is orange */
   --st-info:      var(--cyan);
   --st-dead:      var(--white-ghost);
 
@@ -153,6 +164,16 @@
   --sp-12:48px;--sp-16:64px;--sp-20:80px;--sp-24:96px;
 
   --radius: 0;  /* never anything else */
+
+  /* ─── FOCUS ─────────────────────────────────────────────── */
+  --focus-ring:        var(--cobalt);   /* 4.70:1 on black; clears 3:1 on every system surface */
+  --focus-ring-invert: var(--white);    /* flip when the ring would sit on a cobalt fill */
+  --focus-width:  2px;
+  --focus-offset: 1px;
+
+  /* ─── TARGET SIZE ───────────────────────────────────────── */
+  --target-min:   24px;  /* WCAG 2.5.8 floor */
+  --target-touch: 44px;  /* mobile default */
 
   /* ─── MOTION ────────────────────────────────────────────── */
   /* Durations — short + decisive. This is a machine, not a toy. */
@@ -235,8 +256,8 @@ a:hover { color: var(--white); border-bottom-color: var(--cyan); }
    TEXTURES / MOTIFS
    ============================================================ */
 
-/* Hazard stripes — diagonal yellow/black, etc. */
-.stripes-yellow { background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, var(--black) 14px 28px); }
+/* Hazard stripes — diagonal cobalt/black, etc. */
+.stripes-cobalt { background: repeating-linear-gradient(-45deg, var(--cobalt) 0 14px, var(--black) 14px 28px); }
 .stripes-pink   { background: repeating-linear-gradient(-45deg, var(--pink)   0 14px, var(--black) 14px 28px); }
 .stripes-cyan   { background: repeating-linear-gradient(-45deg, var(--cyan)   0 14px, var(--black) 14px 28px); }
 
@@ -364,11 +385,18 @@ a:hover { color: var(--white); border-bottom-color: var(--cyan); }
 .fx-boot { animation: fx-enter var(--dur-slow) var(--ease-step) both; }
 
 /* ============================================================
-   FOCUS — keyboard reachability. Hard yellow ring, on-brand.
+   FOCUS — keyboard reachability. Hard cobalt ring, on-brand.
+   Never removed. Always distinct from hover (hover translates,
+   focus rings). Verified 4.70:1 on black; clears 3:1 on every
+   system surface EXCEPT cobalt — there the ring flips to white
+   via .focus-invert (put it on any element with a cobalt fill).
    ============================================================ */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--yellow);
-  outline-offset: 1px;
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+:where(a, button, [tabindex]).focus-invert:focus-visible {
+  outline-color: var(--focus-ring-invert);
 }
 
 /* ============================================================

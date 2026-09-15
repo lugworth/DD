@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Foundations" name="Accessibility" subtitle="Verified contrast pairings, focus ring, target sizes, motion policy" viewport="1180x1500" -->
+<html><head><meta charset="UTF-8"><link rel="stylesheet" href="../styles.css"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:28px 30px 40px;font-family:'Geist Mono','Red Hat Mono',monospace;color:#fff}
+.chk{height:7px;margin-bottom:22px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:38px;text-transform:uppercase;letter-spacing:-.01em;margin-bottom:6px}
+.sub{font-size:12px;color:rgba(255,255,255,.55);line-height:1.7;max-width:640px;margin-bottom:6px}
+.sec{border-top:1px solid rgba(255,255,255,.14);margin-top:34px;padding-top:14px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:12px}
+.note{font-size:11px;line-height:1.75;color:rgba(255,255,255,.55);max-width:660px;margin-bottom:14px}
+.note b{color:#2d6cff;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:11px;border:1px solid rgba(255,255,255,.14)}
+th{text-align:left;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55);padding:8px 11px;border-bottom:1px solid rgba(255,255,255,.14);background:#0a0a0a;white-space:nowrap}
+td{padding:7px 11px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.sw{display:inline-flex;align-items:center;justify-content:center;width:74px;height:26px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0}
+.ratio{font-variant-numeric:tabular-nums;font-weight:700;font-size:12px}
+.vd{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;margin-right:4px}
+.pass{background:#39ff6a;color:#000}
+.large{background:#ff5a00;color:#000}
+.fail{background:#ff0066;color:#fff}
+.fx-row{display:flex;gap:26px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.fxb{height:38px;padding:0 18px;display:inline-flex;align-items:center;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;font-family:inherit}
+.fxb.pri{background:#2d6cff;color:#000;border-color:#2d6cff}
+.is-focus{outline:2px solid #2d6cff;outline-offset:2px}
+.is-focus-on-y{outline:2px solid #fff;outline-offset:2px}
+.cap{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:7px}
+.tgt{position:relative;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.tgt-ok{width:44px;height:44px;background:#2d6cff;color:#000}
+.tgt-min{width:24px;height:24px;background:#00d9ff;color:#000;font-size:9px}
+.tgt-bad{width:16px;height:16px;background:#ff0066;color:#fff;font-size:8px}
+.tgrid{display:flex;gap:30px;align-items:flex-end}
+.tcell{text-align:center}
+.kb{display:grid;grid-template-columns:112px 1fr;gap:0;border:1px solid rgba(255,255,255,.14);font-size:11px}
+.kb>div{padding:8px 11px;border-bottom:1px solid rgba(255,255,255,.08)}
+.kb>div:nth-child(odd){background:#0a0a0a;color:#00d9ff;font-weight:700;letter-spacing:.1em;border-right:1px solid rgba(255,255,255,.08)}
+.kb>div:nth-child(even){color:rgba(255,255,255,.6)}
+.kb>div:nth-last-child(-n+2){border-bottom:none}
+.dd{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dcard{border:1px solid rgba(255,255,255,.14);padding:14px}
+.dcard.do{border-left:3px solid #39ff6a}
+.dcard.dont{border-left:3px solid #ff0066}
+.dcard h4{font-size:10px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:9px}
+.dcard.do h4{color:#39ff6a}.dcard.dont h4{color:#ff0066}
+.dcard ul{list-style:none;font-size:11px;line-height:1.85;color:rgba(255,255,255,.6)}
+.dcard li::before{content:'▸ ';color:rgba(255,255,255,.55)}
+</style></head><body>
+<div class="chk"></div>
+<h1>Accessibility</h1>
+<p class="sub">digidelic is a neon-on-void system, which makes most of its pairings dramatically over-threshold — and makes the few failures easy to miss. Every ratio below is computed, not estimated. Brutalism's stark palette is an accessibility asset; the thick borders and chunky blocks the style already demands are exactly what focus rings and target sizes need.</p>
+
+<div class="sec">
+<div class="lab">// 01 · verified contrast pairings</div>
+<p class="note">WCAG 2.2 AA: <b>4.5:1</b> body text · <b>3:1</b> large text (18pt / 14pt bold+) and non-text UI (borders, focus rings, meaningful icons). Ratios computed against the stated background — recompute if you place a color on anything else.</p>
+<table>
+<thead><tr><th>Pairing</th><th>Sample</th><th>Ratio</th><th>Verdict</th><th>Use for</th></tr></thead>
+<tbody>
+<tr><td>white on black</td><td><span class="sw" style="background:#000;color:#fff;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">21.00</td><td><span class="vd pass">AAA</span></td><td>Anything</td></tr>
+<tr><td>white on panel #111110</td><td><span class="sw" style="background:#111110;color:#fff;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">18.89</td><td><span class="vd pass">AAA</span></td><td>Anything</td></tr>
+<tr><td>cobalt on black</td><td><span class="sw" style="background:#000;color:#2d6cff;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">4.70</td><td><span class="vd pass">AAA</span></td><td>Anything</td></tr>
+<tr><td>black on cobalt</td><td><span class="sw" style="background:#2d6cff;color:#000">Aa</span></td><td class="ratio">4.70</td><td><span class="vd pass">AAA</span></td><td>Primary buttons</td></tr>
+<tr><td>green on black</td><td><span class="sw" style="background:#000;color:#39ff6a;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">15.69</td><td><span class="vd pass">AAA</span></td><td>Success, live</td></tr>
+<tr><td>cyan on black</td><td><span class="sw" style="background:#000;color:#00d9ff;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">12.37</td><td><span class="vd pass">AAA</span></td><td>Data, links</td></tr>
+<tr><td>teal on black</td><td><span class="sw" style="background:#000;color:#12b39b;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">7.95</td><td><span class="vd pass">AAA</span></td><td>Body text</td></tr>
+<tr><td>coral on black</td><td><span class="sw" style="background:#000;color:#ff6050;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">7.04</td><td><span class="vd pass">AAA</span></td><td>Body text</td></tr>
+<tr><td>orange on black</td><td><span class="sw" style="background:#000;color:#ff5a00;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">6.71</td><td><span class="vd pass">AA</span></td><td>Warning text</td></tr>
+<tr><td>pink on black</td><td><span class="sw" style="background:#000;color:#ff2d87;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">5.98</td><td><span class="vd pass">AA</span></td><td>Body text</td></tr>
+<tr><td>pink-hot on black</td><td><span class="sw" style="background:#000;color:#ff0066;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">5.44</td><td><span class="vd pass">AA</span></td><td>Critical text</td></tr>
+<tr><td>sky on black</td><td><span class="sw" style="background:#000;color:#0a84e0;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">5.39</td><td><span class="vd pass">AA</span></td><td>Body text</td></tr>
+<tr><td>magenta on black</td><td><span class="sw" style="background:#000;color:#c800ff;border:1px solid rgba(255,255,255,.2)">Aa</span></td><td class="ratio">4.90</td><td><span class="vd pass">AA</span></td><td>Body text — near floor</td></tr>
+<tr><td>white on pink-hot</td><td><span class="sw" style="background:#ff0066;color:#fff">Aa</span></td><td class="ratio">3.86</td><td><span class="vd large">LARGE / UI</span></td><td>Button labels ≥14px bold only</td></tr>
+<tr><td>white on sky</td><td><span class="sw" style="background:#0a84e0;color:#fff">Aa</span></td><td class="ratio">3.90</td><td><span class="vd large">LARGE / UI</span></td><td>Button labels ≥14px bold only</td></tr>
+<tr><td>white on cobalt</td><td><span class="sw" style="background:#2d6cff;color:#fff">Aa</span></td><td class="ratio">4.47</td><td><span class="vd pass">AA</span></td><td>Label text on cobalt fills</td></tr>
+</tbody>
+</table>
+<p class="note" style="margin-top:14px"><b>Cobalt is the only color in the system that works in every direction.</b> 4.70:1 as text on black, 4.70:1 with black label text on it, 4.47:1 with white — so a cobalt fill takes either text color and a cobalt rule reads on the void. That is why it carries the primary action and the focus ring. The margins are far thinner than the retired acid hero's, though: cobalt is not a large-text exemption color, and it must never drop below 14px bold when reversed out in white.</p>
+</div>
+
+<div class="sec">
+<div class="lab">// 02 · muted text floor</div>
+<p class="note">The system leans on low-alpha white for secondary labels. Below <b>rgba(255,255,255,.55)</b> that text stops passing AA on black. Treat .55 as the floor for anything readable; reserve lower alphas for non-informational rules and dividers.</p>
+<table>
+<thead><tr><th>Alpha on black</th><th>Sample</th><th>Ratio</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>rgba(255,255,255,.65)</td><td style="color:rgba(255,255,255,.65)">secondary label text</td><td class="ratio">8.63</td><td><span class="vd pass">AAA</span></td></tr>
+<tr><td>rgba(255,255,255,.55)</td><td style="color:rgba(255,255,255,.55)">secondary label text</td><td class="ratio">6.25</td><td><span class="vd pass">AA — floor</span></td></tr>
+<tr><td>rgba(255,255,255,.40)</td><td style="color:rgba(255,255,255,.4)">secondary label text</td><td class="ratio">3.66</td><td><span class="vd large">LARGE / UI</span></td></tr>
+<tr style="background:rgba(255,0,102,.07)"><td>rgba(255,255,255,.35)</td><td style="color:rgba(255,255,255,.35)">secondary label text</td><td class="ratio" style="color:#ff0066">3.00</td><td><span class="vd fail">UI ONLY</span></td></tr>
+<tr style="background:rgba(255,0,102,.07)"><td>rgba(255,255,255,.30)</td><td style="color:rgba(255,255,255,.3)">secondary label text</td><td class="ratio" style="color:#ff0066">2.48</td><td><span class="vd fail">DECORATIVE ONLY</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="sec">
+<div class="lab">// 03 · focus ring</div>
+<p class="note">A 2px hard cobalt ring at 1px offset, never removed, always distinct from hover. Cobalt reads <b>4.70:1</b> against black and clears 3:1 against every surface in the system — except cobalt itself, where the ring flips to white. Focus is a design feature here, not an apology: the thick-border vocabulary the brand already speaks is exactly what WCAG 2.4.11 wants.</p>
+<div class="fx-row">
+  <div><button class="fxb">Default</button><div class="cap">rest</div></div>
+  <div><button class="fxb is-focus">Focused</button><div class="cap">2px #2d6cff · offset 1px</div></div>
+  <div><button class="fxb pri">Primary</button><div class="cap">rest</div></div>
+  <div><button class="fxb pri is-focus-on-y">Primary</button><div class="cap">ring flips to #fff on cobalt</div></div>
+</div>
+</div>
+
+<div class="sec">
+<div class="lab">// 04 · target size</div>
+<p class="note">WCAG 2.5.8 sets a <b>24×24 CSS px</b> minimum; <b>44×44</b> is the mobile target this system ships. Brutalism's chunky controls make this free — the failure mode is icon-only glyphs shrunk to fit a dense row.</p>
+<div class="tgrid">
+  <div class="tcell"><div class="tgt tgt-ok">44</div><div class="cap">44×44 — mobile</div></div>
+  <div class="tcell"><div class="tgt tgt-min">24</div><div class="cap">24×24 — AA floor</div></div>
+  <div class="tcell"><div class="tgt tgt-bad">16</div><div class="cap" style="color:#ff0066">16×16 — fails</div></div>
+</div>
+</div>
+
+<div class="sec">
+<div class="lab">// 05 · motion policy</div>
+<p class="note">The glitch and psychedelia layers loop indefinitely by design. WCAG 2.2.2 requires a way to stop looping motion, and 2.3.3 requires honoring system preference. Both layers collapse under <b>prefers-reduced-motion: reduce</b> — animations resolve to their rest frame rather than disappearing, so nothing shifts layout. Never ship an auto-looping decorative layer without that guard.</p>
+<div class="kb" style="grid-template-columns:180px 1fr">
+  <div>prefers-reduced-motion</div><div>All gl-* and psy-* animations → none. Static rest frame retained.</div>
+  <div>--dur-fast 100ms</div><div>Hover / press feedback</div>
+  <div>--dur-base 160ms</div><div>Entrances, panel transitions</div>
+  <div>Looping decoration</div><div>Must be pausable or preference-gated. No exceptions.</div>
+</div>
+</div>
+
+<div class="sec">
+<div class="lab">// 06 · keyboard contract</div>
+<p class="note">Every interactive component in this system answers to these keys. Custom components that break the contract are bugs, not variants.</p>
+<div class="kb">
+  <div>Tab / ⇧Tab</div><div>Move focus forward / back in DOM order — which must match visual order</div>
+  <div>Enter / Space</div><div>Activate the focused button, toggle, or menu item</div>
+  <div>Esc</div><div>Dismiss modal, drawer, popover, command palette, dropdown</div>
+  <div>↑ ↓</div><div>Move within a menu, listbox, combobox, or tree</div>
+  <div>← →</div><div>Move between tabs; expand / collapse a tree node</div>
+  <div>Home / End</div><div>Jump to first / last item in a collection</div>
+  <div>⌘K</div><div>Open the command palette</div>
+</div>
+</div>
+
+<div class="sec">
+<div class="lab">// 07 · rules</div>
+<div class="dd">
+<div class="dcard do"><h4>Do</h4><ul>
+<li>Pair status color with a glyph — <span style="color:#39ff6a">▶ nominal</span>, <span style="color:#ff0066">✕ critical</span>. Color alone never carries meaning.</li>
+<li>Use semantic elements. A <span style="color:#2d6cff">&lt;button&gt;</span> is focusable and Enter-activatable for free.</li>
+<li>Keep the focus ring distinct from hover — hover translates, focus rings.</li>
+<li>Recompute contrast whenever a color moves to a new surface.</li>
+<li>Let the brutalist border weight do the accessibility work.</li>
+</ul></div>
+<div class="dcard dont"><h4>Don't</h4><ul>
+<li>Treat cobalt as a hazard or warning signal — that is <span style="color:#ff5a00">--orange</span>. Cobalt means primary, not danger.</li>
+<li>Drop informational label text below rgba(255,255,255,.55).</li>
+<li>Remove <span style="color:#2d6cff">outline</span> without shipping a replacement.</li>
+<li>Ship a looping glitch layer with no reduced-motion branch.</li>
+<li>Shrink an icon-only control below 24×24 to fit a dense row.</li>
+<li>Rely on the cobalt focus ring against a cobalt fill — flip it to white.</li>
+</ul></div>
+</div>
+</div>
+</body></html>

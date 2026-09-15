@@ -40,12 +40,23 @@
   }
 
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var stage = document.querySelector('.gl-stage') || document.body;
-  var slices = document.querySelectorAll('.gl-slice');
+
+  /* Resolve the stage lazily. When this file is loaded from <head> — which is
+     how the compiled bundle loads it — document.body is still null at module
+     scope, and grabbing it here permanently captured null. */
+  function getStage() {
+    return document.querySelector('.gl-stage') || document.body || document.documentElement;
+  }
+  function getSlices() {
+    return document.querySelectorAll('.gl-slice');
+  }
 
   function rand(a, b) { return a + Math.random() * (b - a); }
 
   function burst() {
+    var stage = getStage();
+    var slices = getSlices();
+    if (!stage) { schedule(); return; }
     stage.setAttribute('data-gl-tear', '1');
     slices.forEach(function (el) {
       el.style.setProperty('--gl-slice-top',  rand(12, 80).toFixed(1) + '%');

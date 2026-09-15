@@ -1,0 +1,103 @@
+<!-- @dsCard group="Components" name="Field" subtitle="Inputs, selects, checkboxes — seeded focus ring, validation, three surfaces" viewport="1280x920" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Field</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#2d6cff}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:64ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:32px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:72ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px 26px}
+code{color:#2d6cff}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Field</h1>
+<p class="sub">Zero radius, hairline rules, and a focus ring in the seeded hue — so focus is unmistakable without a glow. Validation is the one override: an errored field takes the danger colour on its rule, ring and message.</p>
+<div id="root"></div>
+<script>
+const { Field, Input, Select, Checkbox, Button, ButtonRow } = window.DigidelicDesignSystem_da5439;
+const { createElement: h, Fragment, useState } = React;
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+
+function Demo() {
+  const [a, setA] = useState('Ethiopia Guji');
+  const [b, setB] = useState('');
+  const [c, setC] = useState('Washed');
+  const [notes, setNotes] = useState('Jasmine, bergamot, stone fruit.');
+  const [on, setOn] = useState(true);
+  const [pick, setPick] = useState('light');
+
+  return h(Fragment, null,
+    Sec('01 · text, select, textarea', 'Each field seeds its focus ring from its own label.',
+      h('div', { className: 'grid' },
+        h(Field, { label: 'Lot name', required: true, id: 'lot', help: 'As printed on the bag.' },
+          h(Input, { id: 'lot', value: a, onChange: (e) => setA(e.target.value) })),
+        h(Field, { label: 'Producer', hint: 'optional', id: 'producer' },
+          h(Input, { id: 'producer', value: b, onChange: (e) => setB(e.target.value), placeholder: 'e.g. Tariku Bogale' })),
+        h(Field, { label: 'Process', id: 'process' },
+          h(Select, { id: 'process', value: c, onChange: (e) => setC(e.target.value), options: ['Washed','Natural','Honey','Anaerobic'] })),
+        h(Field, { label: 'Cupping notes', hint: notes.length + '/240', id: 'notes' },
+          h(Input, { id: 'notes', multiline: true, rows: 3, value: notes, onChange: (e) => setNotes(e.target.value) })))),
+
+    Sec('02 · states', null,
+      h('div', { className: 'grid' },
+        h(Field, { label: 'Default', id: 's1' }, h(Input, { id: 's1', placeholder: 'Untouched' })),
+        h(Field, { label: 'Invalid', id: 's2', error: 'Weight must be greater than zero.' },
+          h(Input, { id: 's2', value: '0', invalid: true })),
+        h(Field, { label: 'Disabled', id: 's3', help: 'Locked while the roast is running.' },
+          h(Input, { id: 's3', value: 'BATCH-1182', disabled: true })),
+        h(Field, { label: 'Pill geometry', id: 's4' },
+          h(Input, { id: 's4', geometry: 'pill', placeholder: 'Rounded' })))),
+
+    Sec('03 · checkboxes and radios', null,
+      h('div', { className: 'grid' },
+        h('div', { style: { display: 'grid', gap: 10 } },
+          h(Checkbox, { label: 'Decaf', id: 'decaf', checked: on, onChange: () => setOn(!on) }),
+          h(Checkbox, { label: 'Single origin', id: 'so', checked: false, onChange: () => {} }),
+          h(Checkbox, { label: 'Locked', id: 'lk', checked: true, disabled: true, onChange: () => {} })),
+        h('div', { style: { display: 'grid', gap: 10 } },
+          ['light','medium','dark'].map((r) =>
+            h(Checkbox, { key: r, radio: true, label: r, id: 'roast-' + r, checked: pick === r, onChange: () => setPick(r) }))))),
+
+    Sec('04 · night', null, h('div', { className: 'night' },
+      h('div', { className: 'grid' },
+        h(Field, { surface: 'night', label: 'Lot name', id: 'nlot', required: true, help: 'Ring rotates with the ramp.' },
+          h(Input, { surface: 'night', id: 'nlot', value: 'Kenya Nyeri' })),
+        h(Field, { surface: 'night', label: 'Invalid', id: 'nerr', error: 'Sector unreachable.' },
+          h(Input, { surface: 'night', id: 'nerr', value: 'X.06', invalid: true })),
+        h('div', { style: { display: 'grid', gap: 10, alignContent: 'start' } },
+          h(Checkbox, { surface: 'night', label: 'Decaf', id: 'ndecaf', checked: true, onChange: () => {} }),
+          h(Checkbox, { surface: 'night', radio: true, label: 'Medium roast', id: 'nmed', checked: true, onChange: () => {} }))))),
+
+    Sec('05 · cream', null, h('div', { className: 'cream' },
+      h('div', { className: 'grid' },
+        h(Field, { surface: 'cream', label: 'Lot name', id: 'clot', required: true, help: 'Controls sit on the raised white.' },
+          h(Input, { surface: 'cream', id: 'clot', value: 'Colombia Huila' })),
+        h(Field, { surface: 'cream', label: 'Invalid', id: 'cerr', error: 'Weight must be greater than zero.' },
+          h(Input, { surface: 'cream', id: 'cerr', value: '0', invalid: true })),
+        h('div', { style: { display: 'grid', gap: 10, alignContent: 'start' } },
+          h(Checkbox, { surface: 'cream', label: 'Decaf', id: 'cdecaf', checked: true, onChange: () => {} }),
+          h(Checkbox, { surface: 'cream', radio: true, label: 'Light roast', id: 'clight', checked: true, onChange: () => {} })))))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

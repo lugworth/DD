@@ -1,0 +1,49 @@
+# digidelic Design System
+
+> Saturated neon-on-void brand and UI system. Zero border radius, pure-black canvas, mono-first typography, solid-block color. Brutalist FUI vocabulary — mission-control interfaces, WILLB/Clov color blocking, ASCII glitch texture.
+
+## Non-negotiable laws
+
+- Background is pure black (`#000` / `#0a0a0a`). Never a gradient.
+- Border radius is `0`. Universal, no exceptions.
+- Color arrives in solid blocks. No soft fills, no glassmorphism, no blurred shadows.
+- Text on any brand fill flips to black.
+- Default border: 1px white @ 12% alpha. No other resting border treatment.
+- Depth is a hard offset shadow (`3px 3px 0 0`), never a blur. Hover translates `-2px,-2px`; active snaps to `0,0`.
+- No emoji, no exclamation points. Punctuation is structure: `// >> :: — ▶ ×`.
+- ALL CAPS for structural text; lowercase for body and system output.
+- Numeric readouts use `font-variant-numeric: tabular-nums`.
+
+## Entry points
+
+- [styles.css](styles.css): single stylesheet import — pulls in tokens, base elements, motifs, glitch layer.
+- [tokens.json](tokens.json): W3C DTCG tokens — colors (with contrast ratios), type, spacing, motion, elevation, focus, target sizes.
+- [README.md](README.md): full human documentation.
+- [tailwind.config.js](tailwind.config.js): Tailwind drop-in config.
+
+## Foundations
+
+- [Accessibility](preview/foundations-accessibility.html): computed contrast pairing table, muted-text floor, focus ring, target sizes, motion policy, keyboard contract.
+- [Component States](preview/foundations-states.html): global rest / hover / focus / active / disabled / loading / error reference.
+- [Anatomy](preview/foundations-anatomy.html): labeled subpart diagrams for button, card, input, nav item.
+
+## Critical constraints for generated code
+
+- `--blue #2d6cff` is **3.59:1 on black** — a FILL color only. Never body text. Put white text on the blue instead (5.85:1).
+- Informational text never below `rgba(255,255,255,0.55)` (6.25:1). `--white-faint` (0.35) is decorative only.
+- Focus ring: `2px solid #2d6cff` at `1px` offset. Add `.focus-invert` on cobalt-filled elements to flip the ring to white.
+- Every looping animation must collapse under `prefers-reduced-motion: reduce`.
+- Minimum target 24×24px; 44×44px on touch.
+
+## UI kits
+
+- [digidelic React app](ui_kits/digidelic/index.html): full node-grid mission-control prototype.
+- [Tailwind build](ui_kits/digidelic-tailwind/index.html): CDN showcase + usage docs.
+- [shadcn/ui theme](ui_kits/shadcn/index.html): variable theme in `ui_kits/shadcn/globals.css`.
+- [daisyUI theme](ui_kits/daisyui/index.html): drop-in `daisyui-digidelic.css`.
+
+## Optional
+
+- Component cards live at `preview/components-*.html` — buttons, inputs, cards, badges, navigation, overlays, data display, disclosure, menus, log rows.
+- Brand cards at `preview/brand-*.html` — logo, motifs, textures, glitch, psychedelia, night garden, zine system, style references.
+- Fonts in `fonts/` (Geist Mono, Red Hat Mono, variable TTF). Space Grotesk from Google Fonts.

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Foundations" name="Component States" subtitle="One global reference — rest, hover, focus, active, disabled, loading, error" viewport="1180x900" -->
+<html><head><meta charset="UTF-8"><link rel="stylesheet" href="../styles.css"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:28px 30px 40px;font-family:'Geist Mono','Red Hat Mono',monospace;color:#fff}
+.chk{height:7px;margin-bottom:22px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:38px;text-transform:uppercase;letter-spacing:-.01em;margin-bottom:6px}
+.sub{font-size:12px;color:rgba(255,255,255,.55);line-height:1.7;max-width:680px}
+.sec{border-top:1px solid rgba(255,255,255,.14);margin-top:32px;padding-top:14px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:14px}
+.matrix{display:grid;grid-template-columns:96px repeat(6,1fr);gap:1px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14)}
+.matrix>div{background:#000;padding:13px 11px;display:flex;align-items:center;min-height:62px}
+.mh{font-size:8px!important;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55);background:#0a0a0a!important;min-height:0!important;padding:8px 11px!important}
+.rh{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);background:#0a0a0a!important}
+.b{height:32px;padding:0 14px;display:inline-flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-family:inherit;border:1px solid transparent;white-space:nowrap}
+.b-rest{background:#2d6cff;color:#000}
+.b-hover{background:#2d6cff;color:#000;transform:translate(-2px,-2px);box-shadow:3px 3px 0 0 rgba(255,255,255,.3)}
+.b-focus{background:#2d6cff;color:#000;outline:2px solid #fff;outline-offset:2px}
+.b-active{background:#1f52d6;color:#000}
+.b-dis{background:#1a1a18;color:rgba(255,255,255,.28);border-color:rgba(255,255,255,.1)}
+.b-load{background:#2d6cff;color:#000;gap:7px}
+.spin{width:10px;height:10px;border:2px solid rgba(0,0,0,.25);border-top-color:#000;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.i{height:30px;width:100%;max-width:150px;padding:0 9px;display:flex;align-items:center;font-size:11px;background:#0a0a0a;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.4)}
+.i-hover{border-color:rgba(255,255,255,.4)}
+.i-focus{border-color:#2d6cff;box-shadow:0 0 0 3px rgba(45,108,255,.15);color:#fff}
+.i-active{border-color:#2d6cff;color:#fff}
+.i-dis{background:#111110;border-color:rgba(255,255,255,.08);color:rgba(255,255,255,.28)}
+.i-err{border-color:#ff0066;color:#fff}
+.n{padding:7px 12px;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);border:1px solid transparent}
+.n-hover{color:#fff;background:#111110}
+.n-focus{color:#fff;outline:2px solid #2d6cff;outline-offset:1px}
+.n-active{background:#2d6cff;color:#000}
+.n-dis{color:rgba(255,255,255,.28)}
+.c{width:100%;max-width:140px;padding:9px 10px;background:#111110;border:1px solid rgba(255,255,255,.12);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.c-hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 0 rgba(255,255,255,.12)}
+.c-focus{outline:2px solid #2d6cff;outline-offset:2px}
+.c-active{border-color:#2d6cff;color:#2d6cff}
+.c-dis{opacity:.4}
+.c-load{color:rgba(255,255,255,.4)}
+.skel{height:7px;background:linear-gradient(90deg,#1a1a18,#2a2a26,#1a1a18);background-size:200% 100%;animation:sk 1.2s linear infinite;margin-top:6px}
+@keyframes sk{to{background-position:-200% 0}}
+.na{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.1em}
+.rules{display:grid;grid-template-columns:150px 1fr;border:1px solid rgba(255,255,255,.14);font-size:11px}
+.rules>div{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.rules>div:nth-child(odd){background:#0a0a0a;color:#00d9ff;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:9px;border-right:1px solid rgba(255,255,255,.08)}
+.rules>div:nth-child(even){color:rgba(255,255,255,.6);line-height:1.7}
+.rules>div:nth-last-child(-n+2){border-bottom:none}
+.rules b{color:#2d6cff;font-weight:700}
+@media (prefers-reduced-motion: reduce){.spin,.skel{animation:none}}
+</style></head><body>
+<div class="chk"></div>
+<h1>Component States</h1>
+<p class="sub">Every interactive component answers the same seven states in the same visual language. Documenting them once here — rather than re-deriving them on each component page — is what keeps a button and a text input feeling like the same machine. Read a column to learn a state; read a row to learn a component.</p>
+
+<div class="sec">
+<div class="lab">// state matrix</div>
+<div class="matrix">
+  <div class="mh"></div>
+  <div class="mh">Rest</div><div class="mh">Hover</div><div class="mh">Focus</div><div class="mh">Active</div><div class="mh">Disabled</div><div class="mh">Loading / Error</div>
+
+  <div class="rh">Button</div>
+  <div><span class="b b-rest">Deploy</span></div>
+  <div><span class="b b-hover">Deploy</span></div>
+  <div><span class="b b-focus">Deploy</span></div>
+  <div><span class="b b-active">Deploy</span></div>
+  <div><span class="b b-dis">Deploy</span></div>
+  <div><span class="b b-load"><span class="spin"></span>Deploy</span></div>
+
+  <div class="rh">Input</div>
+  <div><span class="i">node id</span></div>
+  <div><span class="i i-hover">node id</span></div>
+  <div><span class="i i-focus">node-047</span></div>
+  <div><span class="i i-active">node-047</span></div>
+  <div><span class="i i-dis">locked</span></div>
+  <div><span class="i i-err">✕ not found</span></div>
+
+  <div class="rh">Nav item</div>
+  <div><span class="n">Nodes</span></div>
+  <div><span class="n n-hover">Nodes</span></div>
+  <div><span class="n n-focus">Nodes</span></div>
+  <div><span class="n n-active">Nodes</span></div>
+  <div><span class="n n-dis">Nodes</span></div>
+  <div><span class="na">— n/a —</span></div>
+
+  <div class="rh">Card</div>
+  <div><div class="c">node-047<br>72% load</div></div>
+  <div><div class="c c-hover">node-047<br>72% load</div></div>
+  <div><div class="c c-focus">node-047<br>72% load</div></div>
+  <div><div class="c c-active">node-047<br>selected</div></div>
+  <div><div class="c c-dis">node-003<br>offline</div></div>
+  <div><div class="c c-load">loading<div class="skel"></div><div class="skel" style="width:60%"></div></div></div>
+</div>
+</div>
+
+<div class="sec">
+<div class="lab">// the seven laws</div>
+<div class="rules">
+  <div>Rest</div><div>Hairline border, 1px white @12%. No fill unless the component is a primary action. This is the quietest the system gets.</div>
+  <div>Hover</div><div><b>Translate −2px, −2px with a 3px hard offset shadow.</b> Never a soft glow, never a blur. The element physically lifts off the void — a shadow with a hard edge reads as a printed layer, not a light source.</div>
+  <div>Focus</div><div>2px solid <span style="color:#2d6cff">#2d6cff</span> outline at 1px offset — flipped to white on cobalt fills. Always distinct from hover so mouse and keyboard users can tell them apart. Never removed.</div>
+  <div>Active</div><div>Snap back to translate(0,0), shadow gone. Fills darken one step. Press should feel like the element hits the page.</div>
+  <div>Disabled</div><div>Fill drops to #1a1a18, text to rgba(255,255,255,.28), border to 10%. Exempt from contrast minimums, but never so faint it reads as absent.</div>
+  <div>Loading</div><div>Retain the element's footprint — replace content with a spinner or skeleton bars, never collapse the box. Layout must not shift when the data lands.</div>
+  <div>Error</div><div>Border flips to <span style="color:#ff0066">#ff0066</span> and a glyph joins the message. Color never carries the error alone.</div>
+</div>
+</div>
+</body></html>

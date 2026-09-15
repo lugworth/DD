@@ -4,7 +4,7 @@ Live **animated + interactive** generative tool — an emulation of a handheld
 A/V device screen: a phosphor dot-matrix running Game-of-Life colonies that
 flicker, grow, and dissolve on dark teal glass, with CRT-style bloom.
 **Touch/click the screen** to splash a new colony into the simulation — the
-splash flashes yellow and radiates ripple rings, just like poking the real
+splash flashes cobalt and radiates ripple rings, just like poking the real
 device (ref: kindofdevice_ A/V app reel).
 
 Fifth sibling in the tools family — same shell, same rack UX. Open
@@ -23,17 +23,13 @@ crossfades toward the fully blurred pass for the soft metaball-glow mode
 seen in the reference. Touched cells carry a heat value that tints them
 toward the splash color while it fades.
 
-The ripple quality lives **in the colonies themselves**. Two crossing
-slow water waves undulate the brightness and size of every lit dot, so
-colony bodies shimmer like liquid. Beneath them runs a height/velocity
-wave field excited by the life of the colonies — every cell birth drops a
-small pulse, every death a dip — so soft ripples radiate through the blobs
-as they grow and churn. Where the water is moving, the phosphor refracts
-toward a **spectral second hue** (icy blue in the green palette). Now and
-then a colony **transmits**: a spontaneous hot pulse flares and ripples
-outward on its own. A dim palette-colored **abyss** drifts slowly beneath
-the matrix, and the bloom breathes on a ~7-second heartbeat. Touch/click
-still splashes a new colony straight into the simulation.
+Beneath the dots runs a **pond wave field** (height/velocity ripple
+simulation with reflecting edges). Every touch plunges a gaussian into it:
+big round wavefronts expand across the screen, bounce off the walls, lift
+the brightness and swell the size of the dots they roll through, and stir
+the colony — cells on a passing crest sputter to life. Dragging pulls a
+wake. The wave field steps every frame regardless of the life tempo, so
+the surface always answers immediately, even paused.
 
 ## Parameter rack
 
@@ -48,8 +44,8 @@ still splashes a new colony straight into the simulation.
 | | Diffusion | Crisp dots ↔ soft blurred glow |
 | | Glow | Bloom intensity |
 | | Dot size | Dot diameter within its cell |
-| | Undulation | Watery shimmer of the colonies: wave amplitude, ripple gain, spectral refraction |
-| Style | Palette | `Phosphor` (green on teal glass) · `Amber` · `Digidelic` (electric yellow on void) |
+| | Ripple power | Plunge depth, wave brightness gain, and colony stirring of the pond field |
+| Style | Palette | `Phosphor` (green on teal glass) · `Amber` · `Digidelic` (electric cobalt on void) |
 | | Sound | Tiny colony synth — births trigger pentatonic blips, density drives the filter |
 
 `space` = reseed, `p` = play/pause, `e` = export PNG. Pointer down/drag on
@@ -58,64 +54,4 @@ the canvas stamps colonies with ripples.
 ## Export
 
 - `▶ Export PNG` — current frame at 2160×2160
-- `⏺ Rec 6s` — 6-second WebM clip of the live animation via `MediaRecorder`,
-  including audio when Sound is on
-
-## Sharing & history
-
-The seed readout is a button — click it to copy a **permalink** that
-encodes the seed and every rack setting, so a specific result is a URL.
-Opening a link restores that exact state. `Ctrl+Z` / `Ctrl+Shift+Z`
-(or `Ctrl+Y`) step through parameter **undo/redo**. On devices that
-support the Web Share API a **Share** button appears next to Export and
-hands the rendered PNG straight to the system share sheet.
-
-## GIF capture
-
-**◉ GIF 3s** grabs 36 frames off the live canvas at 12.5fps and packs a
-looping GIF89a — useful where a WebM won't play inline (chat, forums,
-older clients). The encoder is written into the file rather than pulled
-from a CDN, so the tool stays dependency-free: colour is quantised to a
-6·6·6 cube plus a 40-step grey ramp with an ordered dither, then LZW
-packed. Capture is downscaled to 480px on the long edge; the pack step
-takes a second or two at the end.
-
-## Listening
-
-**Listen** turns on microphone input, reduced to one smoothed 0–1 energy
-value that is folded into a single parameter (shown on the button) on top
-of whatever the slider is set to — so the rack still governs the floor and
-the room only ever pushes upward. It is off until asked for, needs a
-permission grant, and any failure quietly falls back to no mic.
-
-Multi-touch: each finger now carries its own stamp throttle, so two
-hands splash colonies at full rate instead of halving each other.
-
-## GPU dot engine (opt-in)
-
-**Dot engine** moves the dot rasterisation to a WebGL2 fragment shader.
-Only that pass moves: the Life simulation stays on the CPU, because it
-costs about a quarter of a millisecond per generation and it owns
-births, audio, pulses and touch — none of which want a round trip
-through a texture. What is actually expensive is drawing tens of
-thousands of individually coloured dots each frame, and that is pure
-per-pixel arithmetic.
-
-The shader renders into a canvas the existing compositor treats exactly
-like the CPU layer, so bloom, abyss, glass sheen and vignette are
-untouched by the choice. CPU remains the default, and a missing WebGL2
-context or a shader that will not compile reverts to it.
-
-The Life step itself also got faster: the two wrapping columns are now
-handled separately, so the interior needs no modulo per neighbour.
-
-## MP4 capture
-
-**▣ MP4 6s** encodes six seconds of H.264 with WebCodecs and muxes it
-here in-file — no library, keeping the tool dependency-free. MP4 plays
-inline in the places WebM does not: iOS, Twitter, Discord.
-
-The muxer writes a non-fragmented `ftyp`/`mdat`/`moov` with every sample
-in a single chunk, which keeps `stsc` and `stco` trivial and is
-perfectly legal. It needs a browser with `VideoEncoder`; without one the
-button says so and nothing else changes.
+- `⏺ Rec 6s` — 6-second WebM clip of the live animation via `MediaRecorder`

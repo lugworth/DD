@@ -7,15 +7,15 @@ body{background:#000;padding:16px;font-family:'Geist Mono',monospace;display:fle
 .b{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;padding:0 8px;height:20px;border:1px solid;position:relative;overflow:hidden}
 .pip{width:5px;height:5px;background:currentColor;flex-shrink:0}
 .ok{color:#39ff6a;border-color:#39ff6a}
-.wa{color:#eaff00;border-color:#eaff00}
+.wa{color:#2d6cff;border-color:#2d6cff}
 .er{color:#ff0066;border-color:#ff0066}
 .in{color:#00d9ff;border-color:#00d9ff}
 .de{color:rgba(255,255,255,0.4);border-color:rgba(255,255,255,0.15)}
-.sy{background:#eaff00;color:#000;border-color:#eaff00}
+.sy{background:#2d6cff;color:#000;border-color:#2d6cff}
 .sp{background:#ff2d87;color:#000;border-color:#ff2d87}
 .sg{background:#39ff6a;color:#000;border-color:#39ff6a}
 .sc{background:#00d9ff;color:#000;border-color:#00d9ff}
-.w{width:100%;font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-top:4px}
+.w{width:100%;font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-top:4px}
 .w:first-child{margin-top:0}
 
 /* ── MOTION ───────────────────────────────────────── */
@@ -28,18 +28,18 @@ body{background:#000;padding:16px;font-family:'Geist Mono',monospace;display:fle
 @keyframes flash{0%,100%{background:#ff0066;color:#fff}50%{background:#000;color:#ff0066}}
 .b-flash{animation:flash 0.55s steps(1,end) infinite;border-color:#ff0066}
 @keyframes slide{0%{background-position:0 0}100%{background-position:28px 0}}
-.b-hazard{background:repeating-linear-gradient(-45deg,#eaff00 0 7px,#000 7px 14px);background-size:28px 20px;color:#eaff00;border-color:#eaff00;animation:slide 0.5s linear infinite;text-shadow:0 0 3px #000,0 0 5px #000}
+.b-hazard{background:repeating-linear-gradient(-45deg,#2d6cff 0 7px,#000 7px 14px);background-size:28px 20px;color:#2d6cff;border-color:#2d6cff;animation:slide 0.5s linear infinite;text-shadow:0 0 3px #000,0 0 5px #000}
 .b-ring{padding-left:18px}
 @keyframes ring{0%{box-shadow:0 0 0 0 rgba(57,255,106,0.6)}100%{box-shadow:0 0 0 7px rgba(57,255,106,0)}}
 .b-ring::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:5px;height:5px;background:#39ff6a;animation:ring 1.2s ease-out infinite}
 
 /* coord chip */
 .cd{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #fff;color:#fff;font-size:11px;font-weight:700;letter-spacing:0.05em;position:relative}
-.cd.y{border-color:#eaff00;color:#eaff00}
+.cd.y{border-color:#2d6cff;color:#2d6cff}
 .cd.p{border-color:#ff2d87;color:#ff2d87}
 .cd.g{border-color:#39ff6a;color:#39ff6a}
-.cd.b{border-color:#2d4cff;color:#2d4cff}
-.cd.fy{background:#eaff00;border-color:#eaff00;color:#000}
+.cd.b{border-color:#2d6cff;color:#2d6cff}
+.cd.fy{background:#2d6cff;border-color:#2d6cff;color:#000}
 .cd.fp{background:#ff2d87;border-color:#ff2d87;color:#000}
 @keyframes lock{0%,100%{border-color:#ff0066}50%{border-color:rgba(255,0,102,0.15)}}
 .cd.lock{color:#ff0066;animation:lock 0.5s steps(1,end) infinite}
@@ -50,8 +50,8 @@ body{background:#000;padding:16px;font-family:'Geist Mono',monospace;display:fle
 .cd.tick span{animation:tick 0.5s steps(1,end) infinite}
 
 /* ── checker motif (coral × blue) ── */
-.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%),linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%);background-size:16px 16px;background-position:0 0,8px 8px}
-.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%),linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
 </style>  <link rel="stylesheet" href="../glitch.css">
 </head><body class="gl-stage">
 <div class="chk-strip"></div>
@@ -86,10 +86,10 @@ body{background:#000;padding:16px;font-family:'Geist Mono',monospace;display:fle
 <div class="cd chk" style="border-color:#fff;color:#fff;text-shadow:0 0 3px #000,0 1px 2px #000">▦</div>
 
 <div class="w">// CLASS TAGS</div>
-<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">RELAY</div>
-<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">TERMINAL</div>
-<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">BEACON</div>
-<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">VECTOR</div>
-<div class="b" style="color:#fff;border-color:rgba(255,255,255,0.3)">SENTINEL</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,.3)">RELAY</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,.3)">TERMINAL</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,.3)">BEACON</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,.3)">VECTOR</div>
+<div class="b" style="color:#fff;border-color:rgba(255,255,255,.3)">SENTINEL</div>
 <script src="../glitch.js"></script>
 </body></html>

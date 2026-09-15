@@ -21,7 +21,7 @@ Built from brand description + design system tokens. No codebase was attached.
 - `<TopBar>` — Header with system status
 
 ## Design Tokens
-All tokens from `../../colors_and_type.css` — hard corners, monospace UI, yellow accent.
+All tokens from `../../colors_and_type.css` — hard corners, monospace UI, cobalt accent.
 
 ## Notes
 - No codebase was provided; this is synthesized from brand aesthetic

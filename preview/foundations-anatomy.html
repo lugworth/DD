@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Foundations" name="Anatomy" subtitle="Labeled subpart breakdowns — button, card, input, nav item" viewport="1180x1080" -->
+<html><head><meta charset="UTF-8"><link rel="stylesheet" href="../styles.css"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:28px 30px 44px;font-family:'Geist Mono','Red Hat Mono',monospace;color:#fff}
+.chk{height:7px;margin-bottom:22px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:38px;text-transform:uppercase;letter-spacing:-.01em;margin-bottom:6px}
+.sub{font-size:12px;color:rgba(255,255,255,.55);line-height:1.7;max-width:660px}
+.sec{border-top:1px solid rgba(255,255,255,.14);margin-top:34px;padding-top:14px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:16px}
+.split{display:grid;grid-template-columns:1fr 300px;gap:34px;align-items:start}
+/* diagram stage */
+.stage{position:relative;background:#0a0a0a;border:1px solid rgba(255,255,255,.1);padding:64px 90px;display:flex;align-items:center;justify-content:center;min-height:210px}
+.pin{position:absolute;width:17px;height:17px;background:#00d9ff;color:#000;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;z-index:3}
+.ln{position:absolute;background:#00d9ff;z-index:2}
+.lnh{height:1px}.lnv{width:1px}
+/* key */
+.key{font-size:11px}
+.key-r{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08);align-items:baseline}
+.key-r:last-child{border-bottom:none}
+.key-n{width:17px;height:17px;background:#00d9ff;color:#000;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-variant-numeric:tabular-nums}
+.key-t{line-height:1.6}
+.key-t b{display:block;color:#fff;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:1px}
+.key-t span{color:rgba(255,255,255,.55)}
+.key-t i{color:#2d6cff;font-style:normal}
+/* specimens */
+.sp-btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;background:#2d6cff;color:#000;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border:none}
+.sp-btn .pip{width:7px;height:7px;background:#000;flex-shrink:0}
+.sp-card{width:250px;background:#111110;border:1px solid rgba(255,255,255,.12)}
+.sp-card-h{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sp-card-t{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:14px;text-transform:uppercase}
+.sp-card-c{font-size:9px;letter-spacing:.14em;color:#00d9ff;border:1px solid rgba(0,217,255,.4);padding:1px 5px}
+.sp-card-b{padding:12px}
+.sp-card-n{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:38px;line-height:1;color:#2d6cff;font-variant-numeric:tabular-nums}
+.sp-card-m{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:4px}
+.sp-card-f{padding:9px 12px;border-top:1px solid rgba(255,255,255,.1);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.sp-in-w{width:250px}
+.sp-in-l{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px}
+.sp-in{display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;background:#0a0a0a;border:1px solid #2d6cff;font-size:12px;color:#fff}
+.sp-in .car{color:#2d6cff}
+.sp-in-h{font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.55);margin-top:6px}
+.sp-nav{display:inline-flex;align-items:center;gap:8px;padding:0 16px;height:38px;background:#2d6cff;color:#000;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;position:relative}
+.sp-nav .ix{font-size:8px;border:1px solid rgba(0,0,0,.35);padding:1px 4px;font-variant-numeric:tabular-nums}
+.sp-nav .dot{width:5px;height:5px;background:#ff2d87;position:absolute;top:5px;right:5px}
+</style></head><body>
+<div class="chk"></div>
+<h1>Anatomy</h1>
+<p class="sub">Labeled breakdowns of the system's four load-bearing components. Anatomy diagrams are the fastest way to settle a naming argument and the cheapest way to keep a rebuild faithful — when a subpart has a name, it stops getting improvised.</p>
+
+<div class="sec">
+<div class="lab">// button</div>
+<div class="split">
+  <div class="stage">
+    <span class="sp-btn"><span class="pip"></span>Initialize</span>
+    <div class="pin" style="left:130px;top:40px">1</div><div class="ln lnv" style="left:138px;top:57px;height:47px"></div>
+    <div class="pin" style="left:200px;top:40px">2</div><div class="ln lnv" style="left:208px;top:57px;height:47px"></div>
+    <div class="pin" style="left:76px;top:143px">3</div><div class="ln lnh" style="left:93px;top:151px;width:52px"></div>
+    <div class="pin" style="right:76px;top:143px">4</div><div class="ln lnh" style="right:93px;top:151px;width:52px"></div>
+  </div>
+  <div class="key">
+    <div class="key-r"><span class="key-n">1</span><span class="key-t"><b>Pip</b><span>Optional 7×7 square glyph. Square, never round. Omit on text-only actions.</span></span></div>
+    <div class="key-r"><span class="key-n">2</span><span class="key-t"><b>Label</b><span>Mono, 700, <i>0.14em</i> tracking, uppercase. One or two words — a button is a verb.</span></span></div>
+    <div class="key-r"><span class="key-n">3</span><span class="key-t"><b>Fill</b><span>Solid brand color. Text flips to black. Ghost variants swap fill for a 1px border.</span></span></div>
+    <div class="key-r"><span class="key-n">4</span><span class="key-t"><b>Box</b><span>36px tall, <i>16px</i> side padding, <i>0</i> radius. 44px on touch.</span></span></div>
+  </div>
+</div>
+</div>
+
+<div class="sec">
+<div class="lab">// data card</div>
+<div class="split">
+  <div class="stage" style="padding:44px 90px">
+    <div class="sp-card">
+      <div class="sp-card-h"><span class="sp-card-t">Node-047</span><span class="sp-card-c">A1.2</span></div>
+      <div class="sp-card-b"><div class="sp-card-n">72<span style="font-size:15px">%</span></div><div class="sp-card-m">load · nominal</div></div>
+      <div class="sp-card-f">last ping 3s</div>
+    </div>
+    <div class="pin" style="left:120px;top:52px">1</div><div class="ln lnh" style="left:137px;top:60px;width:74px"></div>
+    <div class="pin" style="right:120px;top:52px">2</div><div class="ln lnh" style="right:137px;top:60px;width:74px"></div>
+    <div class="pin" style="left:120px;top:104px">3</div><div class="ln lnh" style="left:137px;top:112px;width:74px"></div>
+    <div class="pin" style="right:120px;top:126px">4</div><div class="ln lnh" style="right:137px;top:134px;width:74px"></div>
+    <div class="pin" style="left:120px;top:166px">5</div><div class="ln lnh" style="left:137px;top:174px;width:74px"></div>
+  </div>
+  <div class="key">
+    <div class="key-r"><span class="key-n">1</span><span class="key-t"><b>Title</b><span>Space Grotesk 900, uppercase. The entity, not the metric.</span></span></div>
+    <div class="key-r"><span class="key-n">2</span><span class="key-t"><b>Coordinate</b><span>Bordered mono marker — <i>A1.2</i>, <i>X.06</i>. The system's signature decoration; always real data, never filler.</span></span></div>
+    <div class="key-r"><span class="key-n">3</span><span class="key-t"><b>Figure</b><span>The one number worth 38px. Always <i>tabular-nums</i> so it doesn't jitter as it ticks.</span></span></div>
+    <div class="key-r"><span class="key-n">4</span><span class="key-t"><b>Caption</b><span>Unit and status, tracked mono at the muted floor.</span></span></div>
+    <div class="key-r"><span class="key-n">5</span><span class="key-t"><b>Footer rule</b><span>Hairline + timestamp. Optional — drop it before you crowd the figure.</span></span></div>
+  </div>
+</div>
+</div>
+
+<div class="sec">
+<div class="lab">// input</div>
+<div class="split">
+  <div class="stage" style="padding:52px 90px">
+    <div class="sp-in-w">
+      <div class="sp-in-l">Node ID</div>
+      <div class="sp-in"><span class="car">▸</span><span>node-047</span></div>
+      <div class="sp-in-h">6-char sector-prefixed id</div>
+    </div>
+    <div class="pin" style="left:124px;top:56px">1</div><div class="ln lnh" style="left:141px;top:64px;width:70px"></div>
+    <div class="pin" style="left:124px;top:88px">2</div><div class="ln lnh" style="left:141px;top:96px;width:70px"></div>
+    <div class="pin" style="right:124px;top:88px">3</div><div class="ln lnh" style="right:141px;top:96px;width:70px"></div>
+    <div class="pin" style="left:124px;top:126px">4</div><div class="ln lnh" style="left:141px;top:134px;width:70px"></div>
+  </div>
+  <div class="key">
+    <div class="key-r"><span class="key-n">1</span><span class="key-t"><b>Label</b><span>Always present, always above. Placeholders are not labels.</span></span></div>
+    <div class="key-r"><span class="key-n">2</span><span class="key-t"><b>Caret glyph</b><span><i>▸</i> marks the entry point — the terminal tell that makes a field feel typed-into.</span></span></div>
+    <div class="key-r"><span class="key-n">3</span><span class="key-t"><b>Field border</b><span>1px hairline at rest; <i>#2d6cff</i> plus a 3px soft ring on focus; <i>#ff0066</i> on error.</span></span></div>
+    <div class="key-r"><span class="key-n">4</span><span class="key-t"><b>Helper</b><span>Format hint at rest; error message with a glyph on failure. Same slot — the box never resizes.</span></span></div>
+  </div>
+</div>
+</div>
+
+<div class="sec">
+<div class="lab">// nav item</div>
+<div class="split">
+  <div class="stage" style="padding:60px 90px">
+    <span class="sp-nav"><span class="ix">02</span>Nodes<span class="dot"></span></span>
+    <div class="pin" style="left:150px;top:44px">1</div><div class="ln lnv" style="left:158px;top:61px;height:40px"></div>
+    <div class="pin" style="right:150px;top:44px">2</div><div class="ln lnv" style="right:158px;top:61px;height:40px"></div>
+    <div class="pin" style="left:120px;top:150px">3</div><div class="ln lnh" style="left:137px;top:158px;width:64px"></div>
+    <div class="pin" style="right:120px;top:150px">4</div><div class="ln lnh" style="right:137px;top:158px;width:64px"></div>
+  </div>
+  <div class="key">
+    <div class="key-r"><span class="key-n">1</span><span class="key-t"><b>Index</b><span>Zero-padded <i>02</i> in a hairline box. Numbering is decoration <i>and</i> a keyboard hint.</span></span></div>
+    <div class="key-r"><span class="key-n">2</span><span class="key-t"><b>Alert dot</b><span>5×5 pink square, top-right. Presence only — never a count in the dot itself.</span></span></div>
+    <div class="key-r"><span class="key-n">3</span><span class="key-t"><b>Active fill</b><span>Solid cobalt, black text. See <i>Component States</i> for the Rule and Bracket alternatives.</span></span></div>
+    <div class="key-r"><span class="key-n">4</span><span class="key-t"><b>Divider</b><span>1px right border joins items into one machined strip — nav items butt, they never float.</span></span></div>
+  </div>
+</div>
+</div>
+</body></html>

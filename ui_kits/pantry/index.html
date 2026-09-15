@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Pantry" name="PANTRY.EXE" subtitle="Windows desktop app — recipes, grocery inventory, meal planner, receipt scanner" viewport="1440x900" -->
+<html><head><meta charset="UTF-8"><title>PANTRY.EXE</title>
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%}
+body{background:#000;font-family:'Geist Mono',monospace;color:#fff;overflow:hidden}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:#0a0a0a}::-webkit-scrollbar-thumb{background:#2d6cff}
+:root{--den:1;--texop:1}
+a{color:#00d9ff}a:hover{color:#2d6cff}
+.tex{position:absolute;inset:0;pointer-events:none;background-repeat:repeat}
+.tx-dense{background-image:url('../../assets/tex-ascii-dense.png');background-size:520px;mix-blend-mode:screen;opacity:calc(.1*var(--texop))}
+.tx-patch{background-image:url('../../assets/patch-acid-1.png');background-size:cover;background-position:center;mix-blend-mode:screen;opacity:calc(.09*var(--texop))}
+.tx-react{background-image:url('../../assets/tex-reaction-green.png');background-size:cover;background-position:center;mix-blend-mode:screen;opacity:calc(.12*var(--texop))}
+.tx-cosmo{background-image:url('../../assets/cosmogram-neon.png');background-size:cover;background-position:center;mix-blend-mode:screen}
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:12px 12px;background-position:0 0,6px 6px}
+.card{transition:border-color .12s, transform .12s}
+.card:hover{border-color:#00d9ff !important;transform:translate(-1px,-1px)}
+.row:hover{background:rgba(255,255,255,.04)}
+.db:hover{filter:brightness(1.25)}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.tickwrap{overflow:hidden;white-space:nowrap}
+.tick{display:inline-block;animation:tick 28s linear infinite}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:0}}
+.blink{animation:blink 1.1s steps(1) infinite}
+@media(prefers-reduced-motion:reduce){.tick,.blink{animation:none}}
+input::placeholder{color:rgba(255,255,255,.25)}
+input[type=number]::-webkit-inner-spin-button{opacity:1}
+</style></head><body>
+<div id="root"></div>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#2d6cff"/><text x="50" y="62" font-family="monospace" font-size="34" font-weight="900" fill="#2d6cff" text-anchor="middle">P_</text></svg></template>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="data.js"></script>
+<script type="text/babel" src="ui.jsx"></script>
+<script type="text/babel" src="views-a.jsx"></script>
+<script type="text/babel" src="views-b.jsx"></script>
+<script type="text/babel">
+const NAV = [['library','LIBRARY','\u25A4'],['planner','PLANNER','\u25A6'],['inventory','INVENTORY','\u25A3'],['shopping','SHOPPING','\u25A2'],['form','+ NEW RECIPE','\u2795']];
+function App() {
+  const [view, setView] = React.useState('library');
+  const [recipes, setRecipes] = React.useState(window.PANTRY.recipes);
+  const [inv, setInv] = React.useState(window.PANTRY.inv.map(i=>({...i})));
+  const [list, setList] = React.useState([]);
+  const [plan, setPlan] = React.useState([null,null,'curryx',null,null,null,null]);
+  const [prefs, setPrefs] = React.useState({veg:false, quick:false, stock:false});
+  const [sel, setSel] = React.useState(null);
+  const [scan, setScan] = React.useState(false);
+  const [compact, setCompact] = React.useState(false);
+  const [texop, setTexop] = React.useState(1);
+  const [toasts, setToasts] = React.useState([]);
+  const toast = (msg, c) => { const id = Date.now()+Math.random(); setToasts(t=>[...t,{id,msg,c}]); setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)), 2600); };
+  React.useEffect(() => { document.documentElement.style.setProperty('--den', compact?0.55:1); }, [compact]);
+  React.useEffect(() => { document.documentElement.style.setProperty('--texop', texop); }, [texop]);
+  const toggleItem = id => setInv(inv.map(i => i.id===id ? {...i, have:!i.have} : i));
+  const addToList = (name, invId, from, loc) => setList(l => l.some(x=>x.invId && x.invId===invId) ? l : [...l, {key:Date.now()+Math.random(), name, invId, from, loc, done:false}]);
+  const cook = r => { setInv(v => v.map(i => r.ing.includes(i.id) && !i.staple ? {...i, have:false} : i)); toast(`COOKED ${r.name.toUpperCase()} — STOCK DEDUCTED`, C.green); };
+  const addMissing = r => { missingOf(r, inv).forEach(id => { const it = inv.find(i=>i.id===id); addToList(it.name, id, r.name.split(' ')[0], it.loc); }); toast(`${missingOf(r,inv).length} ITEMS \u2192 SHOPPING LIST`, C.cobalt); setView('shopping'); };
+  const restockDone = () => { const doneIds = list.filter(i=>i.done && i.invId).map(i=>i.invId); setInv(v => v.map(i => doneIds.includes(i.id) ? {...i, have:true} : i)); setList(l => l.filter(i=>!i.done)); toast(`${doneIds.length} ITEMS RESTOCKED`, C.green); };
+  const autoBuild = pool => { if (!pool.length) return toast('NO RECIPES MATCH THE DIET FILTER', C.coral); const shuffled = [...pool].sort(()=>Math.random()-.5); setPlan(DAYS.map((_,i)=>shuffled[i%shuffled.length].id)); toast('WEEK BUILT FROM YOUR DIET FILTER', C.pink); };
+  const commitScan = () => { const ids = window.PANTRY.receipt.items.filter(i=>i.map).map(i=>i.map); setInv(v => v.map(i => ids.includes(i.id) ? {...i, have:true} : i)); setScan(false); toast(`RECEIPT PARSED — ${ids.length} ITEMS RESTOCKED`, C.pink); };
+  const openRecipe = id => { setSel(id); setView('detail'); };
+  const selR = recipes.find(r=>r.id===sel);
+  const outCount = inv.filter(i=>!i.have).length;
+  return (
+    <div style={{height:'100%', display:'flex', flexDirection:'column', border:'1px solid rgba(255,255,255,.2)'}}>
+      {/* custom borderless chrome */}
+      <div className="chk" style={{height:6, flexShrink:0}}></div>
+      <div style={{height:40, background:'#0a0a0a', borderBottom:`1px solid ${C.line}`, display:'flex', alignItems:'center', padding:'0 12px', gap:14, flexShrink:0}}>
+        <div style={{fontFamily:"'Space Grotesk',sans-serif", fontWeight:900, fontSize:18, textTransform:'lowercase', letterSpacing:'-.01em'}}>pantry<span style={{color:C.cobalt}}>.exe</span></div>
+        <Lab style={{color:'rgba(255,255,255,.25)'}}>v0.9 // HOME KITCHEN OS</Lab>
+        <span style={{flex:1}}></span>
+        <Lab c={C.cyan}>TEX</Lab>
+        <input type="range" min="0" max="1" step="0.05" value={texop} onChange={e=>setTexop(+e.target.value)} style={{width:80, accentColor:C.cyan}}/>
+        <Toggle on={compact} onClick={()=>setCompact(!compact)}>compact</Toggle>
+        <div style={{display:'flex', gap:6, marginLeft:8}}>
+          {['\u2500','\u25A1'].map(g => <button key={g} className="db" style={{width:26, height:22, fontFamily:'inherit', background:'transparent', border:`1px solid ${C.line}`, color:C.dim, cursor:'pointer', fontSize:10}}>{g}</button>)}
+          <button className="db" style={{width:26, height:22, fontFamily:'inherit', background:C.coral, border:`1px solid ${C.coral}`, color:'#000', cursor:'pointer', fontSize:10}}>&#10005;</button>
+        </div>
+      </div>
+      <div style={{flex:1, minHeight:0, display:'flex'}}>
+        {/* nav rail */}
+        <div style={{width:170, flexShrink:0, borderRight:`1px solid ${C.line}`, background:'#0c0c0c', display:'flex', flexDirection:'column', padding:'calc(10px*var(--den)) 0', position:'relative', overflow:'hidden'}}>
+          <div className="tex tx-cosmo" style={{opacity:'calc(.12*var(--texop))'}}></div>
+          {NAV.map(([id, label, ic]) => {
+            const on = view===id || (id==='library' && view==='detail');
+            return (
+              <button key={id} onClick={()=>setView(id)} className="db" style={{position:'relative', zIndex:1, fontFamily:'inherit', textAlign:'left', display:'flex', alignItems:'center', gap:9, padding:'calc(11px*var(--den)) 14px', fontSize:10, fontWeight:700, letterSpacing:'.16em', cursor:'pointer', background:on?'rgba(45,108,255,.18)':'transparent', border:'none', borderLeft:`3px solid ${on?C.cobalt:'transparent'}`, color:on?'#fff':C.dim}}>
+                <span style={{color:on?C.cobalt:'inherit'}}>{ic}</span>{label}
+                {id==='inventory' && outCount ? <span style={{marginLeft:'auto', background:C.coral, color:'#000', fontSize:8, fontWeight:700, padding:'1px 5px'}}>{outCount}</span> : null}
+                {id==='shopping' && list.length ? <span style={{marginLeft:'auto', background:C.cobalt, color:'#000', fontSize:8, fontWeight:700, padding:'1px 5px'}}>{list.length}</span> : null}
+              </button>);
+          })}
+          <span style={{flex:1}}></span>
+          <button onClick={()=>setScan(true)} className="db" style={{position:'relative', zIndex:1, margin:'0 12px', fontFamily:'inherit', fontSize:9, fontWeight:700, letterSpacing:'.16em', padding:'calc(10px*var(--den)) 8px', cursor:'pointer', background:C.pink, color:'#000', border:'none'}}>&#9639; SCAN RECEIPT</button>
+          <Lab style={{padding:'12px 14px 2px', color:'rgba(255,255,255,.2)'}}>NODE 07 // KITCHEN</Lab>
+        </div>
+        {/* main */}
+        <div style={{flex:1, minWidth:0, padding:'calc(14px*var(--den))', position:'relative', overflow:'hidden', display:'flex', flexDirection:'column'}}>
+          <div className="tex tx-dense" style={{opacity:'calc(.05*var(--texop))'}}></div>
+          <div style={{position:'relative', zIndex:1, flex:1, minHeight:0}}>
+            {view==='library' ? <Library recipes={recipes} inv={inv} onOpen={openRecipe}/> : null}
+            {view==='detail' && selR ? <RecipeDetail r={selR} inv={inv} onBack={()=>setView('library')} onCook={()=>cook(selR)} onAddMissing={()=>addMissing(selR)} onToggleItem={toggleItem}/> : null}
+            {view==='inventory' ? <Inventory inv={inv} onToggle={toggleItem} onScan={()=>setScan(true)} onRestockAll={()=>{ inv.filter(i=>!i.have).forEach(i=>addToList(i.name, i.id, null, i.loc)); toast('OUT-OF-STOCK ITEMS \u2192 SHOPPING LIST', C.cobalt); setView('shopping'); }}/> : null}
+            {view==='shopping' ? <Shopping list={list} inv={inv} onCheck={k=>setList(list.map(i=>i.key===k?{...i,done:!i.done}:i))} onClearDone={restockDone} onAdd={n=>setList([...list,{key:Date.now(), name:n, done:false}])} onRestock={id=>{const it=inv.find(i=>i.id===id); addToList(it.name, id, null, it.loc);}}/> : null}
+            {view==='planner' ? <Planner recipes={recipes} inv={inv} plan={plan} prefs={prefs} onSetPrefs={setPrefs} onAssign={(d,id)=>setPlan(plan.map((p,i)=>i===d?id:p))} onClear={d=>setPlan(plan.map((p,i)=>i===d?null:p))} onAutoBuild={autoBuild} onOpen={openRecipe}/> : null}
+            {view==='form' ? <RecipeForm inv={inv} onSave={r=>{setRecipes([r,...recipes]); toast(`${r.name.toUpperCase()} SAVED`, C.green); setView('library');}} onCancel={()=>setView('library')}/> : null}
+          </div>
+        </div>
+      </div>
+      {/* status ticker */}
+      <div style={{height:26, flexShrink:0, background:C.blue, display:'flex', alignItems:'center', overflow:'hidden'}}>
+        <div className="tickwrap" style={{flex:1}}>
+          <div className="tick" style={{fontSize:9, fontWeight:700, letterSpacing:'.18em', color:C.cobalt, textTransform:'uppercase'}}>
+            {Array(2).fill(`// ${inv.filter(i=>i.have).length}/${inv.length} stocked /// ${outCount} out /// ${list.length} on list /// ${plan.filter(Boolean).length}/7 dinners planned /// wed 07.22.2026 /// node 07 kitchen online /// `).join('')}
+          </div>
+        </div>
+        <span style={{padding:'0 10px', fontSize:9, color:'#fff', letterSpacing:'.14em', borderLeft:'1px solid rgba(255,255,255,.3)'}}>SYS OK <span className="blink">_</span></span>
+      </div>
+      {scan ? <Scanner onClose={()=>setScan(false)} onCommit={commitScan}/> : null}
+      {/* toasts */}
+      <div style={{position:'fixed', top:56, right:16, zIndex:60, display:'flex', flexDirection:'column', gap:6}}>
+        {toasts.map(t => <div key={t.id} style={{background:'#000', border:`1px solid ${t.c}`, color:t.c, fontSize:9, fontWeight:700, letterSpacing:'.14em', padding:'8px 12px'}}>{t.msg}</div>)}
+      </div>
+    </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body></html>

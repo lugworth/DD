@@ -18,12 +18,12 @@ tailwind.config = {
     extend: {
       colors: {
         void:'#000000', soft:'#0a0a0a', panel:'#111110', raised:'#1a1a18',
-        yellow:{DEFAULT:'#eaff00',dim:'#d4e800'},
+        cobalt:{DEFAULT:'#2d6cff',dim:'#1f52d6'},
         pink:{DEFAULT:'#ff2d87',hot:'#ff0066'},
         green:{DEFAULT:'#39ff6a',dim:'#00d93d'},
         lime:{DEFAULT:'#c6ff3a',dim:'#a0e600'},
         cyan:{DEFAULT:'#00d9ff'},
-        blue:{DEFAULT:'#2d4cff',deep:'#0018cc'},
+        blue:{DEFAULT:'#2d6cff',deep:'#0018cc'},
         magenta:{DEFAULT:'#c800ff'},
         orange:{DEFAULT:'#ff5a00'},
         coral:{DEFAULT:'#ff6050'}, sky:{DEFAULT:'#0a84e0'}, teal:{DEFAULT:'#12b39b'},
@@ -97,7 +97,7 @@ tailwind.config = {
     <div class="relative z-10 flex items-end justify-between p-5">
       <div>
         <div class="font-display font-black text-4xl lowercase tracking-tight leading-none gl-text">
-          <span class="text-yellow">d</span>igi<span class="text-sky">d</span>elic
+          <span class="text-cobalt">d</span>igi<span class="text-sky">d</span>elic
         </div>
         <div class="text-2xs uppercase tracking-widest text-white/50 mt-2">// tailwind build · v2.3 · night-garden</div>
       </div>
@@ -111,7 +111,7 @@ tailwind.config = {
   <section class="mb-10">
     <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// colors · bg-{token} text-{token}</div>
     <div class="grid grid-cols-4 sm:grid-cols-7 gap-0.5">
-      <div class="h-16 bg-yellow text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">yellow</span><span class="text-[8px]">#eaff00</span></div>
+      <div class="h-16 bg-cobalt text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">cobalt</span><span class="text-[8px]">#2d6cff</span></div>
       <div class="h-16 bg-pink text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">pink</span><span class="text-[8px]">#ff2d87</span></div>
       <div class="h-16 bg-green text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">green</span><span class="text-[8px]">#39ff6a</span></div>
       <div class="h-16 bg-cyan text-ink p-2 flex flex-col justify-between"><span class="text-[8px] font-bold uppercase tracking-wider">cyan</span><span class="text-[8px]">#00d9ff</span></div>
@@ -132,12 +132,12 @@ tailwind.config = {
   <section class="mb-10">
     <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// buttons</div>
     <div class="flex flex-wrap gap-2 items-center">
-      <button class="h-8 px-4 bg-yellow text-ink text-xs font-bold uppercase tracking-wider transition-transform duration-100 ease-flow hover:-translate-y-0.5">initialize</button>
-      <button class="h-8 px-4 bg-coral text-ink text-xs font-bold uppercase tracking-wider transition-transform duration-100 ease-flow hover:-translate-y-0.5">notify</button>
-      <button class="h-8 px-4 bg-teal text-ink text-xs font-bold uppercase tracking-wider transition-transform duration-100 ease-flow hover:-translate-y-0.5">sync</button>
-      <button class="h-8 px-4 bg-transparent border border-yellow text-yellow text-xs font-bold uppercase tracking-wider transition-colors hover:bg-yellow hover:text-ink">run</button>
-      <button class="h-8 px-4 bg-transparent border border-pink-hot text-pink-hot text-xs font-bold uppercase tracking-wider">abort</button>
-      <button class="h-8 px-4 chk text-white text-xs font-bold uppercase tracking-wider" style="text-shadow:0 0 4px #000,0 1px 2px #000">▦ engage</button>
+      <button class="h-8 px-4 bg-cobalt text-ink text-xs font-bold uppercase tracking-wider transition-all duration-100 ease-flow hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(255,255,255,.35)] active:translate-x-0 active:translate-y-0 active:shadow-none">initialize</button>
+      <button class="h-8 px-4 bg-coral text-ink text-xs font-bold uppercase tracking-wider transition-all duration-100 ease-flow hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(255,255,255,.35)] active:translate-x-0 active:translate-y-0 active:shadow-none">notify</button>
+      <button class="h-8 px-4 bg-teal text-ink text-xs font-bold uppercase tracking-wider transition-all duration-100 ease-flow hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(255,255,255,.35)] active:translate-x-0 active:translate-y-0 active:shadow-none">sync</button>
+      <button class="h-8 px-4 bg-transparent border border-cobalt text-cobalt text-xs font-bold uppercase tracking-wider transition-all duration-100 ease-flow hover:bg-cobalt hover:text-ink hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(45,108,255,.3)] active:translate-x-0 active:translate-y-0 active:shadow-none">run</button>
+      <button class="h-8 px-4 bg-transparent border border-pink-hot text-pink-hot text-xs font-bold uppercase tracking-wider transition-all duration-100 ease-flow hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(255,0,102,.3)] active:translate-x-0 active:translate-y-0 active:shadow-none">abort</button>
+      <button class="h-8 px-4 chk text-white text-xs font-bold uppercase tracking-wider transition-all duration-100 ease-flow hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(255,255,255,.35)] active:translate-x-0 active:translate-y-0 active:shadow-none" style="text-shadow:0 0 4px #000,0 1px 2px #000">▦ engage</button>
     </div>
   </section>
 
@@ -145,6 +145,19 @@ tailwind.config = {
   <section class="mb-10">
     <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// node cards · positive (solid block) vs negative (void)</div>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      <!-- SECTOR SUMMARY: solid block, segmented health bar, badge chips -->
+      <div class="bg-coral p-3.5 text-ink">
+        <div class="flex items-start justify-between mb-2"><span class="font-display font-black text-[28px] leading-none">B6</span><span class="text-[9px] font-bold uppercase tracking-wider text-right">8<br>nodes</span></div>
+        <div class="flex h-1.5 w-full mb-2 overflow-hidden">
+          <span class="bg-green" style="width:37%"></span><span class="bg-cobalt" style="width:25%"></span><span class="bg-cyan" style="width:12%"></span><span class="bg-orange" style="width:13%"></span><span class="bg-black/50" style="width:13%"></span>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <b class="bg-ink text-green text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5">3 nominal</b>
+          <b class="bg-ink text-cobalt text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5">2 running</b>
+          <b class="bg-ink text-cyan text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5">1 scanning</b>
+          <b class="bg-ink text-white/40 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5">1 offline</b>
+        </div>
+      </div>
       <!-- POSITIVE: solid coral block, data on black inset -->
       <div class="bg-coral border border-coral">
         <div class="px-2.5 py-2 flex items-center justify-between">
@@ -215,10 +228,23 @@ tailwind.config = {
     <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// status badges</div>
     <div class="flex flex-wrap gap-2">
       <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest border border-green text-green"><span class="w-1 h-1 bg-current"></span>nominal</span>
-      <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest border border-yellow text-yellow"><span class="w-1 h-1 bg-current"></span>warning</span>
+      <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest border border-cobalt text-cobalt"><span class="w-1 h-1 bg-current"></span>warning</span>
       <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest border border-pink-hot text-pink-hot"><span class="w-1 h-1 bg-current"></span>critical</span>
       <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest border border-cyan text-cyan"><span class="w-1 h-1 bg-current"></span>scanning</span>
       <span class="inline-flex items-center gap-1.5 h-5 px-2 text-[9px] font-bold uppercase tracking-widest bg-coral text-ink">active</span>
+    </div>
+  </section>
+
+  <!-- log / terminal rows -->
+  <section class="mb-10">
+    <div class="text-2xs uppercase tracking-widest text-white/35 mb-3">// log rows · chevron header + timestamped states</div>
+    <div class="border border-white/12">
+      <div class="h-5 flex items-center pl-1 text-[9px] font-bold tracking-[2px] text-black overflow-hidden whitespace-nowrap" style="background:linear-gradient(90deg,#2d6cff,#ff2d87 55%,#00d9ff)">&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;</div>
+      <div class="flex flex-col">
+        <div class="flex items-center gap-2.5 px-4 py-2.5 text-sm border-b border-white/10 text-green"><span class="font-bold tabular-nums before:content-['['] after:content-[']']">02:34:48</span><span>relay_047 :: sync -ok</span></div>
+        <div class="flex items-center gap-2.5 px-4 py-2.5 text-sm border-b border-white/10 text-pink-hot" style="background:rgba(255,45,135,.1)"><span class="font-bold text-pink tabular-nums before:content-['['] after:content-[']']">03:04:34</span><span>node_003 :: signal -lost</span></div>
+        <div class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-white/32"><span class="font-bold tabular-nums before:content-['['] after:content-[']']">06:54:08</span><span>beacon_112 :: idle -standby</span></div>
+      </div>
     </div>
   </section>
 
@@ -279,7 +305,7 @@ tailwind.config = {
       <code class="text-coral bg-void px-1 border border-white/12">bg-coral</code>,
       <code class="text-sky bg-void px-1 border border-white/12">text-sky</code>,
       <code class="text-blood bg-void px-1 border border-white/12">border-blood</code>,
-      <code class="text-yellow bg-void px-1 border border-white/12">font-display</code>.
+      <code class="text-cobalt bg-void px-1 border border-white/12">font-display</code>.
       Radius is globally reset to 0. Color-blocking is the core move: loud states become <span class="text-coral">solid color blocks</span> with a black data inset; calm states stay <span class="text-cyan">black void</span> with a single color rule. Motif + texture classes (<code class="text-white bg-void px-1 border border-white/12">.chk</code>,
       <code class="text-white bg-void px-1 border border-white/12">.tex.night</code>,
       <code class="text-white bg-void px-1 border border-white/12">.swirl</code>) live in the

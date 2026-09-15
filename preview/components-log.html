@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Log / Terminal Rows" subtitle="Chevron header, timestamped status rows" viewport="640x210" -->
+<html><head><meta charset="UTF-8"><style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;padding:0;font-family:'Geist Mono',monospace}
+.panel{border:1px solid rgba(255,255,255,0.08)}
+.chev{height:20px;background:linear-gradient(90deg,#5a2dff,#ff2d87 55%,#00d9ff);color:#0a0a0a;font-size:11px;font-weight:700;letter-spacing:2px;line-height:20px;overflow:hidden;white-space:nowrap;padding-left:4px}
+.rows{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:12px;letter-spacing:0.02em;border-bottom:1px solid rgba(255,255,255,0.06)}
+.row:last-child{border-bottom:none}
+.ts{font-weight:700;font-variant-numeric:tabular-nums}
+.ts::before{content:'['}
+.ts::after{content:']'}
+.msg{opacity:0.9}
+.row.ok{color:#39ff6a}
+.row.err{color:#ff3b5c;background:rgba(255,45,135,0.1)}
+.row.err .ts{color:#ff2d87}
+.row.mut{color:rgba(255,255,255,0.55)}
+</style></head><body>
+<div class="panel">
+<div class="chev">&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;&lt;&gt;</div>
+<div class="rows">
+<div class="row ok"><span class="ts">02:34:48</span><span class="msg">lorem_ipsum :: sin -dolor</span></div>
+<div class="row err"><span class="ts">03:04:34</span><span class="msg">lorem_ipsum :: sin -dolor</span></div>
+<div class="row mut"><span class="ts">06:54:08</span><span class="msg">lorem_ipsum :: sin -dolor</span></div>
+</div>
+</div>
+</body></html>

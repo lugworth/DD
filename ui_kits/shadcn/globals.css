@@ -11,7 +11,7 @@
 
    Notes:
    - digidelic is ZERO-RADIUS. --radius is 0 everywhere.
-   - Surfaces are near-black; primary is acid yellow with BLACK text.
+   - Surfaces are near-black; primary is acid cobalt with BLACK text.
    - Values are oklch to match shadcn's newest generator output.
    ============================================================ */
 
@@ -31,8 +31,8 @@
   --popover:               oklch(0.16 0.004 100);    /* #1a1a18 raised */
   --popover-foreground:    oklch(1 0 0);
 
-  /* primary = acid yellow, ink = black */
-  --primary:               oklch(0.95 0.21 113);     /* #eaff00 */
+  /* primary = acid cobalt, ink = black */
+  --primary:               oklch(0.95 0.21 113);     /* #2d6cff */
   --primary-foreground:    oklch(0 0 0);
 
   /* secondary = raised surface */
@@ -45,7 +45,7 @@
 
   /* accent (hover surfaces) */
   --accent:                oklch(0.20 0.004 100);
-  --accent-foreground:     oklch(0.95 0.21 113);     /* yellow on hover */
+  --accent-foreground:     oklch(0.95 0.21 113);     /* cobalt on hover */
 
   /* destructive = hot pink */
   --destructive:           oklch(0.63 0.27 8);       /* #ff0066 */
@@ -54,10 +54,10 @@
   /* lines + focus */
   --border:                oklch(1 0 0 / 12%);
   --input:                 oklch(1 0 0 / 14%);
-  --ring:                  oklch(0.95 0.21 113);     /* yellow focus ring */
+  --ring:                  oklch(0.95 0.21 113);     /* cobalt focus ring */
 
   /* data viz — digidelic neon set */
-  --chart-1:               oklch(0.95 0.21 113);     /* yellow  #eaff00 */
+  --chart-1:               oklch(0.95 0.21 113);     /* cobalt  #2d6cff */
   --chart-2:               oklch(0.72 0.18 215);     /* cyan    #00d9ff */
   --chart-3:               oklch(0.70 0.21 350);     /* pink    #ff2d87 */
   --chart-4:               oklch(0.62 0.16 240);     /* sky     #0a84e0 */

@@ -38,64 +38,13 @@ Blinn-style specular bloom on ridge tops.
 | | Gloss | Specular strength and tightness |
 | | Light angle | Direction of the key light |
 | | Detail | Simulation grid resolution (re-seeds the culture) |
-| Style | Palette | `Ferro` (silver on black) · `Porcelain` (dark relief on paper) · `Digidelic` (phosphor green + yellow specular on void) |
+| Style | Palette | `Ferro` (silver on black) · `Porcelain` (dark relief on paper) · `Digidelic` (phosphor green + cobalt specular on void) |
 | | Format | 1:1 square or 4:5 portrait |
 
 `space` = reseed, `p` = play/pause, `e` = export PNG.
 
 ## Export
 
-- `▶ Export PNG` — current frame at 2160px wide. This upscales the live
-  simulation canvas rather than re-rendering at target resolution, so
-  sharpness tracks the **Detail** slider (grid resolution) — low-Detail
-  exports will look softer than the 2160px file size implies.
+- `▶ Export PNG` — current frame at 2160px wide
 - `⏺ Rec 6s` — captures a 6-second WebM clip of the live animation
   (30 fps via `MediaRecorder`), named `digidelic-reaction-<seed>.webm`
-
-## Sharing & history
-
-The seed readout is a button — click it to copy a **permalink** that
-encodes the seed and every rack setting, so a specific result is a URL.
-Opening a link restores that exact state. `Ctrl+Z` / `Ctrl+Shift+Z`
-(or `Ctrl+Y`) step through parameter **undo/redo**. On devices that
-support the Web Share API a **Share** button appears next to Export and
-hands the rendered PNG straight to the system share sheet.
-
-## GIF capture
-
-**◉ GIF 3s** grabs 36 frames off the live canvas at 12.5fps and packs a
-looping GIF89a — useful where a WebM won't play inline (chat, forums,
-older clients). The encoder is written into the file rather than pulled
-from a CDN, so the tool stays dependency-free: colour is quantised to a
-6·6·6 cube plus a 40-step grey ramp with an ordered dither, then LZW
-packed. Capture is downscaled to 480px on the long edge; the pack step
-takes a second or two at the end.
-
-## GPU engine (opt-in)
-
-**Engine** switches the simulation between the original CPU path and a
-WebGL2 port that runs the field in a pair of ping-ponged float textures.
-The GPU path renders into the same internal canvas the CPU path writes,
-so export, record and GIF capture are unaffected by the choice.
-
-CPU stays the default. Every failure mode — no WebGL2, no float render
-targets, a shader that will not compile or link, an incomplete
-framebuffer — flips the control back to CPU rather than showing you a
-broken sheet.
-
-The shader is a faithful transcription of the CPU step: same 9-point
-laplacian, same anisotropy weights, same substrate boundary ring, and
-deliberately *unclamped*, because B overshoots 1.0 transiently where a
-blob is seeded and clamping would give the two engines subtly different
-dynamics. Run side by side from the same seed they should agree.
-
-## MP4 capture
-
-**▣ MP4 6s** encodes six seconds of H.264 with WebCodecs and muxes it
-here in-file — no library, keeping the tool dependency-free. MP4 plays
-inline in the places WebM does not: iOS, Twitter, Discord.
-
-The muxer writes a non-fragmented `ftyp`/`mdat`/`moov` with every sample
-in a single chunk, which keeps `stsc` and `stco` trivial and is
-perfectly legal. It needs a browser with `VideoEncoder`; without one the
-button says so and nothing else changes.

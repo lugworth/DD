@@ -13,4 +13,4 @@ Tailwind build of the digidelic system.
 4. Motif/texture/glitch classes live in an `@layer utilities` block — see `index.html` and `glitch.css`.
 
 ## Palette v2.1
-Neon heroes (yellow/pink/green/cyan/blue/magenta/orange/lime) + duotone layer (coral `#ff6050`, sky `#0a84e0`, teal `#12b39b`) sampled from the flower/halftone refs.
+Neon heroes (cobalt/pink/green/cyan/blue/magenta/orange/lime) + duotone layer (coral `#ff6050`, sky `#0a84e0`, teal `#12b39b`) sampled from the flower/halftone refs.

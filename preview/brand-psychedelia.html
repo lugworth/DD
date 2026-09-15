@@ -1,66 +1,179 @@
-<!-- @dsCard group="Brand" name="Psychedelia Engine" subtitle="Swirls, rainbow aura, hue-cycle, liquid warp — built from the Shimoda flower-figure refs" viewport="760x520" -->
+<!-- @dsCard group="Brand" name="Psychedelia Engine" subtitle="Feathered primitives, in situ behind real components — smooth by construction, brand palette only" viewport="1280x2180" -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="stylesheet" href="../glitch.css">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&family=Red+Hat+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>Psychedelia Engine</title>
+<link rel="stylesheet" href="../styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../_ds_bundle.js"></script>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#000;color:#fff;font-family:'Red Hat Mono',monospace;padding:16px;}
-  .lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:6px;display:flex;gap:8px;align-items:center}
-  .lab::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.12)}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .tile{position:relative;height:150px;border:1px solid rgba(255,255,255,.14);overflow:hidden;background:#060606;display:flex;align-items:center;justify-content:center}
-  .cap{position:absolute;left:0;right:0;bottom:0;z-index:3;background:linear-gradient(0deg,rgba(0,0,0,.92),transparent);padding:16px 8px 5px;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#fff;line-height:1.4}
-  .cap b{color:#eaff00}
-  .strip{height:8px;margin-bottom:14px}
-  .word{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:40px;text-transform:lowercase;letter-spacing:-.02em;line-height:1;position:relative;z-index:3}
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:0 0 56px}
+a{color:#2d6cff}a:hover{color:#ff2d87}
+.wrap{padding:0 38px}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:38px;text-transform:uppercase;letter-spacing:-.01em;line-height:1;margin:30px 0 8px}
+.lede{font-size:12px;line-height:1.7;color:rgba(255,255,255,.55);max-width:76ch;margin:0 0 8px}
+.lede b{color:#39ff6a;font-weight:700}
+.strip{height:9px;margin-bottom:0}
+.sec{display:flex;gap:9px;align-items:center;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);margin:42px 0 12px}
+.sec::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.16)}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:78ch;margin:0 0 16px}
+/* The stage: a psy layer needs a positioned, clipping host on pure black. */
+.stage{position:relative;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.22);min-height:210px;display:flex;align-items:center;justify-content:center}
+.stage > .fg{position:relative;z-index:3}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.ctr{font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.8);text-shadow:0 1px 3px #000}
+.word{font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:40px;text-transform:lowercase;letter-spacing:-.02em;line-height:1}
+.retired{border:1px solid rgba(255,255,255,.22);padding:15px 17px;margin-top:16px;display:grid;gap:7px}
+.retired b{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#ff0066}
+.retired p{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);margin:0;max-width:80ch}
+code{color:#00d9ff;letter-spacing:.04em}
 </style>
 </head>
 <body class="gl-stage">
-  <!-- hero: rainbow strip + gradient wordmark -->
-  <div class="strip psy-rainbow"></div>
-  <div class="lab">// psychedelia engine — shared via glitch.css</div>
-
-  <div class="grid">
-    <!-- 1. portrait + aura -->
-    <div class="tile tex-host">
-      <div class="tex tex-psy1" style="--tex-op:.92"></div>
-      <span class="psy-aura psy-aura-thin" style="left:44%"></span>
-      <div class="cap"><b>RAINBOW AURA</b> · .psy-aura over .tex-psy1</div>
-    </div>
-    <!-- 2. psy-sun + pinwheel -->
-    <div class="tile tex-host">
-      <span class="psy-sun"></span>
-      <span class="psy-pinwheel" style="width:120px;height:120px;color:#00d9ff;animation:psy-spin-cw 30s linear infinite"></span>
-      <div class="cap"><b>PSY SUN + PINWHEEL</b> · conic spirals, hue-cycling</div>
-    </div>
-    <!-- 3. liquid swirl -->
-    <div class="tile tex-host">
-      <span class="psy-swirl psy-wave" style="width:150px;height:150px;color:#ff2d87;animation:psy-spin-ccw 50s linear infinite"></span>
-      <span class="psy-pinwheel psy-liquid" style="width:90px;height:90px;color:#eaff00;animation:psy-spin-cw 36s linear infinite"></span>
-      <div class="cap"><b>LIQUID WAVE</b> · .psy-wave (#psyWave)</div>
-    </div>
-    <!-- 4. portrait 2 + sun -->
-    <div class="tile tex-host">
-      <div class="tex tex-psy2 psy-hue-s" style="--tex-op:.9"></div>
-      <span class="psy-aura" style="left:60%;opacity:.4"></span>
-      <div class="cap"><b>SAT-BREATHE</b> · .psy-hue-s on imagery</div>
-    </div>
-    <!-- 5. gradient + aberration text -->
-    <div class="tile" style="flex-direction:column;gap:10px">
-      <div class="word psy-text psy-undulate">digidelic</div>
-      <div class="word psy-aberr" style="font-size:26px;color:#fff">SIGNAL</div>
-      <div class="cap"><b>GRADIENT + ABERRATION TEXT</b> · .psy-text / .psy-aberr</div>
-    </div>
-    <!-- 6. crossgrid + swirl combo -->
-    <div class="tile tex-host">
-      <div class="tex tex-crossgrid" style="--tex-op:.5"></div>
-      <span class="psy-pinwheel" style="width:130px;height:130px;color:#39ff6a;animation:psy-spin-ccw 44s linear infinite"></span>
-      <div class="cap"><b>FUI + PSY</b> · cross-grid × pinwheel</div>
-    </div>
-  </div>
+<div class="strip psy-rainbow"></div>
+<div class="wrap">
+<h1>Psychedelia Engine</h1>
+<p class="lede">A decorative layer for hero surfaces, built from one constraint: <b>every effect must be smooth by construction</b>, not smooth by tuning. Hue is never rotated — the spectrum is assembled from brand neons only, so nothing drifts into muddy off-palette tones. Everything below sits behind real components, because that is the only place this layer is ever allowed to appear.</p>
+<div id="root"></div>
+</div>
 <script src="../glitch.js"></script>
+<script>
+const NS = window.DigidelicDesignSystem_da5439 || {};
+const { Card, CardSection, NodeCard, SectorCard, StatCard, Badge, BadgeRow, Progress, ProgressStack, Spinner, Button } = NS;
+const { createElement: h, Fragment } = React;
+
+const Sec = (label) => h('p', { className: 'sec' }, label);
+const Note = (t) => h('p', { className: 'note' }, t);
+
+/* A psy layer plus whatever should sit above it. Layers are always
+   z-index 0 in a clipping host; content gets its own stacking context. */
+function Stage({ layers, children, min, label }) {
+  return h('div', { className: 'stage', style: min ? { minHeight: min } : null },
+    layers,
+    h('div', { className: 'fg' }, children || h('span', { className: 'ctr' }, label)));
+}
+
+/* Caption block under each stage — a real Card, not hand-rolled chrome. */
+function Spec({ name, cls, children, accent }) {
+  return h(Card, { variant: 'flat', padding: 'sm', accent, id: name, style: { gap: 0 } },
+    h(BadgeRow, { gap: 6, style: { marginBottom: 7 } },
+      h(Badge, { label: name, accent, size: 'sm' }),
+      cls ? h(Badge, { label: cls, variant: 'ghost', size: 'sm', accent }) : null),
+    h('p', { style: { font: '400 11px/1.65 "Geist Mono",monospace', color: 'rgba(255,255,255,.55)', margin: 0 } }, children));
+}
+
+function Page() {
+  if (!Card) return Note('Bundle not compiled yet — reload once it rebuilds.');
+
+  return h(Fragment, null,
+    Sec('// 01 · grounds — full-surface fields'),
+    Note('Three primitives carry every ground in the system. None of them contains a gradient stop narrow enough to alias, which is what makes them safe at any size.'),
+    h('div', { className: 'grid3' },
+      h('div', null,
+        h(Stage, { layers: h('div', { className: 'psy-lava' }, h('i')), label: 'cool field' }),
+        h(Spec, { name: 'Lava field', cls: '.psy-lava', accent: 'cobalt' }, 'Three blurred blobs on independent drifts. No gradient stops, so it cannot alias — the smoothest ground in the set.')),
+      h('div', null,
+        h(Stage, { layers: h('div', { className: 'psy-lava warm' }, h('i')), label: 'warm field' }),
+        h(Spec, { name: 'Lava · warm', cls: '.psy-lava.warm', accent: 'pink' }, 'Pink, orange and green variant for alert-adjacent surfaces. Same geometry, different inks.')),
+      h('div', null,
+        h(Stage, { layers: h('span', { className: 'psy-interference', style: { color: '#00d9ff' } }), label: 'interference' }),
+        h(Spec, { name: 'Interference', cls: '.psy-interference', accent: 'cyan' }, 'Two low-frequency line fields at opposing angles. Wide soft bands plus blur make moiré the intent rather than the artifact.'))),
+
+    Sec('// 02 · radial and structural forms'),
+    Note('The bloom is the only radial form that survived. The warp grid graduated out of this page into the engine proper, and now takes angle and density variants.'),
+    h('div', { className: 'grid3' },
+      h('div', null,
+        h(Stage, { layers: h('span', { className: 'psy-bloom', style: { width: 180, height: 180, color: '#39ff6a' } }), label: 'bloom' }),
+        h(Spec, { name: 'Bloom', cls: '.psy-bloom', accent: 'green' }, 'Breathing concentric halo, fully feathered stops. Takes its colour from currentColor, so it inherits the seeded hue of whatever hosts it.')),
+      h('div', null,
+        h(Stage, { layers: h('span', { className: 'psy-sun' }) },
+          h('span', { className: 'ctr' }, 'sun')),
+        h(Spec, { name: 'Psy sun', cls: '.psy-sun', accent: 'orange' }, 'Oversized masked conic wash on a 120-second rotation. Sits behind everything else in the stack.')),
+      h('div', null,
+        h(Stage, { layers: h('div', { className: 'psy-warpgrid' }), label: 'warp grid' }),
+        h(Spec, { name: 'Warp grid', cls: '.psy-warpgrid', accent: 'indigo' }, 'Perspective line field with a wave breath — the FUI grid bent through the psychedelic layer. Promoted from page scaffolding into a real primitive.'))),
+
+    Sec('// 03 · warp grid variants'),
+    Note('Angle tips the plane; density drives line frequency. Both are custom properties, so an instance can also set --wg-angle, --wg-cell, --wg-a and --wg-b directly.'),
+    h('div', { className: 'grid3' },
+      h('div', null,
+        h(Stage, { min: 150, layers: h('div', { className: 'psy-warpgrid flat' }), label: 'flat · 28°' }),
+        h(Spec, { name: 'Flat', cls: '.flat', accent: 'cobalt' }, 'Shallow tilt — reads as a floor plane.')),
+      h('div', null,
+        h(Stage, { min: 150, layers: h('div', { className: 'psy-warpgrid' }), label: 'default · 46°' }),
+        h(Spec, { name: 'Default', cls: '46deg', accent: 'cyan' }, 'The base tilt, unmodified.')),
+      h('div', null,
+        h(Stage, { min: 150, layers: h('div', { className: 'psy-warpgrid steep' }), label: 'steep · 62°' }),
+        h(Spec, { name: 'Steep', cls: '.steep', accent: 'violet' }, 'Hard tilt — reads as a receding horizon.'))),
+    h('div', { className: 'grid3', style: { marginTop: 12 } },
+      h('div', null,
+        h(Stage, { min: 150, layers: h('div', { className: 'psy-warpgrid fine' }), label: 'fine · 18px' }),
+        h(Spec, { name: 'Fine', cls: '.fine', accent: 'lime' }, 'Dense cell. The practical floor before the lines fuse.')),
+      h('div', null,
+        h(Stage, { min: 150, layers: h('div', { className: 'psy-warpgrid coarse' }), label: 'coarse · 48px' }),
+        h(Spec, { name: 'Coarse', cls: '.coarse', accent: 'magenta' }, 'Open cell, for large hero surfaces.')),
+      h('div', null,
+        h(Stage, { min: 150, layers: h('div', { className: 'psy-warpgrid steep coarse', style: { '--wg-a': '#ff2d87', '--wg-b': '#ff5a00' } }), label: 'composed' }),
+        h(Spec, { name: 'Composed', cls: '.steep.coarse', accent: 'coral' }, 'Variants stack, and the inks are overridable per instance.'))),
+
+    Sec('// 04 · in situ — the layer behind real components'),
+    Note('This is the only sanctioned use. The psy layer sits at z-index 0 inside a clipping host; components stack above it and keep their own solid grounds, so status colour and copy contrast are never touched by the atmosphere behind them.'),
+    h('div', { className: 'grid2' },
+      h(Stage, { min: 300, layers: h('div', { className: 'psy-lava' }, h('i')) },
+        h('div', { style: { display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', padding: 20 } },
+          h(NodeCard, { name: 'NODE-047', code: '[0x2F]', width: 206, status: 'nominal', load: 0.72,
+            rows: [['sector', 'A1.2'], ['class', 'RELAY']] }),
+          h(NodeCard, { name: 'NODE-088', code: '[0x58]', width: 206, strip: true, status: 'warning', load: 0.34,
+            rows: [['sector', 'B6'], ['class', 'INTAKE']] }))),
+      h(Stage, { min: 300, layers: h('span', { className: 'psy-interference', style: { color: '#c800ff' } }) },
+        h('div', { style: { display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', padding: 20 } },
+          h(SectorCard, { name: 'B3', width: 214, breakdown: [['nominal', 3], ['running', 1], ['warning', 1], ['offline', 1]] }),
+          h('div', { style: { display: 'grid', gap: 10 } },
+            h(StatCard, { value: '847', label: 'uptime hrs', note: '▶ NOMINAL', status: 'nominal' }),
+            h(StatCard, { value: '003', label: 'failures', note: '▶ CRITICAL', status: 'critical' }))))),
+    h('div', { className: 'grid2', style: { marginTop: 12 } },
+      h(Stage, { min: 260, layers: h('div', { className: 'psy-warpgrid steep' }) },
+        h(Card, { title: 'Sector sweep', label: 'scan in progress', id: 'sweep', variant: 'panel', style: { width: 340 } },
+          h('div', { style: { display: 'grid', gap: 14, marginTop: 4 } },
+            h(Progress, { label: 'Coverage', value: 0.68, showValue: true, accent: 'cyan' }),
+            h(ProgressStack, { label: 'Findings', size: 'lg', parts: [['nominal', 7, 'green'], ['warning', 2, 'orange'], ['critical', 1, 'pink']] }),
+            h(Spinner, { label: 'Scanning sector B3', accent: 'cyan' })))),
+      h(Stage, { min: 260, layers: [h('span', { key: 's', className: 'psy-sun' }), h('span', { key: 'b', className: 'psy-bloom', style: { width: 220, height: 220, color: '#2d6cff' } })] },
+        h(Card, { variant: 'accent', title: 'Re-authenticate', label: 'hero surface', id: 'auth', strip: true, style: { width: 320 } },
+          h('p', { style: { font: '400 11px/1.7 "Geist Mono",monospace', margin: '0 0 14px', opacity: .78 } }, 'A hero panel keeps its solid seeded fill. The layer behind it is atmosphere and never carries meaning.'),
+          h(BadgeRow, null,
+            h(Button, { label: 'Authenticate', id: 'auth', size: 'sm', variant: 'quiet' }),
+            h(Badge, { status: 'ok', label: 'ready', pip: true, size: 'sm' }))))),
+
+    Sec('// 05 · type'),
+    h('div', { className: 'grid2' },
+      h(Stage, { min: 190, layers: h('div', { className: 'psy-lava' }, h('i')) },
+        h('div', { style: { display: 'grid', gap: 12, justifyItems: 'center' } },
+          h('div', { className: 'word psy-text psy-undulate' }, 'digidelic'),
+          h('div', { className: 'word psy-aberr', style: { fontSize: 22, color: '#fff' } }, 'SIGNAL'))),
+      h('div', null,
+        h(Stage, { min: 190, layers: [h('div', { key: 'g', className: 'psy-warpgrid fine' }), h('span', { key: 'i', className: 'psy-interference', style: { color: '#39ff6a', opacity: .34 } })], label: 'composite' }),
+        h(Spec, { name: 'Composite', cls: 'layering', accent: 'green' }, 'Two layers is the ceiling, and only when one is a line field and the other a blob field. Three reads as noise.'))),
+
+    Sec('// 06 · rules'),
+    h('div', { style: { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))' } },
+      h(Spec, { name: 'Smooth by build', accent: 'green' }, 'Every field is a feathered ramp or a blurred blob. If an effect relies on a sub-pixel gradient stop, rebuild it wider — do not try to blur it away.'),
+      h(Spec, { name: 'Palette only', accent: 'cyan' }, 'The spectrum is assembled from brand neons. Never hue-rotate; it drifts colours off-palette into muddy tones. Breathe saturation and brightness instead.'),
+      h(Spec, { name: 'Behind content', accent: 'cobalt' }, 'Layers sit at z-index 0 inside a clipping host and use mix-blend-mode: screen on pure black. Text and components always get their own stacking context above.'),
+      h(Spec, { name: 'Decoration only', accent: 'magenta' }, 'Psychedelia never carries meaning. Status, hierarchy and state stay with the solid-block vocabulary — this layer is atmosphere.'),
+      h(Spec, { name: 'Black only', accent: 'violet' }, 'Screen blending needs a black ground. On cream the entire layer washes out, so the engine is unavailable on that surface by construction, not by rule.'),
+      h(Spec, { name: 'Motion policy', accent: 'orange' }, 'All of it loops, so all of it collapses under prefers-reduced-motion: reduce to a static rest frame. No layout shift when it stops.')),
+
+    h('div', { className: 'retired' },
+      h('b', null, 'retired 08-2026 · .psy-swirl · .psy-pinwheel'),
+      h('p', null, 'Both were removed from the engine. Each existed only to walk back its own aliasing: a concentric ring field and a conic blade field cannot be made reliably smooth at arbitrary scale, because the stop width that reads correctly at 200px moirés at 600px. The feathered primitives above replace them and are smooth by construction rather than by tuning. Do not reintroduce them.'))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Page));
+</script>
 </body>
 </html>

@@ -27,12 +27,12 @@ module.exports = {
         panel:   '#111110',
         raised:  '#1a1a18',
         // neon heroes
-        yellow:  { DEFAULT: '#eaff00', dim: '#d4e800' },
+        cobalt:  { DEFAULT: '#2d6cff', dim: '#1f52d6' },
         pink:    { DEFAULT: '#ff2d87', hot: '#ff0066' },
         green:   { DEFAULT: '#39ff6a', dim: '#00d93d' },
         lime:    { DEFAULT: '#c6ff3a', dim: '#a0e600' },
         cyan:    { DEFAULT: '#00d9ff' },
-        blue:    { DEFAULT: '#2d4cff', deep: '#0018cc' }, // electric
+        blue:    { DEFAULT: '#2d6cff', deep: '#0018cc' }, // electric
         magenta: { DEFAULT: '#c800ff' },
         orange:  { DEFAULT: '#ff5a00' },
         // duotone layer (from flower / halftone refs)
@@ -78,12 +78,12 @@ module.exports = {
       backgroundImage: {
         // motif gradients
         'checker': 'linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%),linear-gradient(45deg,#0a84e0 25%,transparent 25%,transparent 75%,#0a84e0 75%)',
-        'hazard-yellow': 'repeating-linear-gradient(-45deg,#eaff00 0 14px,#000 14px 28px)',
+        'hazard-cobalt': 'repeating-linear-gradient(-45deg,#2d6cff 0 14px,#000 14px 28px)',
         'hazard-coral':  'repeating-linear-gradient(-45deg,#ff6050 0 14px,#000 14px 28px)',
         // psychedelia — spectrum built ONLY from brand neons (no hue-rotate)
-        'psy-spectrum': 'linear-gradient(90deg,#eaff00,#39ff6a,#00d9ff,#2d4cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#eaff00)',
-        'psy-sun':      'conic-gradient(from 0deg,#eaff00,#39ff6a,#00d9ff,#2d4cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#eaff00)',
-        'psy-aura':     'linear-gradient(180deg,rgba(255,45,135,0) 0%,#ff2d87 14%,#ff5a00 28%,#eaff00 42%,#39ff6a 56%,#00d9ff 70%,#2d4cff 82%,rgba(200,0,255,0) 100%)',
+        'psy-spectrum': 'linear-gradient(90deg,#2d6cff,#39ff6a,#00d9ff,#2d6cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#2d6cff)',
+        'psy-sun':      'conic-gradient(from 0deg,#2d6cff,#39ff6a,#00d9ff,#2d6cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#2d6cff)',
+        'psy-aura':     'linear-gradient(180deg,rgba(255,45,135,0) 0%,#ff2d87 14%,#ff5a00 28%,#2d6cff 42%,#39ff6a 56%,#00d9ff 70%,#2d6cff 82%,rgba(200,0,255,0) 100%)',
         // texture overlays (image refs)
         'tex-crossgrid': "url('assets/tex-crossgrid.png')",
         'tex-flower':    "url('assets/tex-flower-duotone.png')",

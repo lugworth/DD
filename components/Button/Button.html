@@ -1,0 +1,131 @@
+<!-- @dsCard group="Components" name="Button" subtitle="Seeded hue, four variants, flat texture and stepped motion — black, night and cream" viewport="1280x1760" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Button</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#2d6cff}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:62ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:34px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px 26px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:70ch}
+code{color:#2d6cff}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Button</h1>
+<p class="sub">Hue is derived, not chosen: <code>id</code> when given, else a hash of the label, so the same node is always the same colour. <code>accent</code> pins a stop when you need one. Every button carries the shared <code>surface</code>, <code>signal</code>, <code>geometry</code>, <code>glitch</code>, <code>texture</code> and <code>animation</code> props.</p>
+<div id="root"></div>
+<script>
+const { Button, ButtonRow } = window.DigidelicDesignSystem_da5439;
+const { createElement: h, Fragment } = React;
+const RAMP = ['magenta','pink','coral','orange','lime','green','cyan','cobalt','indigo','violet'];
+const Sec = (label, children) => h('div', { className: 'sec' }, h('p', { className: 'lab' }, label), children);
+const Col = (label, children) => h('div', null, h('p', { className: 'lab' }, label), children);
+
+function Demo() {
+  return h(Fragment, null,
+    Sec('01 · variants', h('div', { className: 'grid' },
+      Col('solid', h(ButtonRow, null,
+        h(Button, { label: 'Re-authenticate', id: 'auth' }),
+        h(Button, { label: 'Ping', id: 'ping' }))),
+      Col('ghost', h(ButtonRow, null,
+        h(Button, { variant: 'ghost', label: 'Inspect', id: 'inspect' }),
+        h(Button, { variant: 'ghost', label: 'Logs', id: 'logs' }))),
+      Col('quiet', h(ButtonRow, null,
+        h(Button, { variant: 'quiet', label: 'Cancel' }),
+        h(Button, { variant: 'quiet', label: 'Dismiss' }))),
+      Col('danger', h(Button, { variant: 'danger', label: 'Purge node' })))),
+
+    Sec('02 · sizes', h(ButtonRow, { gap: 12 },
+      h(Button, { size: 'sm', label: 'Small', id: 'sm' }),
+      h(Button, { size: 'md', label: 'Medium', id: 'md' }),
+      h(Button, { size: 'lg', label: 'Large', id: 'lg' }))),
+
+    Sec('03 · seeded hue — the ten stops', h(Fragment, null,
+      h('p', { className: 'note', style: { margin: '0 0 14px' } }, 'Pinned with accent. Ink flips to clear AA on each fill.'),
+      h(ButtonRow, { gap: 8 }, RAMP.map((a) => h(Button, { key: a, accent: a, label: a }))))),
+
+    Sec('04 · derived from the seed', h(Fragment, null,
+      h('p', { className: 'note', style: { margin: '0 0 14px' } }, 'No accent prop — each hue falls out of hash(id).'),
+      h(ButtonRow, { gap: 8 }, ['NODE-047','NODE-088','NODE-003','SECTOR-A1','SECTOR-B6','BLOOM-12','GARDEN-04','RELAY-9'].map((n) =>
+        h(Button, { key: n, id: n, label: n, size: 'sm' }))))),
+
+    Sec('05 · pip, checker seam, icon, block', h('div', { className: 'grid' },
+      Col('pip', h(Button, { pip: true, label: 'Live feed', id: 'feed' })),
+      Col('checker seam', h(Button, { checker: true, label: 'Sync', id: 'sync' })),
+      Col('icon', h(ButtonRow, null,
+        h(Button, { icon: true, id: 'i1', 'aria-label': 'Add node' }, '+'),
+        h(Button, { icon: true, variant: 'ghost', id: 'i2', 'aria-label': 'Dismiss' }, '\u00d7'))),
+      Col('block', h(Button, { block: true, label: 'Commit all sectors', id: 'commit' })))),
+
+    Sec('06 · geometry', h(ButtonRow, { gap: 12 },
+      h(Button, { geometry: 'sharp', label: 'Sharp', id: 'g1' }),
+      h(Button, { geometry: 'notched', label: 'Notched', id: 'g2' }),
+      h(Button, { geometry: 'pill', label: 'Pill', id: 'g3' }))),
+
+    Sec('07 · signal', h(ButtonRow, { gap: 12 },
+      h(Button, { signal: 'live', label: 'Live', id: 's1' }),
+      h(Button, { signal: 'standby', label: 'Standby', id: 's1' }),
+      h(Button, { signal: 'offline', label: 'Offline', id: 's1' }),
+      h(Button, { disabled: true, label: 'Disabled', id: 's1' }))),
+
+    Sec('08 · glitch', h(ButtonRow, { gap: 12 },
+      h(Button, { glitch: 'off', label: 'Off', id: 'x1' }),
+      h(Button, { glitch: 'subtle', label: 'Subtle', id: 'x2' }),
+      h(Button, { glitch: 'heavy', label: 'Heavy', id: 'x3' }))),
+
+    Sec('09 · texture', h(Fragment, null,
+      h('p', { className: 'note', style: { margin: '0 0 14px' } }, 'Texture owns the ground, so the label moves onto a flat panel over it — the overlay law, enforced by the component. Two inks only: the stop and its own ink.'),
+      h(ButtonRow, { gap: 10 }, ['stripe','dot','scan','checker','grid','bar'].map((t) =>
+        h(Button, { key: t, texture: t, label: t, id: 'tex-' + t, size: 'lg' }))),
+      h(ButtonRow, { gap: 10, style: { marginTop: 12 } },
+        h(Button, { texture: 'stripe', variant: 'ghost', label: 'Ghost stripe', id: 'tg' }),
+        h(Button, { texture: 'checker', variant: 'quiet', label: 'Quiet checker' }),
+        h(Button, { texture: 'dot', accent: 'cyan', label: 'Pinned cyan' })))),
+
+    Sec('10 · animation', h(Fragment, null,
+      h('p', { className: 'note', style: { margin: '0 0 14px' } }, 'Stepped, never eased. Marquee and shift move the texture tile; blink is a hard two-state cut. All three stop under prefers-reduced-motion.'),
+      h(ButtonRow, { gap: 10 },
+        h(Button, { texture: 'stripe', animation: 'marquee', label: 'Marquee', id: 'a1', size: 'lg' }),
+        h(Button, { texture: 'checker', animation: 'shift', label: 'Shift', id: 'a2', size: 'lg' }),
+        h(Button, { animation: 'blink', label: 'Blink', id: 'a3', size: 'lg' }),
+        h(Button, { texture: 'bar', animation: 'marquee', variant: 'ghost', label: 'Ghost marquee', id: 'a4', size: 'lg' })))),
+
+    Sec('11 · night surface', h('div', { className: 'night' },
+      h('p', { className: 'lab' }, 'every stop rotates toward its warm neighbour'),
+      h(ButtonRow, { gap: 8 }, RAMP.map((a) => h(Button, { key: a, accent: a, surface: 'night', label: a }))),
+      h(ButtonRow, { gap: 12, style: { marginTop: 16 } },
+        h(Button, { surface: 'night', label: 'Solid', id: 'n1' }),
+        h(Button, { surface: 'night', variant: 'ghost', label: 'Ghost', id: 'n2' }),
+        h(Button, { surface: 'night', variant: 'quiet', label: 'Quiet' }),
+        h(Button, { surface: 'night', variant: 'danger', label: 'Purge' })))),
+
+    Sec('12 · cream surface', h('div', { className: 'cream' },
+      h('p', { className: 'lab' }, 'the ramp darkens until white ink clears — night rotates sideways, cream pushes down'),
+      h(ButtonRow, { gap: 8 }, RAMP.map((a) => h(Button, { key: a, accent: a, surface: 'cream', label: a }))),
+      h(ButtonRow, { gap: 12, style: { marginTop: 16 } },
+        h(Button, { surface: 'cream', label: 'Solid', id: 'c1' }),
+        h(Button, { surface: 'cream', variant: 'ghost', label: 'Ghost', id: 'c2' }),
+        h(Button, { surface: 'cream', variant: 'quiet', label: 'Quiet' }),
+        h(Button, { surface: 'cream', variant: 'danger', label: 'Purge' }),
+        h(Button, { surface: 'cream', texture: 'stripe', label: 'Stripe', id: 'c3' }))))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

@@ -96,6 +96,7 @@ body::before {
   position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0;
 }
 .swirl-field .s{position:absolute; mix-blend-mode:screen;}
+.log-chev{height:16px;background:linear-gradient(90deg,#2d6cff,#ff2d87 55%,#00d9ff);color:#0a0a0a;font-size:9px;font-weight:700;letter-spacing:2px;line-height:16px;overflow:hidden;white-space:nowrap;padding-left:4px}
 
 /* ── PSYCHEDELIA (restrained · brand palette only · no hue-shift) ── */
 /* single-color soft swirl — color set per instance via currentColor */
@@ -165,14 +166,14 @@ button,input{font-family:inherit}
 
 .term-btn{transition:background var(--d-fast) var(--e-snap), color var(--d-fast) var(--e-snap), border-color var(--d-fast) var(--e-snap);}
 .term-btn:hover{background:rgba(255,255,255,.07);}
-.term-btn.y:hover{background:#eaff00; color:#000 !important; border-color:#eaff00 !important;}
+.term-btn.y:hover{background:#2d6cff; color:#000 !important; border-color:#2d6cff !important;}
 
 .filter-dot{transition:transform var(--d-base) var(--e-flow), opacity var(--d-fast) var(--e-snap), box-shadow var(--d-fast) var(--e-snap); cursor:pointer;}
 .filter-dot:hover{transform:scale(1.6); opacity:1 !important;}
 
 .term-input{transition:none;}
 .term-row{transition:border-color var(--d-fast) var(--e-snap), box-shadow var(--d-fast) var(--e-snap);}
-.term-row:focus-within{border-top-color:rgba(234,255,0,.5) !important; box-shadow:inset 0 1px 0 0 rgba(234,255,0,.25);}
+.term-row:focus-within{border-top-color:rgba(45,108,255,.5) !important; box-shadow:inset 0 1px 0 0 rgba(45,108,255,.25);}
 
 .close-x{transition:color var(--d-fast) var(--e-snap), transform var(--d-base) var(--e-flow);}
 .close-x:hover{color:#ff6050 !important; transform:rotate(90deg);}
@@ -188,7 +189,7 @@ button,input{font-family:inherit}
 .wordmark{cursor:default;}
 .wordmark:hover .wm-d2{animation:glitch-h 600ms steps(2,end);}
 
-a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid #eaff00; outline-offset:1px;}
+a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid #2d6cff; outline-offset:1px;}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
@@ -267,8 +268,8 @@ const C = {
   fg2:  'rgba(255,255,255,0.86)',
   fg3:  'rgba(255,255,255,0.55)',
   fg4:  'rgba(255,255,255,0.42)',
-  yellow: '#eaff00',
-  yellowDim: '#d4e800',
+  cobalt: '#2d6cff',
+  cobaltDim: '#1f52d6',
   pink:   '#ff2d87',
   pinkDim:'#ff0066',
   green:  '#39ff6a',
@@ -278,7 +279,7 @@ const C = {
   cyan:   '#00d9ff',
   red:    '#ff6050',
   coral:  '#ff6050',
-  blue:   '#2d4cff',
+  blue:   '#2d6cff',
   sky:    '#0a84e0',
   teal:   '#12b39b',
   magenta: '#c800ff',
@@ -295,7 +296,7 @@ const SECTORS = [
 const CLASSES  = ['RELAY','TERMINAL','BEACON','VECTOR','SENTINEL','BRIDGE'];
 const STATUSES = [
   { id:'nominal',  label:'NOMINAL',  color:C.green,  bg:'rgba(57,255,106,.08)' },
-  { id:'running',  label:'RUNNING',  color:C.yellow, bg:'rgba(234,255,0,.08)'  },
+  { id:'running',  label:'RUNNING',  color:C.cobalt, bg:'rgba(45,108,255,.08)'  },
   { id:'scanning', label:'SCANNING', color:C.cyan,   bg:'rgba(0,217,255,.07)'  },
   { id:'warning',  label:'WARNING',  color:C.orange, bg:'rgba(255,90,0,.1)'    },
   { id:'critical', label:'CRITICAL', color:C.pinkDim,bg:'rgba(255,0,102,.09)'  },
@@ -349,7 +350,7 @@ function Badge({status, size='sm'}) {
   );
 }
 
-function Bar({val, color=C.yellow, height=4, width=60}) {
+function Bar({val, color=C.cobalt, height=4, width=60}) {
   return (
     <div style={{height, width, background:C.border, flexShrink:0}}>
       <div style={{height:'100%', width:`${val}%`, background:color, transition:'width 300ms'}}/>
@@ -375,18 +376,15 @@ function TopBar({activeSector, sysTime, view, setView, mobile, onMenu}) {
           width:44, height:44, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
           gap:4, cursor:'pointer', flexShrink:0, marginRight:2,
         }}>
-          <div style={{width:18,height:2,background:C.yellow}}/>
-          <div style={{width:18,height:2,background:C.yellow}}/>
-          <div style={{width:18,height:2,background:C.yellow}}/>
+          <div style={{width:18,height:2,background:C.cobalt}}/>
+          <div style={{width:18,height:2,background:C.cobalt}}/>
+          <div style={{width:18,height:2,background:C.cobalt}}/>
         </div>
       )}
-      {/* Wordmark */}
-      <div className="wordmark" style={{
-        fontFamily:"'Space Grotesk', sans-serif", fontWeight:900,
-        fontSize:mobile?20:24, textTransform:'lowercase', letterSpacing:'-0.01em',
-        color:C.fg1, marginRight: mobile?'auto':20, flexShrink:0, position:'relative',
-      }}>
-        <span style={{color:C.yellow}}>d</span>igi<span className="wm-d2" style={{color:C.sky, display:'inline-block'}}>d</span>elic
+      {/* Wordmark — monogram lockup (canonical logo) */}
+      <div className="wordmark" style={{display:'flex', alignItems:'center', gap:8, marginRight: mobile?'auto':20, flexShrink:0}}>
+        <div style={{width:mobile?26:28, height:mobile?26:28, background:C.cobalt, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Space Grotesk', sans-serif", fontWeight:900, fontSize:mobile?18:20, color:'#000', flexShrink:0}}>d</div>
+        {!mobile && <div style={{fontFamily:"'Geist Mono',monospace", fontSize:9, lineHeight:1.4, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.1em'}}>DIGIDELIC<br/><b style={{color:C.cyan, fontWeight:400}}>sys:0x4F3A</b></div>}
       </div>
 
       {/* Nav tabs — desktop only; mobile uses bottom bar */}
@@ -400,8 +398,8 @@ function TopBar({activeSector, sysTime, view, setView, mobile, onMenu}) {
         <div key={id} className="nav-tab" onClick={()=>setView(id)} style={{
           height:40, padding:'0 12px', display:'flex', alignItems:'center',
           fontSize:9, textTransform:'uppercase', letterSpacing:'0.16em',
-          color: view===id ? C.yellow : C.fg4,
-          borderBottom: view===id ? `2px solid ${C.yellow}` : '2px solid transparent',
+          color: view===id ? C.cobalt : C.fg4,
+          borderBottom: view===id ? `2px solid ${C.cobalt}` : '2px solid transparent',
           cursor:'pointer', flexShrink:0,
         }}>{label}</div>
       ))}
@@ -412,7 +410,7 @@ function TopBar({activeSector, sysTime, view, setView, mobile, onMenu}) {
             <div style={{width:5,height:5,background:C.red}}/>
             <span style={{fontSize:11, color:C.red, fontWeight:700}}>{counts.err}</span>
           </div>
-          <span style={{fontSize:9, color:C.fg4, letterSpacing:'0.06em'}}>{sysTime}</span>
+          <span style={{fontSize:9, color:C.fg4, letterSpacing:'0.06em', fontVariantNumeric:'tabular-nums'}}>{sysTime}</span>
         </div>
       ) : (
       <div style={{marginLeft:'auto', display:'flex', alignItems:'center', gap:16}}>
@@ -423,7 +421,7 @@ function TopBar({activeSector, sysTime, view, setView, mobile, onMenu}) {
             <span style={{fontSize:10, color, fontWeight:700}}>{v}</span>
           </div>
         ))}
-        <div style={{marginLeft:12, fontSize:9, color:C.fg4, letterSpacing:'0.1em'}}>{sysTime}</div>
+        <div style={{marginLeft:12, fontSize:9, color:C.fg4, letterSpacing:'0.1em', fontVariantNumeric:'tabular-nums'}}>{sysTime}</div>
       </div>
       )}
     </div>
@@ -456,7 +454,7 @@ function SideNav({activeSector, setActiveSector, mobile, onClose}) {
           <div key={s.id} className={`side-item${isActive?' is-active':''}`} onClick={()=>setActiveSector(s.id)} style={{
             padding: mobile?'12px 14px':'8px 10px', cursor:'pointer',
             minHeight: mobile?48:'auto',
-            background: isActive ? C.yellow : 'transparent',
+            background: isActive ? C.cobalt : 'transparent',
             borderBottom:`1px solid ${C.void}`,
           }}>
             <div style={{fontSize: mobile?13:11, fontWeight:isActive?900:400, fontFamily:isActive?"'Space Grotesk', sans-serif":'inherit', textTransform:'uppercase', letterSpacing: isActive?'-0.01em':'0.1em', color:isActive?'#000':C.fg2, marginBottom:2}}>{s.label || s.id}</div>
@@ -518,7 +516,7 @@ function NodeCard({node, selected, onClick}) {
           </div>
           <div style={{textAlign:'right'}}>
             <div style={{fontSize:8, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.12em'}}>LOAD</div>
-            <div style={{fontFamily:"'Space Grotesk', sans-serif", fontWeight:900, fontSize:22, color: offline?C.fg4:C.fg1, lineHeight:1}}>{node.load}<span style={{fontSize:11, color:C.fg4}}>%</span></div>
+            <div style={{fontFamily:"'Space Grotesk', sans-serif", fontWeight:900, fontSize:22, color: offline?C.fg4:C.fg1, lineHeight:1, fontVariantNumeric:'tabular-nums'}}>{node.load}<span style={{fontSize:11, color:C.fg4}}>%</span></div>
           </div>
         </div>
       </div>
@@ -586,7 +584,7 @@ function DetailPanel({node, onClose, mobile}) {
     <div className={`tex-host ${mobile?'sheet':''}`} style={{
       width: mobile?'100%':220, background:C.base,
       borderLeft: mobile?'none':`1px solid ${C.border}`,
-      borderTop: mobile?`1px solid ${C.yellow}`:'none',
+      borderTop: mobile?`1px solid ${C.cobalt}`:'none',
       display:'flex', flexDirection:'column', flexShrink:0, overflow:'hidden',
       animation: mobile?undefined:'slide-in 150ms ease-out',
       maxHeight: mobile?'82vh':'none', height: mobile?'auto':'100%',
@@ -625,7 +623,7 @@ function DetailPanel({node, onClose, mobile}) {
       </div>
 
       <div style={{position:'relative', zIndex:2, padding:'8px 12px', borderTop:`1px solid ${C.border}`, display:'flex', gap:6, paddingBottom:mobile?'max(8px, env(safe-area-inset-bottom))':8}}>
-        <button className="term-btn y" onClick={()=>{}} style={{flex:1,height:mobile?44:26,background:'transparent',border:`1px solid ${C.yellow}`,color:C.yellow,fontFamily:"'Geist Mono','Geist Mono','Red Hat Mono',monospace",fontSize:mobile?10:8,textTransform:'uppercase',letterSpacing:'0.14em',cursor:'pointer'}}>PING</button>
+        <button className="term-btn y" onClick={()=>{}} style={{flex:1,height:mobile?44:26,background:'transparent',border:`1px solid ${C.cobalt}`,color:C.cobalt,fontFamily:"'Geist Mono','Geist Mono','Red Hat Mono',monospace",fontSize:mobile?10:8,textTransform:'uppercase',letterSpacing:'0.14em',cursor:'pointer'}}>PING</button>
         <button className="term-btn" onClick={()=>{}} style={{flex:1,height:mobile?44:26,background:'transparent',border:`1px solid ${C.borderMid}`,color:C.fg2,fontFamily:"'Geist Mono','Geist Mono','Red Hat Mono',monospace",fontSize:mobile?10:8,textTransform:'uppercase',letterSpacing:'0.14em',cursor:'pointer'}}>LOG</button>
       </div>
     </div>
@@ -662,7 +660,7 @@ function TerminalPanel({selectedNode}) {
 
   useEffect(()=>{
     if(selectedNode) setLines(p=>[...p,
-      {text:`>> inspect node-${selectedNode.id}`, c:C.yellow},
+      {text:`>> inspect node-${selectedNode.id}`, c:C.cobalt},
       {text:`${selectedNode.class} | ${selectedNode.sector} | ${selectedNode.status.label}`, c:selectedNode.status.color},
       {text:`uptime:${selectedNode.uptime} signal:${selectedNode.signal}% load:${selectedNode.load}%`, c:C.fg2},
     ]);
@@ -695,16 +693,13 @@ function TerminalPanel({selectedNode}) {
   return (
     <div className="tex-host" style={{height:150, background:'#090908', borderTop:`1px solid ${C.border}`, display:'flex', flexDirection:'column', flexShrink:0, overflow:'hidden'}}>
       <div className="tex tex-ascii-dense" style={{opacity:.1}}/>
-      <div style={{position:'relative', zIndex:1, padding:'3px 10px', borderBottom:`1px solid ${C.void}`, display:'flex', justifyContent:'space-between'}}>
-        <span style={{fontSize:8, textTransform:'uppercase', letterSpacing:'0.18em', color:C.fg4}}>// TERMINAL</span>
-        <span style={{fontSize:8, color:C.fg4}}>help</span>
-      </div>
+      <div className="log-chev">{'<>'.repeat(60)}</div>
       <div style={{position:'relative', zIndex:1, flex:1, overflowY:'auto', padding:'5px 10px', display:'flex', flexDirection:'column', gap:1}}>
-        {lines.map((l,i)=><div key={i} style={{fontSize:10, color:l.c, lineHeight:1.5, letterSpacing:'0.03em'}}>{l.text}</div>)}
+        {lines.map((l,i)=><div key={i} style={{fontSize:10, color:l.c, lineHeight:1.5, letterSpacing:'0.03em', display:'flex', gap:6}}><span style={{fontWeight:700, opacity:.7}}>[{String(i).padStart(2,'0')}]</span><span>{l.text}</span></div>)}
         <div ref={endRef}/>
       </div>
       <div className="term-row" style={{position:'relative', zIndex:1, display:'flex', alignItems:'center', padding:'0 10px', height:26, borderTop:`1px solid ${C.void}`, gap:5}}>
-        <span style={{fontSize:10, color:C.yellow, flexShrink:0}}>$</span>
+        <span style={{fontSize:10, color:C.cobalt, flexShrink:0}}>$</span>
         <input className="term-input" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={onKeyDown}
           style={{flex:1,background:'transparent',border:'none',outline:'none',fontFamily:"'Geist Mono','Geist Mono','Red Hat Mono',monospace",fontSize:10,color:C.fg1,letterSpacing:'0.04em'}}
           placeholder="enter command..." autoComplete="off" spellCheck={false}/>
@@ -717,7 +712,7 @@ function TerminalPanel({selectedNode}) {
 // ── SECTORS VIEW ──────────────────────────────────────────────────
 function SectorsView() {
   // rotating duotone accents so healthy sectors still read as a varied color-block grid
-  const calmRotation = [C.teal, C.sky, C.green, C.yellow, C.cyan];
+  const calmRotation = [C.teal, C.sky, C.green, C.cobalt, C.cyan];
   return (
     <div className="view-fade" style={{flex:1, overflowY:'auto', padding:16, display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))', gap:12, alignContent:'start'}}>
       {SECTORS.map((sec,i)=>{
@@ -814,11 +809,11 @@ function App() {
             <>
               {/* Grid header — functional status filter */}
               <div style={{padding:'5px 12px', borderBottom:`1px solid ${C.border}`, display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0, position:'relative', zIndex:1, background:C.base}}>
-                <span onClick={()=>setStatusFilter(null)} style={{fontSize:8, color:statusFilter?C.yellow:C.fg4, textTransform:'uppercase', letterSpacing:'0.18em', cursor:statusFilter?'pointer':'default', transition:'color 100ms linear'}}>
+                <span onClick={()=>setStatusFilter(null)} style={{fontSize:8, color:statusFilter?C.cobalt:C.fg4, textTransform:'uppercase', letterSpacing:'0.18em', cursor:statusFilter?'pointer':'default', transition:'color 100ms linear'}}>
                   // {visibleNodes.length} NODES{statusFilter?`  ·  ${statusFilter} ✕`:''}
                 </span>
                 <div style={{display:'flex', gap:11, alignItems:'center'}}>
-                  {[['nominal',C.lime],['running',C.yellow],['warning',C.orange],['critical',C.red],['offline',C.fg4]].map(([id,c])=>{
+                  {[['nominal',C.lime],['running',C.cobalt],['warning',C.orange],['critical',C.red],['offline',C.fg4]].map(([id,c])=>{
                     const on = statusFilter===id;
                     return <div key={id} className="filter-dot" title={id} onClick={()=>setStatusFilter(on?null:id)}
                       style={{width:7,height:7,background:c, opacity:on?1:0.5, transform:on?'scale(1.5)':'none', boxShadow:on?`0 0 0 1px ${c}`:'none'}}/>;
@@ -829,7 +824,7 @@ function App() {
               <div className="view-fade" style={{flex:1, overflowY:'auto', padding:mobile?10:14, display:'grid', gridTemplateColumns: mobile?'1fr':'repeat(auto-fill,minmax(200px,1fr))', gap:mobile?8:10, alignContent:'start', position:'relative', zIndex:1}}>
                 {visibleNodes.length===0 ? (
                   <div style={{gridColumn:'1/-1', padding:'40px 0', textAlign:'center', fontSize:10, color:C.fg4, textTransform:'uppercase', letterSpacing:'0.2em'}}>
-                    — no nodes match <span style={{color:C.yellow}}>{statusFilter}</span> —
+                    — no nodes match <span style={{color:C.cobalt}}>{statusFilter}</span> —
                   </div>
                 ) : visibleNodes.map(n=>(
                   <NodeCard key={n.id} node={n}

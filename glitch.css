@@ -120,7 +120,7 @@
   position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background-repeat: repeat; background-position: center;
 }
-/* cross-grid: yellow/cyan/magenta plus-marks on black */
+/* cross-grid: cobalt/cyan/magenta plus-marks on black */
 .tex-crossgrid {
   background-image: url('assets/tex-crossgrid.png');
   background-size: 320px;
@@ -167,6 +167,10 @@
 .tex-ascii-4 { background-image: url('assets/tex-ascii-04.png'); background-size: 560px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
 .tex-ascii-5 { background-image: url('assets/tex-ascii-05.png'); background-size: 620px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
 
+/* electric-blue ASCII field (uploads, 07-2026) — high-contrast white glyphs on brand blue */
+.bg-ascii-blue { background-image: url('assets/tex-ascii-blue.png'); background-size: cover; background-position: center; }
+.tex-ascii-blue { background-image: url('assets/tex-ascii-blue.png'); background-size: 280px; mix-blend-mode: screen; opacity: var(--tex-op, 0.5); }
+
 /* Reaction-diffusion fields + cosmogram plates + acid circuit-patch (uploads, 07-2026).
    Organic Turing-pattern coral/mesh + sacred-geometry HUD plates + Mondrian data-blocks. */
 .tex-reaction       { background-image: url('assets/tex-reaction-green.png'); background-size: cover; background-position: center; mix-blend-mode: screen; opacity: var(--tex-op, 0.5); }
@@ -209,32 +213,82 @@
   position: absolute; width: 160%; aspect-ratio: 1; left: -30%; top: 50%;
   transform: translateY(-50%); pointer-events: none; border-radius: 50%;
   background: conic-gradient(from 0deg,
-    #eaff00,#39ff6a,#00d9ff,#2d4cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#eaff00);
+    #2d6cff,#39ff6a,#00d9ff,#2d6cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#2d6cff);
   -webkit-mask: radial-gradient(circle, #000 0%, rgba(0,0,0,.5) 30%, transparent 62%);
           mask: radial-gradient(circle, #000 0%, rgba(0,0,0,.5) 30%, transparent 62%);
   mix-blend-mode: screen; opacity: .14;
   animation: psy-spin-cw 120s linear infinite;
 }
 
-/* concentric ring swirl */
-.psy-swirl {
-  position: absolute; pointer-events: none; border-radius: 50%;
-  background: repeating-radial-gradient(circle at 50% 50%, transparent 0 6px, currentColor 6px 6.6px, transparent 6.6px 13px);
-  -webkit-mask: radial-gradient(circle at 50% 50%, #000 60%, transparent 72%);
-          mask: radial-gradient(circle at 50% 50%, #000 60%, transparent 72%);
-  opacity: .5; mix-blend-mode: screen;
+/* .psy-swirl and .psy-pinwheel were RETIRED (08-2026). Both existed only to
+   walk back their own aliasing — concentric rings and conic blades cannot be
+   made reliably smooth at arbitrary scale, because the stop width that reads
+   correctly at 200px moirés at 600px. The feathered primitives below
+   (.psy-lava, .psy-bloom, .psy-interference) replace them and are smooth by
+   construction rather than by tuning. Do not reintroduce them. */
+
+/* ── warp grid — perspective line field with a wave breath. The FUI grid bent
+   through the psychedelic layer. Lines are 1px but sit on a blurred, tilted
+   plane, so they read as soft light rather than aliasing into sawtooth.
+   Tune with --wg-angle (tilt), --wg-cell (density), --wg-a / --wg-b (inks). ── */
+@keyframes psy-warp {
+  0%,100% { transform: perspective(300px) rotateX(var(--wg-angle,46deg)) translateY(0); }
+  50%     { transform: perspective(300px) rotateX(calc(var(--wg-angle,46deg) - 8deg)) translateY(-14px); }
 }
-/* conic pinwheel spiral */
-.psy-pinwheel {
-  position: absolute; pointer-events: none; border-radius: 50%;
-  background: conic-gradient(from 0deg, currentColor 0 8deg, transparent 8deg 30deg,
-            currentColor 30deg 38deg, transparent 38deg 60deg,
-            currentColor 60deg 68deg, transparent 68deg 90deg,
-            currentColor 90deg 98deg, transparent 98deg 120deg);
-  -webkit-mask: radial-gradient(circle, transparent 18%, #000 20%, #000 64%, transparent 70%);
-          mask: radial-gradient(circle, transparent 18%, #000 20%, #000 64%, transparent 70%);
-  opacity: .35; mix-blend-mode: screen;
+.psy-warpgrid {
+  /* plane tilt */
+  --wg-angle: 46deg; /* @kind other */
+  /* cell size — drives line frequency */
+  --wg-cell: 30px;   /* @kind spacing */
+  --wg-a: #2d6cff;   /* @kind color */
+  --wg-b: #00d9ff;   /* @kind color */
+  position: absolute; inset: -24%; pointer-events: none;
+  mix-blend-mode: screen; opacity: .42; filter: blur(1.1px);
+  background:
+    repeating-linear-gradient(0deg,  transparent 0 calc(var(--wg-cell) * .43), var(--wg-a) calc(var(--wg-cell) * .57) calc(var(--wg-cell) * .6), transparent calc(var(--wg-cell) * .73) var(--wg-cell)),
+    repeating-linear-gradient(90deg, transparent 0 calc(var(--wg-cell) * .43), var(--wg-b) calc(var(--wg-cell) * .57) calc(var(--wg-cell) * .6), transparent calc(var(--wg-cell) * .73) var(--wg-cell));
+  animation: psy-warp 15s ease-in-out infinite;
 }
+/* angle variants — how hard the plane tips away from the viewer */
+.psy-warpgrid.flat  { --wg-angle: 28deg; /* @kind other */ }
+.psy-warpgrid.steep { --wg-angle: 62deg; /* @kind other */ }
+/* density variants — cell size drives line frequency */
+.psy-warpgrid.fine   { --wg-cell: 18px; /* @kind spacing */ }
+.psy-warpgrid.coarse { --wg-cell: 48px; /* @kind spacing */ }
+
+/* ── lava field — slow drifting blurred blobs. The smoothest psychedelic
+   ground in the set: no gradient stops to alias, so it never moirés. ── */
+@keyframes psy-lava-a { 0%,100%{transform:translate(-6%,-4%) scale(1)} 33%{transform:translate(10%,8%) scale(1.18)} 66%{transform:translate(4%,-10%) scale(.92)} }
+@keyframes psy-lava-b { 0%,100%{transform:translate(8%,6%) scale(1.1)} 40%{transform:translate(-10%,-6%) scale(.9)} 70%{transform:translate(-2%,10%) scale(1.2)} }
+@keyframes psy-lava-c { 0%,100%{transform:translate(2%,10%) scale(.95)} 45%{transform:translate(-8%,-8%) scale(1.22)} 75%{transform:translate(10%,2%) scale(1.05)} }
+.psy-lava { position:absolute; inset:-20%; pointer-events:none; mix-blend-mode:screen; }
+.psy-lava::before, .psy-lava::after, .psy-lava > i {
+  content:''; position:absolute; inset:0; border-radius:50%; filter:blur(34px);
+}
+.psy-lava::before { background: radial-gradient(circle at 32% 38%, #2d6cff 0%, rgba(45,108,255,0) 58%); animation: psy-lava-a 17s ease-in-out infinite; }
+.psy-lava::after  { background: radial-gradient(circle at 68% 56%, #c800ff 0%, rgba(200,0,255,0) 56%); animation: psy-lava-b 23s ease-in-out infinite; }
+.psy-lava > i     { background: radial-gradient(circle at 50% 72%, #00d9ff 0%, rgba(0,217,255,0) 54%); animation: psy-lava-c 29s ease-in-out infinite; }
+.psy-lava.warm::before { background: radial-gradient(circle at 30% 40%, #ff2d87 0%, rgba(255,45,135,0) 58%); }
+.psy-lava.warm::after  { background: radial-gradient(circle at 70% 54%, #ff5a00 0%, rgba(255,90,0,0) 56%); }
+.psy-lava.warm > i     { background: radial-gradient(circle at 52% 74%, #39ff6a 0%, rgba(57,255,106,0) 54%); }
+
+/* ── bloom — soft breathing concentric halo, fully feathered ── */
+@keyframes psy-bloom { 0%,100%{transform:scale(1);opacity:.5} 50%{transform:scale(1.14);opacity:.75} }
+.psy-bloom {
+  position:absolute; pointer-events:none; border-radius:50%; mix-blend-mode:screen;
+  background: radial-gradient(circle, rgba(255,255,255,0) 22%, currentColor 34%, rgba(255,255,255,0) 46%),
+              radial-gradient(circle, rgba(255,255,255,0) 52%, currentColor 62%, rgba(255,255,255,0) 74%);
+  filter: blur(3px); animation: psy-bloom 8s ease-in-out infinite;
+}
+
+/* ── interference — two low-frequency line fields at opposing angles. Wide
+   soft bands + blur turn moiré from an artifact into the intended effect. ── */
+@keyframes psy-int-a { 0%,100%{transform:rotate(-14deg) translateY(0)} 50%{transform:rotate(-8deg) translateY(-8px)} }
+@keyframes psy-int-b { 0%,100%{transform:rotate(13deg) translateY(0)} 50%{transform:rotate(7deg) translateY(9px)} }
+.psy-interference { position:absolute; inset:-30%; pointer-events:none; mix-blend-mode:screen; opacity:.5; }
+.psy-interference::before, .psy-interference::after { content:''; position:absolute; inset:0; filter:blur(1.4px); }
+.psy-interference::before { background: repeating-linear-gradient(90deg, transparent 0 7px, currentColor 12px 14px, transparent 19px 26px); animation: psy-int-a 11s ease-in-out infinite; }
+.psy-interference::after  { background: repeating-linear-gradient(90deg, transparent 0 8px, #ff2d87 13px 15px, transparent 20px 28px); animation: psy-int-b 14s ease-in-out infinite; }
 
 /* rainbow chromatic-aura streak (Shimoda light-leak) — stays soft/blurred,
    wave motion comes from transforms (never a displacement filter, which would
@@ -250,8 +304,8 @@
   position: absolute; top: -10%; left: 50%; width: 40%; height: 120%;
   transform: translateX(-50%); pointer-events: none;
   background: linear-gradient(180deg,
-    rgba(255,45,135,0) 0%, #ff2d87 14%, #ff5a00 28%, #eaff00 42%,
-    #39ff6a 56%, #00d9ff 70%, #2d4cff 82%, rgba(200,0,255,0) 100%);
+    rgba(255,45,135,0) 0%, #ff2d87 14%, #ff5a00 28%, #2d6cff 42%,
+    #39ff6a 56%, #00d9ff 70%, #2d6cff 82%, rgba(200,0,255,0) 100%);
   filter: blur(16px); mix-blend-mode: screen; opacity: .55;
   animation: psy-aura-drift 7s ease-in-out infinite;
 }
@@ -260,13 +314,13 @@
 /* flowing rainbow gradient — fill (bars/strips) */
 @keyframes psy-grad-pan { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
 .psy-rainbow {
-  background: linear-gradient(90deg,#eaff00,#39ff6a,#00d9ff,#2d4cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#eaff00);
+  background: linear-gradient(90deg,#2d6cff,#39ff6a,#00d9ff,#2d6cff,#c800ff,#ff2d87,#ff6050,#ff5a00,#2d6cff);
   background-size: 300% 100%;
   animation: psy-grad-pan 5s linear infinite;
 }
 /* flowing rainbow gradient — text */
 .psy-text {
-  background: linear-gradient(90deg,#eaff00,#39ff6a,#00d9ff,#c800ff,#ff2d87,#ff6050,#eaff00);
+  background: linear-gradient(90deg,#2d6cff,#39ff6a,#00d9ff,#c800ff,#ff2d87,#ff6050,#2d6cff);
   background-size: 300% 100%;
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
@@ -299,8 +353,10 @@
 .psy-ribbon { background-size:300% 100%; animation: psy-ribbon 6s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .psy-hue,.psy-hue-s,.psy-sun,.psy-swirl,.psy-pinwheel,.psy-aura,.psy-rainbow,.psy-text,.psy-aberr,
-  .psy-undulate,.psy-ribbon {
+  .psy-hue,.psy-hue-s,.psy-sun,.psy-warpgrid,.psy-aura,.psy-rainbow,.psy-text,.psy-aberr,
+  .psy-undulate,.psy-ribbon,.psy-bloom,
+  .psy-lava::before,.psy-lava::after,.psy-lava > i,
+  .psy-interference::before,.psy-interference::after {
     animation: none !important;
   }
 }

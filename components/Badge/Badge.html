@@ -1,0 +1,98 @@
+<!-- @dsCard group="Components" name="Badge" subtitle="Fixed-meaning status chips and seeded label chips — three surfaces" viewport="1280x900" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Badge</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#2d6cff}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:64ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:32px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:72ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px 26px}
+code{color:#2d6cff}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Badge</h1>
+<p class="sub">Two jobs, two colour rules. A <code>status</code> badge is fixed — <code>ok</code> is always green, <code>down</code> always danger — because an operator reads colour as meaning. A label badge seeds its hue from <code>id</code> or its text, so the same tag is the same colour everywhere.</p>
+<div id="root"></div>
+<script>
+const { Badge, BadgeCount, BadgeRow } = window.DigidelicDesignSystem_da5439;
+const { createElement: h, Fragment } = React;
+const RAMP = ['magenta','pink','coral','orange','lime','green','cyan','cobalt','indigo','violet'];
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+const Col = (label, children) => h('div', null, h('p', { className: 'lab' }, label), children);
+
+function Demo() {
+  return h(Fragment, null,
+    Sec('01 · status — fixed meaning', 'These four never change hue. Colour is the message.',
+      h(BadgeRow, { gap: 8 },
+        h(Badge, { status: 'ok', label: 'nominal', pip: true }),
+        h(Badge, { status: 'warn', label: 'degraded', pip: true }),
+        h(Badge, { status: 'down', label: 'critical', pip: true }),
+        h(Badge, { status: 'idle', label: 'offline', dot: true }))),
+
+    Sec('02 · seeded labels', 'No accent prop — each hue falls out of the text.',
+      h(BadgeRow, { gap: 7 }, ['relay','intake','cupping','roaster','archive','bay-x06','sector-a1','decaf','single-origin','blend'].map((t) =>
+        h(Badge, { key: t, label: t })))),
+
+    Sec('03 · variants & sizes', null, h('div', { className: 'grid' },
+      Col('solid · ghost · quiet', h(BadgeRow, null,
+        h(Badge, { label: 'solid', id: 'v1' }),
+        h(Badge, { label: 'ghost', id: 'v1', variant: 'ghost' }),
+        h(Badge, { label: 'quiet', variant: 'quiet' }))),
+      Col('sm · md · lg', h(BadgeRow, null,
+        h(Badge, { label: 'small', id: 'z', size: 'sm' }),
+        h(Badge, { label: 'medium', id: 'z', size: 'md' }),
+        h(Badge, { label: 'large', id: 'z', size: 'lg' }))),
+      Col('pip · dot · checker', h(BadgeRow, null,
+        h(Badge, { label: 'pip', id: 'p1', pip: true }),
+        h(Badge, { label: 'dot', id: 'p2', dot: true }),
+        h(Badge, { label: 'seam', id: 'p3', checker: true }))),
+      Col('count · geometry', h(BadgeRow, null,
+        h(Badge, { label: 'queue', id: 'q1', count: 14 }),
+        h(BadgeCount, { value: 7, id: 'n1' }),
+        h(BadgeCount, { value: 128, id: 'n2' }),
+        h(Badge, { label: 'pill', id: 'g1', geometry: 'pill' }))))),
+
+    Sec('04 · the ten stops', null,
+      h(BadgeRow, { gap: 6 }, RAMP.map((a) => h(Badge, { key: a, accent: a, label: a })))),
+
+    Sec('05 · night', null, h('div', { className: 'night' },
+      h('p', { className: 'lab' }, 'stops rotate toward their warm neighbour'),
+      h(BadgeRow, { gap: 6 }, RAMP.map((a) => h(Badge, { key: a, accent: a, label: a, surface: 'night' }))),
+      h(BadgeRow, { gap: 8, style: { marginTop: 14 } },
+        h(Badge, { status: 'ok', label: 'nominal', pip: true, surface: 'night' }),
+        h(Badge, { status: 'warn', label: 'degraded', pip: true, surface: 'night' }),
+        h(Badge, { status: 'down', label: 'critical', pip: true, surface: 'night' }),
+        h(Badge, { status: 'idle', label: 'offline', dot: true, surface: 'night' })))),
+
+    Sec('06 · cream', null, h('div', { className: 'cream' },
+      h('p', { className: 'lab' }, 'stops darken until white ink clears'),
+      h(BadgeRow, { gap: 6 }, RAMP.map((a) => h(Badge, { key: a, accent: a, label: a, surface: 'cream' }))),
+      h(BadgeRow, { gap: 8, style: { marginTop: 14 } },
+        h(Badge, { status: 'ok', label: 'nominal', pip: true, surface: 'cream' }),
+        h(Badge, { status: 'warn', label: 'degraded', pip: true, surface: 'cream' }),
+        h(Badge, { status: 'down', label: 'critical', pip: true, surface: 'cream' }),
+        h(Badge, { status: 'idle', label: 'offline', dot: true, surface: 'cream' }))))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

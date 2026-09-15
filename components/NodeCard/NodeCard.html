@@ -1,0 +1,103 @@
+<!-- @dsCard group="Components" name="NodeCard" subtitle="The signature form — node panels, sector roll-ups, stat tiles, ASCII meters" viewport="1280x1020" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NodeCard</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#2d6cff}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:66ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:32px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:74ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
+code{color:#2d6cff}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>NodeCard</h1>
+<p class="sub">The house form. A code header, tabular key/value rows, and a status line whose colour is fixed rather than seeded — an operator reads hue as meaning here. The card's own accents (trim, hover border, load bar) still come from the seed, so a node keeps its identity colour across every screen.</p>
+<div id="root"></div>
+<script>
+const { NodeCard, SectorCard, StatCard, NodeMeter } = window.DigidelicDesignSystem_da5439;
+const { createElement: h, Fragment } = React;
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+
+function Demo() {
+  return h(Fragment, null,
+    Sec('01 · node panels', 'rows is an array of pairs, so the shape stays tabular no matter the content.',
+      h('div', { className: 'row' },
+        h(NodeCard, { name: 'NODE-047', code: '[0x2F]', width: 218, status: 'nominal', load: 0.72,
+          rows: [['sector','A1.2'],['class','RELAY'],['uptime','847:23:11']] }),
+        h(NodeCard, { name: 'NODE-088', code: '[0x58]', width: 218, status: 'warning', load: 0.34,
+          rows: [['sector','B6'],['class','INTAKE'],['uptime','112:04:52']] }),
+        h(NodeCard, { name: 'NODE-003', code: '[0x03]', width: 218, status: 'critical', load: 0,
+          rows: [['sector','X.06'],['class','ROASTER'],['uptime','—']] }),
+        h(NodeCard, { name: 'NODE-119', code: '[0x77]', width: 218, status: 'offline',
+          rows: [['sector','D9'],['class','CUPPING'],['uptime','000:00:00']] }))),
+
+    Sec('02 · trim and interaction', null,
+      h('div', { className: 'row' },
+        h(NodeCard, { name: 'NODE-201', code: '[0xC9]', width: 218, strip: true, status: 'scanning', load: 0.55,
+          rows: [['sector','A4'],['class','SCANNER']] }),
+        h(NodeCard, { name: 'NODE-202', code: '[0xCA]', width: 218, interactive: true, status: 'running', load: 0.88,
+          rows: [['sector','A5'],['class','RELAY']] }),
+        h(NodeCard, { name: 'NODE-203', code: '[0xCB]', width: 218, geometry: 'notched', status: 'nominal', load: 0.41,
+          rows: [['sector','C2'],['class','ARCHIVE']] }))),
+
+    Sec('03 · sector roll-ups', 'Solid seeded fill, segmented health bar, count chips. breakdown drives both.',
+      h('div', { className: 'row' },
+        h(SectorCard, { name: 'B3', width: 232, breakdown: [['nominal',3],['running',1],['warning',1],['offline',1]] }),
+        h(SectorCard, { name: 'X.06', width: 232, breakdown: [['nominal',1],['scanning',1],['critical',1],['offline',1]] }),
+        h(SectorCard, { name: 'D9', width: 232, breakdown: [['nominal',7],['running',2],['scanning',1],['offline',1]] }))),
+
+    Sec('04 · stat tiles and meters', null,
+      h('div', { className: 'row', style: { alignItems: 'flex-start' } },
+        h(StatCard, { value: '847', label: 'uptime hrs', note: '▶ NOMINAL', status: 'nominal' }),
+        h(StatCard, { value: '003', label: 'failures', note: '▶ CRITICAL', status: 'critical' }),
+        h(StatCard, { value: '14', label: 'in queue', id: 'queue' }),
+        h(StatCard, { value: '92%', label: 'yield', id: 'yield', width: 130 }),
+        h('div', { style: { display: 'grid', gap: 8, paddingTop: 4 } },
+          h(NodeMeter, { value: 0.72, id: 'node-047' }),
+          h(NodeMeter, { value: 0.34, id: 'node-088' }),
+          h(NodeMeter, { value: 0.95, id: 'node-201' }),
+          h(NodeMeter, { value: 0.08, id: 'node-003' })))),
+
+    Sec('05 · night', 'The signature form on the violet ground — where it does its best work.',
+      h('div', { className: 'night' },
+        h('div', { className: 'row' },
+          h(NodeCard, { surface: 'night', name: 'NODE-047', code: '[0x2F]', width: 218, status: 'nominal', load: 0.72,
+            rows: [['sector','A1.2'],['class','RELAY']] }),
+          h(NodeCard, { surface: 'night', name: 'NODE-088', code: '[0x58]', width: 218, strip: true, status: 'warning', load: 0.34,
+            rows: [['sector','B6'],['class','INTAKE']] }),
+          h(SectorCard, { surface: 'night', name: 'B3', width: 214, breakdown: [['nominal',3],['running',1],['warning',1],['offline',1]] }),
+          h(StatCard, { surface: 'night', value: '847', label: 'uptime hrs', note: '▶ NOMINAL', status: 'nominal' })))),
+
+    Sec('06 · cream', null,
+      h('div', { className: 'cream' },
+        h('div', { className: 'row' },
+          h(NodeCard, { surface: 'cream', name: 'NODE-047', code: '[0x2F]', width: 218, status: 'nominal', load: 0.72,
+            rows: [['sector','A1.2'],['class','RELAY']] }),
+          h(NodeCard, { surface: 'cream', name: 'NODE-088', code: '[0x58]', width: 218, strip: true, status: 'warning', load: 0.34,
+            rows: [['sector','B6'],['class','INTAKE']] }),
+          h(SectorCard, { surface: 'cream', name: 'B3', width: 214, breakdown: [['nominal',3],['running',1],['warning',1],['offline',1]] }),
+          h(StatCard, { surface: 'cream', value: '14', label: 'in queue', id: 'queue' }))))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

@@ -1,62 +1,120 @@
+<!-- @dsCard group="Brand" name="Textures & Overlays" subtitle="Reference plates, overlay law, and the flat CSS primitives that are UI-safe" viewport="1280x2340" -->
 <!DOCTYPE html>
-<!-- @dsCard group="Brand" name="Texture Overlays" subtitle="Cross-grid, flower duotone, halftone — ambient overlays" viewport="760x480" -->
-<html><head><meta charset="UTF-8"><style>
-@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#000;padding:16px;font-family:'Geist Mono',monospace;color:#fff}
-.chk-strip{flex-basis:100%;grid-column:1/-1;height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%),linear-gradient(45deg,#2d4cff 25%,transparent 25%,transparent 75%,#2d4cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
-.cap{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:8px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-@media(max-width:620px){.grid{grid-template-columns:1fr}}
-.tile{position:relative;height:170px;border:1px solid rgba(255,255,255,.14);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:10px;background:#0a0a0a}
-.tile .t{position:relative;z-index:2;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
-.tile .m{position:relative;z-index:2;font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.6);line-height:1.5}
-.coord{position:absolute;top:8px;right:8px;z-index:2;font-size:8px;border:1px solid currentColor;padding:1px 5px;letter-spacing:.1em}
-
-/* applied-in-context demos */
-.demo{position:relative;border:1px solid rgba(255,255,255,.14);overflow:hidden;padding:16px;min-height:120px;display:flex;flex-direction:column;gap:8px;justify-content:center;background:#0a0a0a}
-.demo h4{position:relative;z-index:2;font-family:'Geist Mono',monospace;font-weight:900;font-size:24px;letter-spacing:.02em;text-transform:uppercase}
-.demo .row{position:relative;z-index:2;display:flex;gap:8px;flex-wrap:wrap}
-.b{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:3px 9px;border:1px solid}
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Textures &amp; Overlays</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:0 0 60px}
+a{color:#2d6cff}a:hover{color:#ff2d87}
+.wrap{padding:0 38px}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:38px;margin:30px 0 8px}
+h2{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;font-size:15px;letter-spacing:.02em;margin:0 0 4px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.65;max-width:74ch;margin:0 0 34px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:44px}
+.note{font-size:11px;line-height:1.75;color:rgba(255,255,255,.55);max-width:76ch;margin:0}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+.plates{display:grid;grid-template-columns:repeat(auto-fill,minmax(292px,1fr));gap:26px 24px;margin-top:20px}
+.plate figure{margin:0}
+.plate .img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;border:1px solid rgba(255,255,255,.22)}
+.plate h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin:11px 0 5px;font-weight:700}
+.plate p{font-size:11px;line-height:1.65;color:rgba(255,255,255,.55);margin:0}
+.sw{display:flex;margin:8px 0 0}
+.sw i{flex:1;height:16px}
+.rules{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;margin-top:18px;border:1px solid rgba(255,255,255,.22)}
+.rules div{padding:15px 17px;border-right:1px solid rgba(255,255,255,.22);border-bottom:1px solid rgba(255,255,255,.22)}
+.rules b{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;margin:0 0 7px}
+.rules p{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);margin:0}
+.rules .yes b{color:#39ff6a}.rules .no b{color:#ff0066}
+.prims{display:grid;grid-template-columns:repeat(auto-fill,minmax(214px,1fr));gap:24px 22px;margin-top:20px}
+.prims .box{height:112px;border:1px solid rgba(255,255,255,.22)}
+.prims h3{font-size:10px;letter-spacing:.18em;text-transform:uppercase;margin:10px 0 5px;font-weight:700}
+.prims code{display:block;font-size:9.5px;line-height:1.6;color:rgba(255,255,255,.42);word-break:break-all}
+.t-stripe{background:repeating-linear-gradient(45deg,#0a0a0a 0 11px,#f2efe4 11px 22px)}
+.t-stripe-hot{background:repeating-linear-gradient(-45deg,#ff0026 0 9px,#000 9px 18px)}
+.t-dot{background-color:#000;background-image:radial-gradient(circle,#0178c6 44%,transparent 45%);background-size:11px 11px}
+.t-dot-tri{background-color:#08080a;background-image:radial-gradient(circle,#ff665e 44%,transparent 45%),radial-gradient(circle,#03888c 44%,transparent 45%);background-size:14px 14px,14px 14px;background-position:0 0,7px 7px}
+.t-scan{background:repeating-linear-gradient(#000 0 2px,#8a3fb0 2px 3px)}
+.t-checker{background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:20px 20px;background-position:0 0,10px 10px}
+.t-grid{background-color:#000;background-image:linear-gradient(#2d6cff 1px,transparent 1px),linear-gradient(90deg,#2d6cff 1px,transparent 1px);background-size:18px 18px}
+.t-bar{background:repeating-linear-gradient(90deg,#c6ff3a 0 6px,#000 6px 9px,#c800ff 9px 13px,#000 13px 20px)}
+.dither{border:1px solid rgba(255,255,255,.22);padding:14px 16px;margin-top:20px;overflow:hidden}
+.dither pre{margin:0;font-size:13px;line-height:1.05;letter-spacing:.08em;white-space:pre;color:#00d9ff}
+.pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:16px 18px;margin-top:20px}
+.pal .chip{height:62px;border:1px solid rgba(255,255,255,.22)}
+.pal b{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin:9px 0 3px}
+.pal span{font-size:10px;color:rgba(255,255,255,.42);line-height:1.55;display:block}
+.pill{display:inline-block;font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;padding:2px 6px;margin-top:6px;background:#c6ff3a;color:#000;font-weight:700}
 </style>
-<link rel="stylesheet" href="../glitch.css">
-</head><body class="gl-stage">
-<div class="chk-strip"></div>
+</head>
+<body>
+<div class="chk"></div>
+<div class="wrap">
+<h1>Textures &amp; Overlays</h1>
+<p class="sub">Two layers, and they are not interchangeable. <b>Plates</b> are photographic — full-bleed imagery, hero grounds, section breaks. <b>Primitives</b> are flat CSS, tileable at any size, and safe behind and around interface. Plates may carry the soft modelling their source has; primitives never do. Nothing in either layer fades to transparent.</p>
 
-<div class="cap">// raw overlay textures — image refs sampled into ambient layers</div>
-<div class="grid" style="margin-bottom:18px">
-  <div class="tile tex-host"><div class="tex tex-crossgrid" style="--tex-op:.6"></div><span class="coord" style="color:#eaff00">T1</span><span class="t" style="color:#eaff00">CROSS-GRID</span><span class="m">screen blend · 320px tile<br/>yellow/cyan/magenta plus-marks</span></div>
-  <div class="tile tex-host"><div class="tex tex-flower" style="--tex-op:.9"></div><span class="coord" style="color:#ff6050">T2</span><span class="t" style="color:#ff6050">FLOWER DUOTONE</span><span class="m">overlay blend · cover<br/>coral · sky · teal</span></div>
-  <div class="tile tex-host"><div class="tex tex-halftone" style="--tex-op:.75"></div><span class="coord" style="color:#ff5a00">T3</span><span class="t" style="color:#ff5a00">HALFTONE</span><span class="m">screen blend · cover<br/>warm dotted portrait</span></div>
+<div class="sec"><p class="lab">01 · reference plates</p>
+<h2>Eight grounds</h2>
+<p class="note">Each plate names what it contributes that the system did not already have. Sampled hexes sit under each.</p>
+<div class="plates">
+  <figure class="plate"><img class="img" src="../assets/textures/turing-red-blue.png" alt="Reaction-diffusion field, red on blue"><h3>Turing · red on blue</h3><p>Reaction-diffusion. Two flat tones, organic path, zero gradient — the closest thing to a plate that obeys primitive law. The system's best full-bleed ground.</p><div class="sw"><i style="background:#041efc"></i><i style="background:#ff0026"></i><i style="background:#4622c6"></i></div></figure>
+  <figure class="plate"><img class="img" src="../assets/textures/turing-blue-white.png" alt="Reaction-diffusion field, blue on white"><h3>Turing · blue on white</h3><p>The same field inverted onto paper. The system's only sanctioned light ground — use for print, quiet documents, and inversion moments.</p><div class="sw"><i style="background:#fefeff"></i><i style="background:#0008ff"></i></div></figure>
+  <figure class="plate"><img class="img" src="../assets/textures/turing-neon-blue.jpg" alt="Reaction-diffusion field, neon blue on black"><h3>Turing · neon on black</h3><p>Glow-modelled. Plate-only: the bloom cannot be reproduced as a primitive and must not be faked with a shadow stack.</p><div class="sw"><i style="background:#0a1e3c"></i><i style="background:#1f9bff"></i><i style="background:#000"></i></div></figure>
+  <figure class="plate"><img class="img" src="../assets/textures/knit-dotmatrix.png" alt="Dot-matrix knit, coral and teal on black"><h3>Knit · dot matrix</h3><p>The reference that earns <code>.t-dot-tri</code>. Square pips on a dark ground, three inks, offset rows. Directly reproducible in CSS.</p><div class="sw"><i style="background:#08080a"></i><i style="background:#0178c6"></i><i style="background:#ff665e"></i><i style="background:#03888c"></i></div></figure>
+  <figure class="plate"><img class="img" src="../assets/textures/dither-elk-stripe.png" alt="Dithered landscape with diagonal stripe overlay"><h3>Dither · stripe overlay</h3><p>Posterised photograph with a hard diagonal stripe cut into the sky. Demonstrates the overlay move: stripe replaces a region, it does not sit translucently on top.</p><div class="sw"><i style="background:#ff0026"></i><i style="background:#245764"></i><i style="background:#f2efe4"></i></div></figure>
+  <figure class="plate"><img class="img" src="../assets/textures/dither-violet-cyan.png" alt="Dithered landscape, violet and cyan on black"><h3>Dither · violet + cyan</h3><p>Two-ink error diffusion on black. Proves the night surface can hold a photograph without any midtone at all.</p><div class="sw"><i style="background:#000"></i><i style="background:#472578"></i><i style="background:#00b3c7"></i></div></figure>
+  <figure class="plate"><img class="img" src="../assets/textures/floral-fractal-blush.png" alt="Fractal floral, blush and botanical green"><h3>Floral · blush fractal</h3><p>The one plate wholly outside the current palette: dusty blush, botanical green, chalk white. Soft-modelled, so plate-only.</p><div class="sw"><i style="background:#d798a7"></i><i style="background:#c87888"></i><i style="background:#3f6b45"></i><i style="background:#d8b7b8"></i></div></figure>
+  <figure class="plate"><img class="img" src="../assets/textures/snake-crimson.png" alt="Pale snake on deep crimson cloth"><h3>Cloth · oxblood</h3><p>Deep crimson with a pale cream subject and a black falloff. Supplies the dark red the ramp has never had.</p><div class="sw"><i style="background:#962c38"></i><i style="background:#79222b"></i><i style="background:#151414"></i><i style="background:#e8e3d0"></i></div></figure>
+</div></div>
+
+<div class="sec"><p class="lab">02 · overlay law</p>
+<h2>What keeps texture from becoming mud</h2>
+<div class="rules">
+  <div class="yes"><b>Replace, don't veil</b><p>An overlay takes over a region completely — the stripe owns the sky. Never a translucent sheet across the whole composition.</p></div>
+  <div class="no"><b>No fade to transparent</b><p>No <code>transparent</code> stop, no alpha ramp, no mask feather. Every edge is a hard stop or a dither boundary.</p></div>
+  <div class="yes"><b>One texture per composition</b><p>A plate or a primitive, not both, and not two primitives. The checkerboard accent strip is exempt — it is trim, not texture.</p></div>
+  <div class="no"><b>Never behind body text</b><p>Texture stops where reading starts. Set copy on a flat panel over the plate, not on the plate.</p></div>
+  <div class="yes"><b>Two inks, maybe three</b><p>Posterise to the smallest ink count that still reads. Three is the ceiling for primitives.</p></div>
+  <div class="no"><b>No hue-rotate on plates</b><p>Recolour by re-exporting from the source tool, not by filtering — filters slide hues off the ramp.</p></div>
+</div></div>
+
+<div class="sec"><p class="lab">03 · flat primitives</p>
+<h2>CSS-only, tileable, UI-safe</h2>
+<p class="note">Hard-stop gradients only. Every one of these scales to any element without resampling and prints without banding.</p>
+<div class="prims">
+  <div><div class="box t-stripe"></div><h3>.t-stripe</h3><code>repeating-linear-gradient(45deg,#0a0a0a 0 11px,#f2efe4 11px 22px)</code></div>
+  <div><div class="box t-stripe-hot"></div><h3>.t-stripe-hot</h3><code>repeating-linear-gradient(-45deg,#ff0026 0 9px,#000 9px 18px)</code></div>
+  <div><div class="box t-dot"></div><h3>.t-dot</h3><code>radial-gradient(circle,#0178c6 44%,transparent 45%) / 11px</code></div>
+  <div><div class="box t-dot-tri"></div><h3>.t-dot-tri</h3><code>two offset radial layers, coral + teal / 14px</code></div>
+  <div><div class="box t-scan"></div><h3>.t-scan</h3><code>repeating-linear-gradient(#000 0 2px,#8a3fb0 2px 3px)</code></div>
+  <div><div class="box t-checker"></div><h3>.t-checker</h3><code>45° hard-stop pair, offset half a cell / 20px</code></div>
+  <div><div class="box t-grid"></div><h3>.t-grid</h3><code>1px rules, both axes / 18px</code></div>
+  <div><div class="box t-bar"></div><h3>.t-bar</h3><code>repeating-linear-gradient(90deg, four hard stops)</code></div>
 </div>
+<div class="dither"><pre>░░▒▒▓▓██▓▓▒▒░░  ▒░▒▓█▓▒░▒  ░▒▓█ ▓▒░ ██▓▓▒▒░░  ▒▓█▓▒ ░░▒▒▓▓
+▒▒▓▓██▓▓▒▒░░▒▒  ▓▒▓█▒░▓▒█  ▒▓█░ ▒░▓ ▓▓▒▒░░▒▒  ▓█▒▓░ ▒▒▓▓██
+▓▓██▓▓▒▒░░▒▒▓▓  █▓█▒░█▒▓░  ▓█▒░ ░▓▒ ▒▒░░▒▒▓▓  █░▓▒█ ▓▓██▓▓</pre></div>
+<p class="note" style="margin-top:11px">The block ramp <code>░▒▓█</code> is the fifth primitive and the only one made of type. It sets progress meters, spinners and texture fills — see the ASCII card.</p>
+<p class="note" style="margin-top:14px">All eight ship in <code>textures.css</code> as <code>.t-*</code> classes driven by <code>--t-a</code> (mark) and <code>--t-b</code> (ground), and in JS as <code>textureFill(kind, a, b, size)</code>. Named colourways — <code>.t-knit</code>, <code>.t-oxblood</code>, <code>.t-blush</code>, <code>.t-electric</code>, <code>.t-paper</code>, <code>.t-bone</code> — set the pairings the plates actually use. Components take them as a <code>texture</code> prop.</p></div>
 
-<div class="cap">// in context — overlay sits above bg, below content (tune via --tex-op)</div>
-<div class="grid">
-  <div class="demo tex-host">
-    <div class="tex tex-crossgrid" style="--tex-op:.2"></div>
-    <h4 class="gl-text">SECTOR A1.2</h4>
-    <div class="row">
-      <span class="b" style="color:#eaff00;border-color:#eaff00">▶ NOMINAL</span>
-      <span class="b" style="color:#00d9ff;border-color:#00d9ff">SCAN</span>
-    </div>
-  </div>
-  <div class="demo tex-host">
-    <div class="tex tex-flower" style="--tex-op:.34"></div>
-    <h4 style="color:#fff">DISPATCH</h4>
-    <div class="row">
-      <span class="b" style="color:#ff6050;border-color:#ff6050">CORAL</span>
-      <span class="b" style="color:#12b39b;border-color:#12b39b">TEAL</span>
-      <span class="b" style="color:#0a84e0;border-color:#0a84e0">SKY</span>
-    </div>
-  </div>
-  <div class="demo tex-host">
-    <div class="tex tex-halftone" style="--tex-op:.26"></div>
-    <h4 style="color:#ff5a00">VECTOR</h4>
-    <div class="row">
-      <span class="b" style="color:#fff;border-color:rgba(255,255,255,.4)">FREELANCE</span>
-    </div>
-  </div>
+<div class="sec"><p class="lab">04 · the second set</p>
+<h2>Six hues, parallel to the rainbow</h2>
+<p class="note">Sampled from the plates and now in the token set as <code>--blush</code>, <code>--oxblood</code>, <code>--botanical</code>, <code>--teal</code>, <code>--red-true</code>, <code>--electric</code>. They are a <b>second set</b>, not an extension: the ten-stop rainbow is saturated and spectral and drives seeded hue — a node is never “oxblood”. These are for plates, editorial and full-bleed grounds. Ink is measured per hue, not assumed.</p>
+<div class="pal">
+  <div><div class="chip" style="background:#d798a7"></div><b>Blush</b><span>#d798a7 · dusty mid pink</span><span class="pill">black ink · 8.94</span></div>
+  <div><div class="chip" style="background:#962c38"></div><b>Oxblood</b><span>#962c38 · deep crimson</span><span class="pill" style="background:#2d6cff;color:#fff">white ink · 7.74</span></div>
+  <div><div class="chip" style="background:#3f6b45"></div><b>Botanical</b><span>#3f6b45 · leaf green</span><span class="pill" style="background:#2d6cff;color:#fff">white ink · 6.18</span></div>
+  <div><div class="chip" style="background:#03888c"></div><b>Teal</b><span>#03888c · dark cyan</span><span class="pill">black ink · 4.90</span></div>
+  <div><div class="chip" style="background:#ff0026"></div><b>True red</b><span>#ff0026 · signal red</span><span class="pill">black ink · 5.28</span></div>
+  <div><div class="chip" style="background:#0008ff"></div><b>Electric</b><span>#0008ff · pure blue</span><span class="pill" style="background:#2d6cff;color:#fff">white ink · 8.47</span></div>
 </div>
-
-<script src="../glitch.js"></script>
-</body></html>
+<p class="note" style="margin-top:18px">Cream <code>#e8e3d0</code> did not join the family — it became the third surface instead. Black, night, cream. On cream the rainbow darkens until white ink clears 4.6:1 on every stop: night rotates the ramp sideways, cream pushes it down. See the Button card’s cream section for all ten.</p>
+<div style="display:flex;margin-top:16px;border:1px solid rgba(255,255,255,.22)">
+  <i style="flex:1;height:34px;background:#c000f5"></i><i style="flex:1;background:#db2774"></i><i style="flex:1;background:#c84b3f"></i><i style="flex:1;background:#cd4800"></i><i style="flex:1;background:#627e1d"></i><i style="flex:1;background:#1e8638"></i><i style="flex:1;background:#008096"></i><i style="flex:1;background:#2c6afb"></i><i style="flex:1;background:#4653e8"></i><i style="flex:1;background:#8a3fb0"></i>
+</div>
+<p class="lab" style="margin:8px 0 0">the ramp on cream · white ink on all ten</p></div>
+</div>
+</body>
+</html>

@@ -16,8 +16,17 @@
         "patterns": [
           {
             "group": [
+              "components/**",
+              "components/Badge/**",
+              "components/Button/**",
+              "components/Card/**",
+              "components/Field/**",
+              "components/NodeCard/**",
+              "components/Progress/**",
               "glitch.js",
-              "tailwind.config.js"
+              "tailwind.config.js",
+              "tweaks-panel.jsx",
+              "ui_kits/pantry/**"
             ],
             "message": "Import design-system components from 'index.js', not component internals."
           }
@@ -37,6 +46,50 @@
       {
         "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Geist Mono|Red Hat Mono|Space Grotesk))/i]",
         "message": "Font not provided by the design system. Available: Geist Mono, Red Hat Mono, Space Grotesk."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|label|id|accent|status|variant|size|surface|signal|geometry|glitch|pip|dot|checker|count|className|style|key|ref|className|style|children)$/]",
+        "message": "<Badge> doesn't accept that prop. Declared props: children, label, id, accent, status, variant, size, surface, signal, geometry, glitch, pip, dot, checker, count, className, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:solid|ghost|quiet|danger)$/]",
+        "message": "<Badge> variant must be one of 'solid' | 'ghost' | 'quiet' | 'danger'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Badge> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|label|id|accent|variant|size|surface|signal|geometry|glitch|texture|animation|disabled|pip|checker|icon|block|onClick|className|style|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: children, label, id, accent, variant, size, surface, signal, geometry, glitch, texture, animation, disabled, pip, checker, icon, block, onClick, className, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:solid|ghost|quiet|danger)$/]",
+        "message": "<Button> variant must be one of 'solid' | 'ghost' | 'quiet' | 'danger'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Button> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|title|label|id|accent|surface|variant|signal|geometry|glitch|texture|padding|strip|rule|interactive|onClick|className|style|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: children, title, label, id, accent, surface, variant, signal, geometry, glitch, texture, padding, strip, rule, interactive, onClick, className, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:panel|raised|flat|accent|outline)$/]",
+        "message": "<Card> variant must be one of 'panel' | 'raised' | 'flat' | 'accent' | 'outline'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Field'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|hint|help|error|children|id|accent|surface|geometry|required|className|style|key|ref|className|style|children)$/]",
+        "message": "<Field> doesn't accept that prop. Declared props: label, hint, help, error, children, id, accent, surface, geometry, required, className, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='NodeCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:name|code|rows|status|load|id|accent|surface|signal|geometry|glitch|strip|interactive|width|onClick|children|className|style|key|ref|className|style|children)$/]",
+        "message": "<NodeCard> doesn't accept that prop. Declared props: name, code, rows, status, load, id, accent, surface, signal, geometry, glitch, strip, interactive, width, onClick, children, className, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Progress'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|label|note|id|accent|surface|size|geometry|indeterminate|showValue|className|style|key|ref|className|style|children)$/]",
+        "message": "<Progress> doesn't accept that prop. Declared props: value, label, note, id, accent, surface, size, geometry, indeterminate, showValue, className, style."
       }
     ]
   },
@@ -51,7 +104,26 @@
     }
   ],
   "x-omelette": {
-    "components": {},
+    "components": {
+      "Badge": {
+        "replaces": []
+      },
+      "Button": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "Field": {
+        "replaces": []
+      },
+      "NodeCard": {
+        "replaces": []
+      },
+      "Progress": {
+        "replaces": []
+      }
+    },
     "tokens": [
       "--bg-page",
       "--bg-raised",
@@ -64,10 +136,34 @@
       "--blood",
       "--blue",
       "--blue-deep",
+      "--blush",
+      "--blush-ink",
       "--border",
       "--border-hi",
       "--border-solid",
+      "--botanical",
+      "--botanical-ink",
+      "--c-cobalt",
+      "--c-coral",
+      "--c-cyan",
+      "--c-green",
+      "--c-indigo",
+      "--c-lime",
+      "--c-magenta",
+      "--c-orange",
+      "--c-pink",
+      "--c-violet",
       "--chk",
+      "--cobalt",
+      "--cobalt-deep",
+      "--cream",
+      "--cream-fg",
+      "--cream-fg-dim",
+      "--cream-fg-faint",
+      "--cream-panel",
+      "--cream-raised",
+      "--cream-rule",
+      "--cream-rule-hi",
       "--cyan",
       "--dur-base",
       "--dur-fast",
@@ -77,11 +173,18 @@
       "--ease-flow",
       "--ease-snap",
       "--ease-step",
+      "--electric",
+      "--electric-ink",
       "--fg",
       "--fg-dim",
+      "--fg-faint",
       "--fg-ghost",
       "--fg-on-color",
       "--fg-soft",
+      "--focus-offset",
+      "--focus-ring",
+      "--focus-ring-invert",
+      "--focus-width",
       "--font-body",
       "--font-display",
       "--font-mono",
@@ -105,12 +208,17 @@
       "--magenta",
       "--magenta-deep",
       "--night",
+      "--orange",
+      "--oxblood",
+      "--oxblood-ink",
       "--periwinkle-lo",
       "--pink",
       "--pink-hot",
       "--radius",
       "--red",
       "--red-deep",
+      "--red-true",
+      "--red-true-ink",
       "--sky",
       "--sp-1",
       "--sp-10",
@@ -131,8 +239,17 @@
       "--st-live",
       "--st-ok",
       "--st-warn",
+      "--t-a",
+      "--t-b",
+      "--t-c",
+      "--t-cell",
       "--t-hover",
       "--t-move",
+      "--t-rule",
+      "--target-min",
+      "--target-touch",
+      "--teal",
+      "--teal-ink",
       "--text-2xl",
       "--text-2xs",
       "--text-3xl",
@@ -145,12 +262,15 @@
       "--text-xl",
       "--text-xs",
       "--violet",
+      "--wg-a",
+      "--wg-angle",
+      "--wg-b",
+      "--wg-cell",
       "--white",
       "--white-dim",
+      "--white-faint",
       "--white-ghost",
-      "--white-soft",
-      "--yellow",
-      "--yellow-deep"
+      "--white-soft"
     ],
     "tokenKinds": {
       "--black": "color",
@@ -160,9 +280,11 @@
       "--white": "color",
       "--white-soft": "color",
       "--white-dim": "color",
+      "--white-faint": "color",
       "--white-ghost": "color",
-      "--yellow": "color",
-      "--yellow-deep": "color",
+      "--cobalt": "color",
+      "--cobalt-deep": "color",
+      "--orange": "color",
       "--pink": "color",
       "--pink-hot": "color",
       "--green": "color",
@@ -184,6 +306,7 @@
       "--fg": "color",
       "--fg-soft": "color",
       "--fg-dim": "color",
+      "--fg-faint": "color",
       "--fg-ghost": "color",
       "--fg-on-color": "color",
       "--bg-page": "color",
@@ -240,6 +363,12 @@
       "--sp-20": "spacing",
       "--sp-24": "spacing",
       "--radius": "radius",
+      "--focus-ring": "color",
+      "--focus-ring-invert": "color",
+      "--focus-width": "spacing",
+      "--focus-offset": "spacing",
+      "--target-min": "spacing",
+      "--target-touch": "spacing",
       "--dur-instant": "other",
       "--dur-fast": "other",
       "--dur-base": "other",
@@ -250,7 +379,46 @@
       "--ease-step": "other",
       "--t-hover": "other",
       "--t-move": "other",
-      "--chk": "spacing"
+      "--chk": "spacing",
+      "--blush": "color",
+      "--oxblood": "color",
+      "--botanical": "color",
+      "--teal": "color",
+      "--red-true": "color",
+      "--electric": "color",
+      "--blush-ink": "color",
+      "--oxblood-ink": "color",
+      "--botanical-ink": "color",
+      "--teal-ink": "color",
+      "--red-true-ink": "color",
+      "--electric-ink": "color",
+      "--cream": "color",
+      "--cream-panel": "color",
+      "--cream-raised": "color",
+      "--cream-fg": "color",
+      "--cream-fg-dim": "color",
+      "--cream-fg-faint": "color",
+      "--cream-rule": "color",
+      "--cream-rule-hi": "color",
+      "--c-magenta": "color",
+      "--c-pink": "color",
+      "--c-coral": "color",
+      "--c-orange": "color",
+      "--c-lime": "color",
+      "--c-green": "color",
+      "--c-cyan": "color",
+      "--c-cobalt": "color",
+      "--c-indigo": "color",
+      "--c-violet": "color",
+      "--t-cell": "other",
+      "--t-rule": "other",
+      "--t-a": "color",
+      "--t-b": "color",
+      "--t-c": "color",
+      "--wg-angle": "other",
+      "--wg-cell": "spacing",
+      "--wg-a": "color",
+      "--wg-b": "color"
     },
     "fontFamilies": [
       "Geist Mono",

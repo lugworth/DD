@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Data Display" subtitle="Table, progress/loader, avatar, empty state" viewport="740x460" -->
+<html><head><meta charset="UTF-8"><style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:16px;font-family:'Geist Mono',monospace;color:#fff}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:8px}
+.chk-strip{height:7px;width:100%;margin-bottom:14px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+.blk{margin-bottom:20px}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:11px;border:1px solid rgba(255,255,255,.12)}
+th{text-align:left;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.12);background:#0a0a0a}
+td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.07);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#111110}
+/* progress + spinner */
+.row{display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+.progress{width:180px;height:7px;background:#111110;border:1px solid rgba(255,255,255,.12);overflow:hidden}
+.progress i{display:block;height:100%}
+.spinner{width:22px;height:22px;border:2px solid rgba(255,255,255,.15);border-top-color:#2d6cff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dots{display:flex;gap:5px;align-items:center}
+.dots span{width:5px;height:5px;background:#00d9ff;animation:dotpulse 1s steps(1,end) infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes dotpulse{0%,60%,100%{opacity:.25}30%{opacity:1}}
+/* avatar */
+.avatar{width:40px;height:40px;background:#1a1a18;border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:15px;color:#2d6cff}
+.avatar.on{position:relative}
+.avatar.on::after{content:'';position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;background:#39ff6a;border:2px solid #000}
+/* empty state */
+.empty{border:1px dashed rgba(255,255,255,.18);padding:30px 20px;text-align:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.empty b{display:block;color:#fff;font-size:13px;letter-spacing:.02em;text-transform:none;margin-bottom:6px;font-weight:700}
+</style>  <link rel="stylesheet" href="../glitch.css">
+</head><body class="gl-stage">
+<div class="chk-strip"></div>
+
+<div class="blk"><div class="lab">// TABLE</div>
+<table>
+<thead><tr><th>Node</th><th>Sector</th><th>Load</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>NODE-047</td><td>A1.2</td><td>72%</td><td style="color:#39ff6a">▶ nominal</td></tr>
+<tr><td>NODE-088</td><td>B6</td><td>34%</td><td style="color:#ff5a00">▶ warning</td></tr>
+<tr><td>NODE-003</td><td>X.06</td><td>0%</td><td style="color:#ff0066">▶ critical</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="blk"><div class="lab">// PROGRESS / LOADER</div>
+<div class="row">
+<div class="progress"><i style="width:72%;background:#2d6cff"></i></div>
+<div class="progress"><i style="width:34%;background:#00d9ff"></i></div>
+<div class="spinner"></div>
+<div class="dots"><span></span><span></span><span></span></div>
+</div>
+</div>
+
+<div class="blk"><div class="lab">// AVATAR</div>
+<div class="row">
+<div class="avatar on">DD</div>
+<div class="avatar" style="color:#ff6050">X6</div>
+<div class="avatar" style="color:#0a84e0">4R</div>
+</div>
+</div>
+
+<div class="blk"><div class="lab">// EMPTY STATE</div>
+<div class="empty"><b>— no nodes match this filter —</b>adjust sector or status and try again</div>
+</div>
+<script src="../glitch.js"></script>
+</body></html>

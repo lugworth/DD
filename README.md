@@ -1,227 +1,132 @@
-# digidelic — Design System v2.0
+# digidelic Design System
 
-> Rewritten from reference imagery. Saturated neon-on-black brand language rooted in Marathon (Bungie 2025, Michael Rigley) + WILLB/Clov brutalist UI references + ASCII glitch textures.
+> A saturated neon-on-void brand and UI system. Zero border radius, pure-black canvas, mono-first typography, and solid-block color. vocabulary rooted in Marathon-style mission-control interfaces, WILLB/Clov color blocking, and ASCII glitch texture.
 
----
+Machine-readable tokens: [tokens.json](tokens.json) (W3C DTCG format — colors, type, spacing, motion, elevation, focus, target sizes, each with contrast notes).
 
-## Reference Sources
+## Non-negotiable laws
 
-Built from these uploaded references:
+- Background is pure black (`#000` / `#0a0a0a`).
+- Border radius is `0`. Universal, no exceptions.
+- Color arrives in solid blocks. No soft fills, no glassmorphism.
+- Default border is 1px white @ 12% alpha. There is no other resting border treatment.
+- No emoji. No exclamation points. Punctuation is structure: `// >> :: — ▶ ×`.
+- ALL CAPS for structural text (headings, labels, nav, CTAs); lowercase for body and system output.
 
-| Source | Contribution |
-|---|---|
-| **Marathon trailer stills** (Rigley/Antibody) | Saturated electric blue, hot magenta, pixel dithering, equipment labels, coordinate markers (A1.2, X.06), chromatic aberration |
-| **WILLB corporate brand** (Behance) | Hot pink + yellow + cyan blocks on black, checkerboard fills, vertical stripe patterns |
-| **Clov fitness UI** | Electric yellow + neon green + hot pink color blocks, rounded pill stripes repurposed as sharp rectangles |
-| **Brutalism web design** | Chunky display type, hazard stripes, ticket-stub compositions |
-| **ASCII glitch blob** | Organic black/white noise as supporting texture |
-| **Bioluminescent green (Marathon)** | Vivid-green-on-void lighting language |
-| **Psychedelic portraiture** (`research/ref-psychedelic-*.jpg`) | Hikari-Shimoda-adjacent: black-clad figures dissolving into chromatic rainbow auras over vivid wildflower fields. Emotional neon — bleed/glow/oversaturation. Hero imagery. |
-| **DIY zine collage** (`research/ref-zine-collage.png`) | Red/blue checker headers, neon-green spirograph loops, tribal/gothic display type, ticker footers, torn-photo collage. The loud lo-fi voice. |
-| **Motion ref** (`research/ref-motion.mp4`) | Animated treatment cues — flicker, light-leak, glitch timing |
+## Foundations
 
-See the **Style References** card in the Design System tab for the moodboard.
+- [Accessibility](preview/foundations-accessibility.html): every computed contrast pairing with its ratio and verdict, the muted-text floor, focus ring spec, target sizes, motion policy, keyboard contract. **`--blue #2d6cff` is a fill color, not a text color (3.59:1).** Informational text never goes below `rgba(255,255,255,.55)` (6.25:1).
+- [Component States](preview/foundations-states.html): the single global reference for rest / hover / focus / active / disabled / loading / error across button, input, nav item, and card. Read a column to learn a state, a row to learn a component.
+- [Anatomy](preview/foundations-anatomy.html): labeled subpart breakdowns for button, data card, input, and nav item.
+- [Colors](preview/colors-palette.html), [Surfaces](preview/colors-surfaces.html), [Display type](preview/type-display.html), [Mono type](preview/type-mono.html), [Spacing & radius](preview/spacing-radius.html).
 
----
+## Components
 
-## Voice & Copy
+Importable React components live in `components/<Name>/`, each a `.jsx` + `.d.ts` pair compiled onto `window.DigidelicDesignSystem_da5439`. Every one takes the same prop vocabulary: `id`/`accent` (hue), `surface`, `signal`, `geometry`, `glitch`, and where meaningful `texture` and `animation`.
 
-- **ALL CAPS for everything structural** — headings, labels, badges, nav, CTAs
-- **lowercase for body + system output** — `session authenticated · awaiting input`
-- **Coordinate markers as decoration** — `A1.2`, `B6`, `X.06`, `4R`, `273`, `0x4F3A`
-- **Equipment labels read like stencil on metal** — `FRONT CONNECT`, `PULL 3`, `HO₂E`, `CARGO`
-- **No exclamation points. No emoji.** 
-- **Punctuation as structure** — `// >> :: — ▶ ×`
-- **Truncation is design** — `signal lost_`, `no carrier`, `ERR_NULL`
+| Component | Also exports | Notes |
+| --- | --- | --- |
+| **Button** | `ButtonRow` | Four variants, three sizes, flat texture grounds, stepped motion |
+| **Badge** | `BadgeCount`, `BadgeRow` | `status` is fixed-meaning; labels are seeded |
+| **Card** | `CardSection`, `CardGrid` | Five grounds, checker trim, texture |
+| **NodeCard** | `SectorCard`, `StatCard`, `NodeMeter` | The signature form — code header, tabular rows, status line |
+| **Field** | `Input`, `Select`, `Checkbox` | Seeded focus ring, validation override |
+| **Progress** | `ProgressSegments`, `ProgressStack`, `ProgressAscii`, `Spinner` | Bars, discrete segments, stacks, block-ramp meters |
 
----
+### Seeded hue
 
-## Visual Law
+A component derives its stop from `hash(id ?? label)`, so the same node is the same colour on every screen. `accent` pins a stop instead. Status colours are the exception — `ok` is always green, `critical` always danger — because an operator reads hue as meaning.
 
-1. **Background is pure black.** `#000` / `#0a0a0a`. Never gradient.
-2. **Color arrives in solid blocks.** Full-bleed rectangles of yellow/pink/green/blue on black. No soft fills.
-3. **Zero border radius.** Hard corners universal.
-4. **Hairlines are 1px white @ 12% alpha.** No other border treatment for default state.
-5. **Active = solid color fill.** Yellow panel, pink panel, etc. Text on color flips to black.
-6. **Multiple type weights + sizes in one composition is intentional.** Fontslop.
-7. **Hazard stripes, checkerboards, and dithered pixel fills** are the texture toolkit — not gradients, not shadows.
+### Surfaces
 
----
+Three grounds: `black`, `night` `#150a1c`, `cream` `#e8e3d0`. The ramp rotates toward warm neighbours on night so magenta/indigo/violet don't sink into the violet ground, and darkens on cream until white ink clears 4.6:1 on all ten stops.
 
-## Color Palette
+### Spec cards
 
-| Token | Hex | Role |
-|---|---|---|
-| `--black` | `#000000` | Universal canvas |
-| `--black-soft` | `#0a0a0a` | Page background |
-| `--black-panel` | `#111110` | Surface / card |
-| `--white` | `#ffffff` | Text on black |
-| `--yellow` | `#eaff00` | Primary action, hazard, WILLB/Clov hero |
-| `--pink` | `#ff2d87` | Alerts, live notifications, glitch |
-| `--pink-hot` | `#ff0066` | Critical errors |
-| `--green` | `#39ff6a` | Success, live, bioluminescent |
-| `--blue` | `#2d4cff` | Marathon fill, immersive panels |
-| `--magenta` | `#c800ff` | Glitch overlay, rare accent |
-| `--cyan` | `#00d9ff` | Data readout, links |
-| `--white` | `#ffffff` | Text, ink on color blocks |
+The older documentation cards — navigation, overlays, disclosure, menus, log rows, and the remaining data displays — live under `preview/components-*.html` and are not yet extracted into components.
 
-> **v2.3 — Night Garden.** Latest refs (07-2026): infrared night-garden photography (deep violet skies, blood-red foliage, indigo leaves) + colorful ASCII dot-matrix grids. These are now the canonical backdrop layer: `--night/--violet/--indigo/--blood` tokens, `.tex-ascii-1…5` tiled data-textures, `.bg-night-*` photo backdrops with `.night-scrim`. See the **Night Garden** card.
+## Color tokens
 
-### Duotone layer (from flower / halftone / cross-grid refs)
+| Token | Hex | Role | On black |
+| --- | --- | --- | --- |
+| `--cobalt` | `#2d6cff` | Primary action, hero fill, focus ring | 4.70:1 |
+| `--green` | `#39ff6a` | Success, live | 15.69:1 |
+| `--cyan` | `#00d9ff` | Data readout, links | 12.37:1 |
+| `--teal` | `#12b39b` | Duotone third | 7.95:1 |
+| `--coral` / `--red` | `#ff6050` | Checkerboard, dividers | 7.04:1 |
+| `--pink` | `#ff2d87` | Alerts, notifications | 5.98:1 |
+| `--pink-hot` | `#ff0066` | Critical errors | 5.44:1 |
+| `--sky` | `#0a84e0` | Zine ground, tickers | 5.39:1 |
+| `--magenta` | `#c800ff` | Glitch overlay | 4.90:1 |
+| `--orange` | `#ff5a00` | Warning, hazard | 6.71:1 |
 
-| Token | Hex | Role |
-|---|---|---|
-| `--sky` | `#0a84e0` | Clean electric-blue surfaces, ticker strips, checker squares (was periwinkle) |
-| `--coral` | `#ff6050` | Checkerboard, tribal/barbed dividers, warm alert (was signal-red) |
-| `--teal` | `#12b39b` | Duotone third — flower texture, secondary accent |
-| `--lime` | `#c6ff3a` | Spirograph / lissajous line overlays |
+`--blue` is an alias of `--cobalt`. The former `#2d4cff` was visually indistinguishable from cobalt and failed AA for body text (3.59:1), so the two merged — the system has one blue.
 
-> **v2.1 recolor:** the harsh red×periwinkle pairing was retuned to the **coral × sky** duotone sampled from the flower/halftone uploads, with **teal** added as a third. Cross-grid stays yellow-dominant with cyan/magenta/orange pops.
+Surfaces: `--black #000` · `--black-soft #0a0a0a` · `--black-panel #111110` · `--black-raised #1a1a18`. Night Garden layer: `--night #150a1c` · `--violet #8a3fb0` · `--indigo #4653e8` · `--blood #e02020`. Cream layer: `--cream #e8e3d0` · `--cream-panel #f2efe4` · `--cream-fg #0a0a0a`.
 
-These unify the loud DIY-zine side of the brand with the FUI core. Use them for expressive surfaces (mastheads, tickers, collage frames) while the neon heroes drive functional UI.
+### The second set
+
+Six deep, muted hues sampled from the reference plates — `--blush #d798a7` · `--oxblood #962c38` · `--botanical #3f6b45` · `--teal #03888c` · `--red-true #ff0026` · `--electric #0008ff`. Parallel to the rainbow, never seeded: a node is never “oxblood”. For plates, editorial and full-bleed grounds only. See [Textures & Overlays](preview/brand-textures.html).
 
 ## Typography
 
-| Font | Role | Source |
-|---|---|---|
-| **Space Grotesk** | Display + body — uppercase tracked headlines, stacked | Google Fonts |
-| **Geist Mono** | UI / labels / terminal / coordinates / data — PRIMARY mono | Local — `fonts/GeistMono-VariableFont_wght.ttf` (variable, 100–900) |
-| **Red Hat Mono** | Alt / fallback mono | Local — `fonts/RedHatMono-VariableFont_wght.ttf` (variable, 300–700) |
+| Font | Role |
+| --- | --- |
+| **Geist Mono** (variable 100–900) | PRIMARY — UI, labels, terminal, coordinates, data. `fonts/GeistMono-VariableFont_wght.ttf` |
+| **Space Grotesk** (700/900) | Display — uppercase tracked headlines |
+| **Red Hat Mono** | Alt / fallback mono |
 
-Real display font TBD. Supply proprietary files to replace Space Grotesk if needed.
+Numeric readouts always use `font-variant-numeric: tabular-nums` so ticking values don't jitter.
 
 ## Spacing
 
-4px base unit. Scale: `4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64 · 80 · 96`.
+4px base. Scale: `4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64 · 80 · 96`.
 
-## Border Radius
+## Motion
 
-`0` — universal. No exceptions.
+`--dur-fast 100ms` (hover/press) · `--dur-base 160ms` (entrances) · `--ease-flow cubic-bezier(.16,1,.3,1)`.
+
+The glitch (`gl-*`) and psychedelia (`psy-*`) layers loop by design and **must** collapse under `prefers-reduced-motion: reduce`. Never ship a looping decorative layer without that guard.
+
+## Motifs & texture
+
+Stripes · checkerboard · dither · scanlines · RGB glitch split · spirograph · ticker · tribal divider · marble. Plus sampled texture overlays (`.tex-crossgrid`, `.tex-flower`, `.tex-halftone`, `.tex-ascii-blue`) that drop into any `.tex-host` and tune with `--tex-op`.
+
+`textures.css` adds the flat primitive layer: eight hard-stop, tileable `.t-*` fills driven by `--t-a` (mark) and `--t-b` (ground), six named colourways (`.t-knit`, `.t-oxblood`, `.t-blush`, `.t-electric`, `.t-paper`, `.t-bone`), and the same set in JS via `textureFill(kind, a, b, size)`. **Overlay law:** replace, never veil — no fade to transparent, no alpha ramp, one texture per composition, and never behind body copy.
+
+The shared glitch layer (`glitch.css` + `glitch.js`) drops a degraded-signal treatment over any surface via `class="gl-stage"`.
+
+## Logo
+
+Canonical mark is the **monogram lockup**: a solid cobalt tile with a lowercase Space Grotesk 900 `d`, paired with a stacked mono caption (`DIGIDELIC` / `lugworth.design`). Variants in [logo-variations.html](ui_kits/digidelic/logo-variations.html).
 
 ## Iconography
 
-No icon library assumed. Unicode + geometric shapes only: `▶ ◀ ■ □ × + ▓ ░ ╋ ┼`. For additional needs use **Phosphor Icons** (thin weight) via CDN — closest technical match.
+No icon library. Unicode geometry only: `▶ ◀ ■ □ ◈ ▣ × + ✕ ▓ ░ ╋ ┼ ≡ ▸`.
 
-## Motifs
+## UI kits
 
-Reusable texture utilities live in `colors_and_type.css`:
+- `ui_kits/digidelic/` — full React app prototype (node-grid mission control)
+- `ui_kits/digidelic-tailwind/` — Tailwind CDN build + usage docs; `tailwind.config.js` at root
+- `ui_kits/shadcn/` — shadcn/ui variable theme (`globals.css`)
+- `ui_kits/daisyui/` — drop-in daisyUI theme (`daisyui-digidelic.css`)
 
-| Class | Motif | Source |
-|---|---|---|
-| `.stripes-yellow/-pink/-cyan` | Diagonal hazard stripes | Clov / WILLB |
-| `.scanlines` | CRT scanline overlay | Marathon / glitch layer |
-| `.dither` | Pixel dot grid | ASCII / Marathon |
-| `.glitch` (+ `data-text`) | RGB channel split | glitch layer |
-| `.checker` (+ `--chk`) | Coral×sky checkerboard masthead | flower duotone |
-| `.spiro` | Acid-lime spirograph loop overlay | zine collage |
-| `.ticker .run` | Scrolling sky-blue date/text strip | zine collage |
-| `.arch` | Cathedral-arched photo frame (round top only) | zine collage |
-| `.tribal` | Red barbed/spiky divider rule | zine collage |
-| `.marble` | Red-on-white liquify swirl frame | zine collage |
+## Files
 
-The shared **glitch layer** (`glitch.css` + `glitch.js`) drops a fine degraded-signal treatment over any surface via `class="gl-stage"` — scanlines, rolling band, sub-pixel RGB jitter, intermittent micro-tears.
-
-### Texture overlays (image refs)
-
-Three sampled uploads live as ambient overlay layers (real positioned `<div>` children for robust rendering). Drop into any `.tex-host` container and tune with `--tex-op`:
-
-| Class | Source | Blend |
-|---|---|---|
-| `.tex .tex-crossgrid` | `assets/tex-crossgrid.png` | screen (yellow/cyan/magenta plus-marks) |
-| `.tex .tex-flower` | `assets/tex-flower-duotone.png` | overlay (coral/sky/teal) |
-| `.tex .tex-halftone` | `assets/tex-halftone-portrait.png` | screen (warm dotted) |
-| `.tex .tex-grid-fine` | cross-grid, 140px | screen (sharp data-texture) |
-
-See the **Texture Overlays** card.
-
-### Tailwind
-
-A full Tailwind build ships alongside the CSS system:
-- `tailwind.config.js` — drop-in config: all tokens as utilities (`bg-coral`, `text-sky`, `border-teal`, `font-display`), radius reset to 0, motif gradients + texture `backgroundImage`.
-- `ui_kits/digidelic-tailwind/index.html` — CDN showcase + usage docs. See the preview cards and `Zine System` / `Style References` cards in the Design System tab.
+```
+styles.css              — root entry; @imports the three below
+colors_and_type.css     — tokens + base elements + motifs
+textures.css            — second set, cream surface, flat .t-* primitives
+glitch.css / glitch.js  — glitch layer, texture overlays, psychedelia engine
+tokens.json             — W3C DTCG machine-readable tokens
+tailwind.config.js      — Tailwind drop-in config
+thumbnail.html          — project tile
+components/             — importable React components (.jsx + .d.ts + card)
+preview/                — design system cards
+ui_kits/                — four consumable kits
+fonts/ assets/ research/
+```
 
 ---
 
-## File Index
-
-```
-README.md                         — this file
-SKILL.md                          — agent skill
-colors_and_type.css               — design tokens
-
-assets/
-  glitch-blob.gif                 — animated ASCII glitch
-
-preview/                          — design system cards
-  colors-palette.html             — full 7-hero palette
-  colors-surfaces.html            — blacks, greys, borders
-  type-display.html               — Space Grotesk headlines
-  type-mono.html                  — Geist Mono system text
-  spacing-radius.html             — spacing scale + 0-radius rule
-  components-buttons.html         — buttons, all variants
-  components-inputs.html          — inputs, selects, toggles
-  components-cards.html           — data panels, ticket stubs
-  components-badges.html          — status, tags, coords
-  brand-motifs.html               — stripes, checker, dither
-  brand-logo.html                 — digidelic wordmark variants
-  brand-glitch.html               — RGB-split + glitch blob
-
-ui_kits/
-  digidelic/
-    README.md
-    index.html                    — full app prototype
-
-tools/                            — generative tools, one folder each
-  index.html                      — the hub: live thumbnail per tool
-  build-standalone.mjs            — bakes any page into a single file
-
-  circuit-matrix/                 — self-routing traces on an LED panel
-  colony-display/                 — phosphor Game-of-Life on glass
-  cosmogram-generator/            — esoteric celestial diagram plates
-  culture/                        — paint cells and filaments, watch them grow
-  glyph-foundry/                  — invented-alphabet specimen sheets
-  overprint/                      — riso press, eight exotic plate engines
-  patchwork-generator/            — recursive patch-grid compositions
-  pixel-echo/                     — chromatic echo stacks over a spine
-  pixel-knit/                     — texture × subject pattern sheets
-  reaction-field/                 — Gray-Scott relief, CPU or WebGL2
-  readout/                        — image or webcam → character mosaic
-  signal-scope/                   — dual-beam scope, oscillators or line in
-  surface-tension/                — press and hold; water sinks the copy
-```
-
-Every tool shares one shell: a seeded parameter rack, PNG export, a
-permalink that encodes seed and settings, `Ctrl+Z` parameter undo, and
-Web Share where the browser has it. The animated ones add GIF and MP4
-capture, both encoded in-file so the no-dependency promise holds. Each
-tool's README covers what is particular to it.
-
----
-
-*v2.0 — 2026. Will refine as more source assets arrive.*
-
-## Tools
-
-`tools/index.html` is the hub for every generative tool in the repo — a
-live-preview card per tool, filterable by trait, linking to both the source
-page and its standalone build. It works opened from `tools/` or from
-`dist/tools.html` next to the baked builds.
-
-## Standalone builds
-
-Every preview, UI-kit, and tool page references local fonts/images with
-relative paths, so a copied HTML file breaks outside the repo. `dist/`
-contains **standalone single-file builds** of all of them — every local
-stylesheet, script, font, and image is inlined (oversized opaque images
-are downscaled + re-encoded to JPEG; transparent textures stay PNG; CSS
-rules a page never fetches are pruned). Open them from anywhere.
-
-Regenerate with:
-
-```
-node tools/build-standalone.mjs                      # all pages
-node tools/build-standalone.mjs preview/foo.html     # one page
-```
-
-Image recompression needs `playwright-core` + Chromium available;
-without them assets are inlined verbatim (bigger files, same fidelity).
+*v2.5 — 08-2026. Contrast-audited, states-documented, anatomy-labeled. Six importable components, three surfaces, flat texture layer.*

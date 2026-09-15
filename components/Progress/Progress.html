@@ -1,0 +1,114 @@
+<!-- @dsCard group="Components" name="Progress" subtitle="Solid bars, discrete segments, stacked breakdowns, ASCII meters and stepped spinners" viewport="1280x900" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Progress</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#2d6cff}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:66ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:32px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:74ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px 30px}
+.stack{display:grid;gap:18px}
+code{color:#2d6cff}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Progress</h1>
+<p class="sub">Four forms, chosen by what the number actually is. A fraction gets a solid bar; a countable total gets discrete segments — fourteen of twenty nodes is not seventy percent. Breakdowns stack. Anything terminal-flavoured gets the block ramp, which is one of the three jobs ASCII is allowed to do.</p>
+<div id="root"></div>
+<script>
+const { Progress, ProgressSegments, ProgressStack, ProgressAscii, Spinner } = window.DigidelicDesignSystem_da5439;
+const { createElement: h, Fragment, useState, useEffect } = React;
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+
+function Demo() {
+  const [v, setV] = useState(0.28);
+  useEffect(() => {
+    const t = setInterval(() => setV((n) => (n >= 1 ? 0.06 : n + 0.04)), 900);
+    return () => clearInterval(t);
+  }, []);
+
+  return h(Fragment, null,
+    Sec('01 · solid bars', 'Hue seeds from the label. Sizes are 4, 6 and 10px.',
+      h('div', { className: 'grid' },
+        h('div', { className: 'stack' },
+          h(Progress, { label: 'Roast progress', value: 0.72, showValue: true }),
+          h(Progress, { label: 'Intake', value: 0.34, showValue: true }),
+          h(Progress, { label: 'Cupping queue', value: 0.91, showValue: true })),
+        h('div', { className: 'stack' },
+          h(Progress, { label: 'Small', value: 0.6, size: 'sm' }),
+          h(Progress, { label: 'Medium', value: 0.6, size: 'md' }),
+          h(Progress, { label: 'Large', value: 0.6, size: 'lg' })),
+        h('div', { className: 'stack' },
+          h(Progress, { label: 'Live — recomputed', value: v, showValue: true, accent: 'cyan' }),
+          h(Progress, { label: 'Indeterminate', indeterminate: true, accent: 'magenta' }),
+          h(Progress, { label: 'Pill geometry', value: 0.45, size: 'lg', geometry: 'pill', accent: 'lime' })))),
+
+    Sec('02 · discrete segments', 'The honest form when the total is countable.',
+      h('div', { className: 'grid' },
+        h(ProgressSegments, { label: 'Nodes online', value: 14, total: 20 }),
+        h(ProgressSegments, { label: 'Bays filled', value: 5, total: 8, accent: 'orange' }),
+        h(ProgressSegments, { label: 'Batches roasted', value: 9, total: 12, size: 'lg', accent: 'green' }))),
+
+    Sec('03 · stacked breakdowns', 'parts is [name, count, accent?] — omit the accent and it seeds from the name.',
+      h('div', { className: 'grid' },
+        h(ProgressStack, { label: 'Sector B3', size: 'lg', parts: [['nominal',3,'green'],['running',1,'cobalt'],['warning',1,'orange'],['offline',1,'violet']] }),
+        h(ProgressStack, { label: 'Inventory by origin', size: 'lg', parts: [['ethiopia',12],['colombia',8],['kenya',5],['sumatra',3]] }))),
+
+    Sec('04 · ASCII meters', 'The block ramp ░▒▓█ — sanctioned for loading and progress.',
+      h('div', { className: 'grid' },
+        h('div', { className: 'stack' },
+          h(ProgressAscii, { label: 'NODE-047', value: 0.72, id: 'node-047' }),
+          h(ProgressAscii, { label: 'NODE-088', value: 0.34, id: 'node-088' }),
+          h(ProgressAscii, { label: 'NODE-003', value: 0.08, id: 'node-003' })),
+        h('div', { className: 'stack' },
+          h(ProgressAscii, { label: 'Wide meter', value: v, width: 40, accent: 'cyan' }),
+          h(ProgressAscii, { label: 'Narrow', value: 0.5, width: 12, accent: 'pink' })),
+        h('div', { className: 'stack' },
+          h(Spinner, { label: 'Scanning sector', accent: 'cyan' }),
+          h(Spinner, { label: 'Roasting', pulse: true, accent: 'orange' }),
+          h(Spinner, { label: 'Re-authenticating', id: 'auth', size: 18 })))),
+
+    Sec('05 · night', null, h('div', { className: 'night' },
+      h('div', { className: 'grid' },
+        h('div', { className: 'stack' },
+          h(Progress, { surface: 'night', label: 'Roast progress', value: 0.72, showValue: true }),
+          h(ProgressSegments, { surface: 'night', label: 'Nodes online', value: 14, total: 20 })),
+        h('div', { className: 'stack' },
+          h(ProgressStack, { surface: 'night', label: 'Sector B3', size: 'lg', parts: [['nominal',3,'green'],['running',1,'cobalt'],['warning',1,'orange'],['offline',1,'violet']] })),
+        h('div', { className: 'stack' },
+          h(ProgressAscii, { surface: 'night', label: 'NODE-047', value: 0.72, id: 'node-047' }),
+          h(Spinner, { surface: 'night', label: 'Scanning', accent: 'cyan' }))))),
+
+    Sec('06 · cream', null, h('div', { className: 'cream' },
+      h('div', { className: 'grid' },
+        h('div', { className: 'stack' },
+          h(Progress, { surface: 'cream', label: 'Roast progress', value: 0.72, showValue: true }),
+          h(ProgressSegments, { surface: 'cream', label: 'Nodes online', value: 14, total: 20 })),
+        h('div', { className: 'stack' },
+          h(ProgressStack, { surface: 'cream', label: 'Sector B3', size: 'lg', parts: [['nominal',3,'green'],['running',1,'cobalt'],['warning',1,'orange'],['offline',1,'violet']] })),
+        h('div', { className: 'stack' },
+          h(ProgressAscii, { surface: 'cream', label: 'NODE-047', value: 0.72, id: 'node-047' }),
+          h(Spinner, { surface: 'cream', label: 'Scanning', accent: 'cyan' })))))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!-- @dsCard group="Components" name="Card" subtitle="Panel, raised, flat, accent and outline grounds — with checker trim and flat texture" viewport="1280x1080" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Card</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#2d6cff}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:64ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:32px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:72ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.p{font-size:11px;line-height:1.7;margin:0;opacity:.72}
+code{color:#2d6cff}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Card</h1>
+<p class="sub">Five grounds off one surface token. <code>strip</code> adds checkerboard trim — trim, not texture, which is why it can coexist with a <code>texture</code> ground. Copy never sits directly on a texture: put it in a <code>CardSection</code>.</p>
+<div id="root"></div>
+<script>
+const { Card, CardSection, CardGrid, Badge, BadgeRow, Button } = window.DigidelicDesignSystem_da5439;
+const { createElement: h, Fragment } = React;
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+const P = (t) => h('p', { className: 'p' }, t);
+
+function Demo() {
+  return h(Fragment, null,
+    Sec('01 · grounds', 'panel, raised and flat read the surface. accent and outline read the seeded hue.',
+      h(CardGrid, { min: 230 },
+        h(Card, { variant: 'panel', label: 'variant', title: 'Panel', id: 'k1' }, P('The default. One step up from the page ground, hairline ruled.')),
+        h(Card, { variant: 'raised', label: 'variant', title: 'Raised', id: 'k2' }, P('Two steps up. For a card sitting on a panel.')),
+        h(Card, { variant: 'flat', label: 'variant', title: 'Flat', id: 'k3' }, P('Page ground with a rule. Quietest of the five.')),
+        h(Card, { variant: 'accent', label: 'variant', title: 'Accent', id: 'k4' }, P('Seeded stop fills the card. Ink flips to clear AA.')),
+        h(Card, { variant: 'outline', label: 'variant', title: 'Outline', id: 'k5' }, P('Hue as a rule only, transparent ground.')))),
+
+    Sec('02 · trim, sections, interactive', null,
+      h(CardGrid, { min: 230 },
+        h(Card, { strip: true, label: 'strip', title: 'Checker trim', id: 'roaster-1' }, P('A 6px checkerboard seam across the top edge, in the seeded hue.')),
+        h(Card, { title: 'Sections', label: 'divided', id: 'k7', padding: 0 },
+          h(CardSection, { divide: false }, P('Header block.')),
+          h(CardSection, null, P('A ruled section below it.')),
+          h(CardSection, null, h(BadgeRow, null, h(Badge, { status: 'ok', label: 'ready', pip: true }), h(Badge, { label: 'batch 12' })))),
+        h(Card, { interactive: true, title: 'Interactive', label: 'button', id: 'k8' }, P('Renders as a button. Hover takes the hue as its border.')))),
+
+    Sec('03 · texture grounds', 'Two inks. The title and copy sit on their own flat block over the tile.',
+      h(CardGrid, { min: 230 },
+        h(Card, { variant: 'accent', texture: 'stripe', title: 'Stripe', label: 'texture', id: 'tx1' }),
+        h(Card, { variant: 'accent', texture: 'checker', title: 'Checker', label: 'texture', id: 'tx2' }),
+        h(Card, { variant: 'accent', texture: 'grid', title: 'Grid', label: 'texture', id: 'tx3' }),
+        h(Card, { texture: 'dot', title: 'Dot', label: 'on panel', id: 'tx4' }))),
+
+    Sec('04 · night', null, h('div', { className: 'night' },
+      h(CardGrid, { min: 210 },
+        h(Card, { surface: 'night', variant: 'panel', title: 'Panel', label: 'night', id: 'n1' }, P('Panel steps up from the violet ground.')),
+        h(Card, { surface: 'night', variant: 'accent', title: 'Accent', label: 'night', id: 'n2' }, P('Rotated stop, black ink.')),
+        h(Card, { surface: 'night', variant: 'outline', strip: true, title: 'Outline', label: 'night', id: 'n3' }, P('Trim and rule share the hue.'))))),
+
+    Sec('05 · cream', null, h('div', { className: 'cream' },
+      h(CardGrid, { min: 210 },
+        h(Card, { surface: 'cream', variant: 'panel', title: 'Panel', label: 'cream', id: 'c1' }, P('Warm chalk ground, black body ink.')),
+        h(Card, { surface: 'cream', variant: 'accent', title: 'Accent', label: 'cream', id: 'c2' }, P('Darkened stop, white ink.')),
+        h(Card, { surface: 'cream', variant: 'outline', strip: true, title: 'Outline', label: 'cream', id: 'c3' }, P('Trim reads against paper.')))))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

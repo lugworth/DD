@@ -5,17 +5,17 @@
 @font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--blue:#2d4cff;--sky:#0a84e0;--yellow:#eaff00;--cyan:#00d9ff;--pink:#ff2d87;--coral:#ff6050}
+:root{--blue:#2d6cff;--sky:#0a84e0;--cobalt:#2d6cff;--cyan:#00d9ff;--pink:#ff2d87;--coral:#ff6050}
 body{background:#000;padding:16px;font-family:'Geist Mono','Red Hat Mono',monospace;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;max-width:740px}
 .item{display:flex;flex-direction:column}
-.label{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:5px}
+.label{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:5px}
 .t{width:140px;height:84px;border:1px solid rgba(255,255,255,0.12);background:#000;overflow:hidden;position:relative}
 /* geometric motifs */
-.sy{background:repeating-radial-gradient(circle at 28% 118%,var(--yellow) 0 2px,#000 2px 13px)}
+.sy{background:repeating-radial-gradient(circle at 28% 118%,var(--cobalt) 0 2px,#000 2px 13px)}
 .sp{background-image:radial-gradient(circle,var(--pink) 1.7px,transparent 2px);background-size:7px 7px;-webkit-mask:linear-gradient(135deg,#000 20%,transparent);mask:linear-gradient(135deg,#000 20%,transparent)}
 .sc{display:flex;align-items:flex-end;gap:3px;padding:9px}
 .sc i{flex:1;background:linear-gradient(180deg,var(--cyan),rgba(0,217,255,.15))}
-.ck{background:repeating-conic-gradient(#000 0% 25%,var(--yellow) 0% 50%);background-size:14px 14px}
+.ck{background:repeating-conic-gradient(#000 0% 25%,var(--cobalt) 0% 50%);background-size:14px 14px}
 .vs{background:repeating-linear-gradient(90deg,var(--cyan) 0 4px,#000 4px 10px)}
 .dt{background-image:radial-gradient(circle,rgba(255,255,255,0.22) 1px,transparent 1px);background-size:5px 5px;border-color:rgba(255,255,255,0.15)}
 /* checker — DEEP BLUE × coral (matches Glitch Compositions) */
@@ -26,6 +26,7 @@ body{background:#000;padding:16px;font-family:'Geist Mono','Red Hat Mono',monosp
 .ascii-dense{background-image:url('../assets/tex-ascii-dense.png');background-size:cover;mix-blend-mode:screen;opacity:.9}
 .ascii-portrait{background-image:url('../assets/tex-ascii-portrait.png');background-size:cover;background-position:center 30%}
 .ascii-1{background-image:url('../assets/tex-ascii-01.png');background-size:200px;mix-blend-mode:screen;opacity:.85}
+.ascii-blue{background-image:url('../assets/tex-ascii-blue.png');background-size:cover}
 .crossgrid{background-image:url('../assets/tex-crossgrid.png');background-size:120px;mix-blend-mode:screen;opacity:.8}
 .flower{background-image:url('../assets/tex-flower-duotone.png');background-size:cover}
 .halftone{background-image:url('../assets/tex-halftone-portrait.png');background-size:cover;background-position:top center}
@@ -45,6 +46,7 @@ body{background:#000;padding:16px;font-family:'Geist Mono','Red Hat Mono',monosp
 <div class="item"><div class="label">// ASCII · DENSE</div><div class="t"><div class="tex ascii-dense"></div></div></div>
 <div class="item"><div class="label">// ASCII · PORTRAIT</div><div class="t"><div class="tex ascii-portrait"></div></div></div>
 <div class="item"><div class="label">// ASCII · TILE</div><div class="t"><div class="tex ascii-1"></div></div></div>
+<div class="item"><div class="label">// ASCII · ELECTRIC BLUE</div><div class="t"><div class="tex ascii-blue"></div></div></div>
 
 <div class="item"><div class="label">// CROSS-GRID</div><div class="t"><div class="tex crossgrid"></div></div></div>
 <div class="item"><div class="label">// FLOWER DUOTONE</div><div class="t"><div class="tex flower"></div></div></div>

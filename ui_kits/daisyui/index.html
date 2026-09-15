@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — daisyUI" name="daisyUI Kit — Digidelic theme" subtitle="daisyUI components restyled to digidelic — drop-in theme CSS + usage" viewport="1280x1600" -->
+<html lang="en" data-theme="digidelic">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>daisyUI — digidelic theme</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="daisyui-digidelic.css">
+<style>
+@font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+body{background:#000}
+.disp{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.chk{background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px}
+.sec{border-top:1px solid rgba(255,255,255,.12);padding-top:14px;margin-top:34px}
+pre{background:#0a0a0a;border:1px solid rgba(255,255,255,.12);padding:12px 14px;font-size:11px;line-height:1.7;color:rgba(255,255,255,.7);overflow-x:auto}
+pre b{color:#2d6cff;font-weight:400}
+/* native-control replacements — <progress>/<input type=range> pseudo-elements are not
+   paintable in every engine, so the kit ships div-based equivalents */
+.dbar{height:7px;background:#111110;border:1px solid rgba(255,255,255,.12);overflow:hidden;width:100%}
+.dbar i{display:block;height:100%}
+.dslider{position:relative;height:24px;display:flex;align-items:center}
+.dslider-t{height:7px;width:100%;background:#111110;border:1px solid rgba(255,255,255,.12);overflow:hidden}
+.dslider-t i{display:block;height:100%;background:#2d6cff}
+.dslider-k{position:absolute;top:50%;width:12px;height:18px;background:#2d6cff;transform:translate(-50%,-50%);cursor:grab}
+.dsw{width:34px;height:18px;background:#111110;border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;padding:2px;cursor:pointer;transition:background .12s,border-color .12s}
+.dsw i{width:12px;height:12px;background:rgba(255,255,255,.35);transition:transform .12s cubic-bezier(.16,1,.3,1),background .12s}
+.dsw.on{background:#2d6cff;border-color:#2d6cff}
+.dsw.on i{transform:translateX(16px);background:#000}
+</style>
+</head>
+<body class="text-white">
+
+<div class="chk" style="height:7px"></div>
+
+<header class="flex items-center gap-3 px-7 py-5 border-b border-white/12">
+  <div class="w-7 h-7 bg-primary text-black flex items-center justify-center shrink-0" style="font-family:'Space Grotesk',sans-serif;font-weight:900;font-size:20px;text-transform:none">d</div>
+  <div class="lab leading-relaxed">DIGIDELIC × DAISYUI<br><span class="text-accent tracking-[.1em]">lugworth.design</span></div>
+  <div class="ml-auto lab tabular-nums">theme v1.0 · daisyui 4</div>
+</header>
+
+<main class="px-7 py-8 max-w-[1180px]">
+
+<h1 class="disp text-4xl mb-2">daisyUI, digidelic'd</h1>
+<p class="text-sm text-white/55 max-w-[560px] leading-relaxed">Every daisyUI component, retuned to the digidelic system: zero radius, near-black surfaces, electric cobalt primary, neon semantics, and the hard-offset tactile press. One CSS file — no build step required.</p>
+
+<!-- INSTALL -->
+<section class="sec">
+  <div class="lab mb-3">// 01 · install</div>
+  <pre>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css"&gt;
+&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;
+<b>&lt;link rel="stylesheet" href="daisyui-digidelic.css"&gt;</b>
+&lt;html <b>data-theme="digidelic"</b>&gt;</pre>
+</section>
+
+<!-- BUTTONS -->
+<section class="sec">
+  <div class="lab mb-3">// 02 · buttons</div>
+  <div class="flex flex-wrap gap-3 items-center">
+    <button class="btn btn-primary">initialize</button>
+    <button class="btn btn-secondary">notify</button>
+    <button class="btn btn-accent">sync</button>
+    <button class="btn btn-outline btn-primary">run</button>
+    <button class="btn btn-error">abort</button>
+    <button class="btn btn-ghost">dismiss</button>
+    <button class="btn btn-primary btn-sm">small</button>
+    <button class="btn btn-primary btn-xs">xs</button>
+    <button class="btn btn-primary" disabled>locked</button>
+  </div>
+</section>
+
+<!-- BADGES + ALERTS -->
+<section class="sec">
+  <div class="lab mb-3">// 03 · badges & alerts</div>
+  <div class="flex flex-wrap gap-2 items-center mb-5">
+    <span class="badge badge-primary">nominal</span>
+    <span class="badge badge-success">online</span>    <span class="badge badge-warning">degraded</span>
+    <span class="badge badge-error">critical</span>
+    <span class="badge badge-accent">scanning</span>
+    <span class="badge badge-outline">idle</span>
+  </div>
+  <div class="grid gap-2 max-w-[560px]">
+    <div class="alert alert-success"><span>▶</span><span>Sync complete — 14 nodes re-authenticated.</span></div>
+    <div class="alert alert-warning"><span>▲</span><span>Node-088 load exceeded threshold.</span></div>
+    <div class="alert alert-error"><span>✕</span><span>Signal lost — node-003 unreachable, 47 cycles.</span></div>
+  </div>
+</section>
+
+<!-- CARDS -->
+<section class="sec">
+  <div class="lab mb-3">// 04 · cards & stats</div>
+  <div class="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-4">
+    <div class="card bg-base-200 border border-white/12">
+      <div class="card-body">
+        <h2 class="card-title disp text-base">Node-047</h2>
+        <p class="text-xs text-white/55 leading-relaxed">Sector A1.2 · uptime 99.4% · last ping 3s</p>
+        <div class="card-actions justify-end mt-2"><button class="btn btn-primary btn-sm">ping</button></div>
+      </div>
+    </div>
+    <div class="card bg-base-200 border border-primary">
+      <div class="card-body">
+        <div class="lab">// load</div>
+        <div class="disp text-primary text-5xl tabular-nums leading-none">72<span class="text-lg">%</span></div>
+        <div class="dbar"><i style="width:72%;background:#2d6cff"></i></div>
+      </div>
+    </div>
+    <div class="card bg-base-200 border border-white/12">
+      <div class="card-body">
+        <div class="lab">// signal</div>
+        <div class="disp text-accent text-5xl tabular-nums leading-none">34<span class="text-lg">db</span></div>
+        <div class="dbar"><i style="width:34%;background:#00d9ff"></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FORMS -->
+<section class="sec">
+  <div class="lab mb-3">// 05 · inputs</div>
+  <div class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4 max-w-[800px]">
+    <input type="text" placeholder="node id" class="input input-bordered w-full" />
+    <input type="text" placeholder="focused" class="input input-primary w-full" />
+    <select class="select select-bordered w-full"><option>sector a1.2</option><option>sector b6</option></select>
+    <div class="dslider"><div class="dslider-t"><i style="width:62%"></i></div><span class="dslider-k" style="left:62%"></span></div>
+    <textarea class="textarea textarea-bordered w-full" placeholder="dispatch note"></textarea>
+    <div class="flex flex-col gap-3 justify-center">
+      <label class="flex items-center gap-3 text-xs"><input type="checkbox" checked class="checkbox checkbox-primary" /> auto-sync</label>
+      <label class="flex items-center gap-3 text-xs"><span class="dsw on"><i></i></span> broadcast</label>
+      <label class="flex items-center gap-3 text-xs"><input type="radio" name="r" checked class="radio radio-accent" /> priority</label>
+    </div>
+  </div>
+</section>
+
+<!-- NAV -->
+<section class="sec">
+  <div class="lab mb-3">// 06 · navigation</div>
+  <div role="tablist" class="tabs tabs-bordered mb-5">
+    <a role="tab" class="tab tab-active">grid</a>
+    <a role="tab" class="tab">nodes</a>
+    <a role="tab" class="tab">logs</a>
+  </div>
+  <div class="breadcrumbs text-xs mb-5"><ul><li>system</li><li>sector a1.2</li><li class="text-primary">node-047</li></ul></div>
+  <ul class="menu bg-base-200 border border-white/12 w-56 text-xs">
+    <li><a class="active">■ grid</a></li>
+    <li><a>◈ nodes</a></li>
+    <li><a>≡ logs</a></li>
+  </ul>
+</section>
+
+<!-- TABLE -->
+<section class="sec">
+  <div class="lab mb-3">// 07 · table</div>
+  <div class="border border-white/12">
+    <table class="table table-sm">
+      <thead><tr><th>node</th><th>sector</th><th>load</th><th>status</th></tr></thead>
+      <tbody>
+        <tr><td>NODE-047</td><td>A1.2</td><td>72%</td><td class="text-success">▶ nominal</td></tr>
+        <tr><td>NODE-088</td><td>B6</td><td>34%</td><td class="text-warning">▶ warning</td></tr>
+        <tr><td>NODE-003</td><td>X.06</td><td>0%</td><td class="text-error">▶ critical</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- MISC -->
+<section class="sec">
+  <div class="lab mb-3">// 08 · loading & avatars</div>
+  <div class="flex flex-wrap gap-6 items-center">
+    <span class="loading loading-spinner text-primary"></span>
+    <span class="loading loading-dots text-accent"></span>
+    <span class="loading loading-bars text-secondary"></span>
+    <div class="avatar placeholder"><div class="bg-base-300 text-primary w-10 border border-white/15"><span class="disp text-sm">DD</span></div></div>
+    <div class="avatar placeholder"><div class="bg-base-300 text-secondary w-10 border border-white/15"><span class="disp text-sm">X6</span></div></div>
+    <div class="tooltip tooltip-open tooltip-primary" data-tip="ping node"><button class="btn btn-outline btn-primary btn-sm">▶</button></div>
+  </div>
+</section>
+
+<!-- TOKEN MAP -->
+<section class="sec">
+  <div class="lab mb-3">// 09 · token map</div>
+  <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+    <div><div class="h-14 bg-primary"></div><div class="lab mt-1.5">primary #2d6cff</div></div>
+    <div><div class="h-14 bg-secondary"></div><div class="lab mt-1.5">secondary #ff2d87</div></div>
+    <div><div class="h-14 bg-accent"></div><div class="lab mt-1.5">accent #00d9ff</div></div>
+    <div><div class="h-14 bg-success"></div><div class="lab mt-1.5">success #00e676</div></div>
+    <div><div class="h-14 bg-warning"></div><div class="lab mt-1.5">warning #ff5a00</div></div>
+    <div><div class="h-14 bg-error"></div><div class="lab mt-1.5">error #ff0066</div></div>
+    <div><div class="h-14 bg-info"></div><div class="lab mt-1.5">info #0a84e0</div></div>
+    <div><div class="h-14 bg-base-200 border border-white/12"></div><div class="lab mt-1.5">base-200 #111110</div></div>
+  </div>
+</section>
+
+</main>
+<div class="chk mt-10" style="height:7px"></div>
+</body>
+</html>
