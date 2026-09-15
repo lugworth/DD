@@ -184,47 +184,59 @@ async function build(file){
   }
 
   /* 4 · local scripts → inline <script> (supports ES module imports from ./shared/) */
-  function resolveSharedImports(code, baseDir) {
-    const importRegex = /import\s+([\s\S]*?)\s+from\s+(['"])(\.?\.?\/shared\/[^'"]+)\2\s*;?/g;
-    return code.replace(importRegex, (full, imports, quote, relPath) => {
-      const absPath = resolve(baseDir, relPath);
-      if (!existsSync(absPath)) {
-        stats.missing++;
-        console.warn(`  ! missing shared import ${relPath}`);
-        return full;
+  async function resolveSharedImports(code, baseDir) {
+      const importRegex = /import\s+([\s\S]*?)\s+from\s+(['"])(\.?\.\/shared\/[^'"]+)\2\s*;?/g;
+      let result = code;
+      let match;
+      while ((match = importRegex.exec(code)) !== null) {
+        const [full, imports, quote, relPath] = match;
+        const absPath = resolve(baseDir, relPath);
+        if (!existsSync(absPath)) {
+          stats.missing++;
+          console.warn(`  ! missing shared import ${relPath}`);
+          continue;
+        }
+        let sharedCode = readFileSync(absPath, 'utf8');
+        sharedCode = await resolveSharedImports(sharedCode, dirname(absPath));
+        sharedCode = sharedCode.replace(/\bexport\s+default\s+/g, '// export default ');
+        sharedCode = sharedCode.replace(/\bexport\s+const\s+/g, 'const ');
+        sharedCode = sharedCode.replace(/\bexport\s+let\s+/g, 'let ');
+        sharedCode = sharedCode.replace(/\bexport\s+function\s+/g, 'function ');
+        sharedCode = sharedCode.replace(/\bexport\s+class\s+/g, 'class ');
+        sharedCode = sharedCode.replace(/\bexport\s+\{([^}]+)\};?/g, '// export {$1}');
+        result = result.replace(full, `// inlined from ${relPath}\n${sharedCode}`);
       }
-      let sharedCode = readFileSync(absPath, 'utf8');
-      sharedCode = resolveSharedImports(sharedCode, dirname(absPath));
-      sharedCode = sharedCode.replace(/\bexport\s+default\s+/g, '// export default ');
-      sharedCode = sharedCode.replace(/\bexport\s+const\s+/g, 'const ');
-      sharedCode = sharedCode.replace(/\bexport\s+let\s+/g, 'let ');
-      sharedCode = sharedCode.replace(/\bexport\s+function\s+/g, 'function ');
-      sharedCode = sharedCode.replace(/\bexport\s+class\s+/g, 'class ');
-      sharedCode = sharedCode.replace(/\bexport\s+\{([^}]+)\};?/g, '// export {$1}');
-      return `// inlined from ${relPath}\n${sharedCode}`;
-    });
-  }
+      return result;
+    }
 
-  function inlineScripts(html, baseDir) {
-    html = html.replace(/<script\b[^>]*\bsrc=("|')([^"']+\.js)\1[^>]*>\s*<\/script>/g, (m, q, src) => {
-      if (isRemote(src)) return m;
+  async function inlineScripts(html, baseDir) {
+    // Replace external script tags with inline scripts
+    const scriptSrcRegex = /<script\b[^>]*\bsrc=("|')([^"']+\.js)\1[^>]*>\s*<\/script>/g;
+    const scriptSrcMatches = [...html.matchAll(scriptSrcRegex)];
+    for (const m of scriptSrcMatches) {
+      const [full, q, src] = m;
+      if (isRemote(src)) continue;
       const p = resolve(baseDir, src);
-      if (!existsSync(p)) { stats.missing++; console.warn(`  ! missing ${src}`); return m; }
+      if (!existsSync(p)) { stats.missing++; console.warn(`  ! missing ${src}`); continue; }
       let code = readFileSync(p, 'utf8');
-      code = resolveSharedImports(code, dirname(p));
-      return `<script>\n${code.replace(/<\/script/gi, '<\\/script')}\n</script>`;
-    });
+      code = await resolveSharedImports(code, dirname(p));
+      html = html.replace(full, `<script>\n${code.replace(/<\/script/gi, '<\\/script')}\n</script>`);
+    }
 
-    html = html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/g, (m, code) => {
-      if (/<script\b[^>]*\bsrc=/i.test(m)) return m;
-      code = resolveSharedImports(code, baseDir);
-      return `<script>\n${code.replace(/<\/script/gi, '<\\/script')}\n</script>`;
-    });
+    // Replace inline script content
+    const scriptContentRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/g;
+    const scriptContentMatches = [...html.matchAll(scriptContentRegex)];
+    for (const m of scriptContentMatches) {
+      const [full, code] = m;
+      if (/<script\b[^>]*\bsrc=/i.test(full)) continue;
+      const processedCode = await resolveSharedImports(code, baseDir);
+      html = html.replace(full, `<script>\n${processedCode.replace(/<\/script/gi, '<\\/script')}\n</script>`);
+    }
 
     return html;
   }
 
-  html = inlineScripts(html, dir);
+  html = await inlineScripts(html, dir);
 
   mkdirSync(OUT,{recursive:true});
   const out = join(OUT, flatName(file));
