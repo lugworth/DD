@@ -112,17 +112,29 @@ main{padding:24px}
   position:absolute;top:8px;right:10px;font-size:9px;letter-spacing:.2em;color:var(--white-dim);
   background:rgba(0,0,0,.6);padding:2px 6px;z-index:2;
 }
-.card .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:9px;flex:1}
-.card h2{font-family:var(--font-display);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.14em}
-.card h2 a::after{content:'';position:absolute;inset:0;z-index:1}
-.card p{color:var(--white-dim);font-size:10.5px;line-height:1.6;letter-spacing:.03em;flex:1}
-.tags{display:flex;gap:5px;flex-wrap:wrap}
+.card .body{padding:0 0 16px;display:flex;flex-direction:column;flex:1}
+.node-hd{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:9px 16px;border-bottom:1px solid var(--border);
+}
+.node-hd h2{font-family:var(--font-display);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.14em}
+.node-hd h2 a::after{content:'';position:absolute;inset:0;z-index:1}
+.node-hd .code{font-size:9px;letter-spacing:.1em;color:var(--white-dim);white-space:nowrap}
+.card p{color:var(--white-dim);font-size:10.5px;line-height:1.6;letter-spacing:.03em;padding:12px 16px 0}
+.node-rows{display:flex;flex-direction:column;padding:9px 16px 0;flex:1}
+.node-rw{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.node-rw:last-child{border-bottom:0}
+.node-k{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--white-dim)}
+.node-v{font-size:10px;letter-spacing:.05em;font-variant-numeric:tabular-nums;text-align:right;color:var(--white-soft)}
+.node-pip{display:inline-block;width:5px;height:5px;background:currentColor;margin-right:5px;vertical-align:middle}
+.node-v.status{color:var(--green)}
+.tags{display:flex;gap:5px;flex-wrap:wrap;padding:10px 16px 0}
 .tag{
   font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;
   border:1px solid var(--border);color:var(--white-dim);padding:2px 6px;
 }
 .tag.hot{border-color:var(--yellow);color:var(--yellow)}
-.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;position:relative;z-index:2}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding:0 16px;position:relative;z-index:2}
 .links a{
   font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
   border:1px solid var(--border-hi);padding:5px 10px;color:var(--white-soft);
@@ -572,12 +584,31 @@ TOOLS.forEach((tool,i)=>{
 
   const body=document.createElement('div');
   body.className='body';
+
+  const nodeHd=document.createElement('div');
+  nodeHd.className='node-hd';
   const hd=document.createElement('h2');
   const a=document.createElement('a');
   a.href=href(tool.slug); a.textContent=tool.name;
   hd.appendChild(a);
+  const code=document.createElement('span');
+  code.className='code';
+  code.textContent='0x'+(i+1).toString(16).toUpperCase().padStart(4,'0');
+  nodeHd.append(hd,code);
+
   const p=document.createElement('p');
   p.textContent=tool.blurb;
+
+  const rows=document.createElement('div');
+  rows.className='node-rows';
+  const rowType=document.createElement('div');
+  rowType.className='node-rw';
+  rowType.innerHTML='<span class="node-k">type</span><span class="node-v">'+tool.tags.join(' · ').toUpperCase()+'</span>';
+  const rowStatus=document.createElement('div');
+  rowStatus.className='node-rw';
+  rowStatus.innerHTML='<span class="node-k">status</span><span class="node-v status"><span class="node-pip" aria-hidden="true"></span>LIVE</span>';
+  rows.append(rowType,rowStatus);
+
   const tags=document.createElement('div');
   tags.className='tags';
   tool.tags.forEach(tg=>{
@@ -597,7 +628,7 @@ TOOLS.forEach((tool,i)=>{
   const rm=readme(tool.slug);
   if(rm){ const rl=document.createElement('a'); rl.href=rm; rl.textContent='Readme'; links.appendChild(rl); }
 
-  body.append(hd,p,tags,links);
+  body.append(nodeHd,p,rows,tags,links);
   card.appendChild(body);
   grid.appendChild(card);
 
