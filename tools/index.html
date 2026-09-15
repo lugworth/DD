@@ -47,6 +47,16 @@ header{
 .title-block{display:flex;flex-direction:column;justify-content:center;padding:10px 20px;border-right:1px solid var(--border)}
 .title-block h1{font-family:var(--font-display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.12em;line-height:1}
 .title-block .sub{color:var(--white-dim);font-size:10px;letter-spacing:.14em;text-transform:lowercase;margin-top:4px}
+.hub-nav{display:flex;align-items:stretch;border-right:1px solid var(--border)}
+.hub-nav a{
+  display:flex;align-items:center;font-family:var(--font-mono);font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--white-dim);
+  padding:0 16px;border-right:1px solid var(--border);
+  transition:color var(--d-fast) var(--e-snap),background var(--d-fast) var(--e-snap);
+}
+.hub-nav a:last-child{border-right:0}
+.hub-nav a:hover{background:var(--white);color:var(--black)}
+.hub-nav a.is-active{background:var(--yellow);color:var(--black);font-weight:600}
 .head-coords{margin-left:auto;display:flex;align-items:center;gap:20px;padding:0 20px;color:var(--white-dim);font-size:10px;letter-spacing:.18em}
 .head-coords .live{color:var(--green)}
 .head-coords .live::before{content:'●';margin-right:6px;animation:blink 1.6s steps(1) infinite}
@@ -138,6 +148,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
   .bar{top:53px}
   main{padding:16px}
   .grid{grid-template-columns:1fr}
+  .head-coords{display:none}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -152,6 +163,10 @@ footer .fill{flex:1;border-right:0;text-align:right}
     <h1>Tools</h1>
     <div class="sub">generative instrument rack · <span id="toolCount">—</span> builds</div>
   </div>
+  <nav class="hub-nav" aria-label="site sections">
+    <a href="./index.html" class="is-active" aria-current="page">Tools</a>
+    <a href="../components/index.html">Components</a>
+  </nav>
   <div class="head-coords">
     <span>A1.2</span><span>X.06</span><span>0x4F3A</span><span class="live">live</span>
   </div>
