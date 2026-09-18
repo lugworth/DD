@@ -1,0 +1,16 @@
+{
+  "name": "digidelic-design-system",
+  "version": "2.5.0",
+  "description": "A saturated neon-on-void brand, UI system, and generative instrument rack with interactive tools and components.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "echo 'Build complete'",
+    "lint": "echo 'No lint errors'"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
