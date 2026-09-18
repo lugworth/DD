@@ -167,6 +167,40 @@
 .tex-ascii-4 { background-image: url('assets/tex-ascii-04.png'); background-size: 560px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
 .tex-ascii-5 { background-image: url('assets/tex-ascii-05.png'); background-size: 620px; mix-blend-mode: screen; opacity: var(--tex-op, 0.16); }
 
+/* ASCII in Full Contrast as Hard-Light Overlay — minimal, crisp, non-obstructive */
+.tex-ascii-hl,
+.tex-ascii-hardlight {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background-image: url('assets/tex-ascii-dense.png');
+  background-size: 360px; background-repeat: repeat;
+  mix-blend-mode: hard-light;
+  opacity: var(--tex-hl-op, 0.14);
+  filter: contrast(180%) brightness(125%);
+}
+.tex-ascii-hl-subtle {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background-image: url('assets/tex-ascii-01.png');
+  background-size: 420px; background-repeat: repeat;
+  mix-blend-mode: hard-light;
+  opacity: var(--tex-hl-op, 0.08);
+  filter: contrast(170%);
+}
+
+/* Bright Blue-to-Pink-Red gradients on solid surfaces */
+.grad-blue-pink {
+  background: linear-gradient(90deg, #2d6cff 0%, #ff2d87 100%) !important;
+  color: #ffffff !important;
+}
+.grad-blue-pink-diag {
+  background: linear-gradient(135deg, #2d6cff 0%, #a82fff 50%, #ff2d87 100%) !important;
+  color: #ffffff !important;
+}
+.text-grad-blue-pink {
+  background: linear-gradient(90deg, #2d6cff 0%, #ff2d87 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 /* electric-blue ASCII field (uploads, 07-2026) — high-contrast white glyphs on brand blue */
 .bg-ascii-blue { background-image: url('assets/tex-ascii-blue.png'); background-size: cover; background-position: center; }
 .tex-ascii-blue { background-image: url('assets/tex-ascii-blue.png'); background-size: 280px; mix-blend-mode: screen; opacity: var(--tex-op, 0.5); }

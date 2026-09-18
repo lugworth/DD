@@ -125,6 +125,11 @@
   --st-info:      var(--cyan);
   --st-dead:      var(--white-ghost);
 
+  /* ─── SPECTRAL ACCENTS (Blue to Pink-Red Gradients) ─────── */
+  --grad-blue-pink:      linear-gradient(90deg, var(--cobalt) 0%, var(--pink) 100%);
+  --grad-blue-pink-diag: linear-gradient(135deg, var(--cobalt) 0%, #a82fff 50%, var(--pink) 100%);
+  --grad-blue-pink-v:    linear-gradient(180deg, var(--cobalt) 0%, var(--pink) 100%);
+
   /* ─── TYPOGRAPHY ────────────────────────────────────────── */
   --font-display: 'Space Grotesk', system-ui, sans-serif;
   --font-mono:    'Geist Mono', 'Red Hat Mono', 'Courier New', monospace;

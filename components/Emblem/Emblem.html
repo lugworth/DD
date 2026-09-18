@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emblem Badges // Digidelic Design System</title>
+<meta name="description" content="Twelve vector cosmogram rosettes and planetary armillary badges with stepped hover mechanics, registration marks, radial rim stencils, and psychedelic fluid melt.">
+<link rel="stylesheet" href="/styles/tokens.css">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="./Emblem.js"></script>
+<style>
+:root{
+  --bg-primary:#0a0a0c;--bg-secondary:#121216;--bg-tertiary:#18181f;
+  --border-subtle:rgba(255,255,255,0.08);--border-active:#00d9ff;
+  --text-primary:#f0f0f4;--text-secondary:#8a8a9a;--accent-cyan:#00d9ff;
+  --accent-pink:#ff2d87;--accent-lime:#c6ff3a;--accent-orange:#ff5a00;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg-primary);color:var(--text-primary);
+  font-family:'Geist Mono','Red Hat Mono',monospace;
+  min-height:100vh;padding:40px 24px 100px;
+}
+.page-wrap{max-width:1200px;margin:0 auto;position:relative}
+.ambient-ascii{
+  position:fixed;top:0;left:0;right:0;height:120px;
+  background-image:radial-gradient(rgba(255,255,255,0.08) 1px, transparent 0);
+  background-size:16px 16px;pointer-events:none;z-index:0;opacity:0.6;
+}
+.chk{height:4px;background:repeating-linear-gradient(90deg,#00d9ff 0 8px,#ff2d87 8px 16px,#c6ff3a 16px 24px,#ff5a00 24px 32px,#121216 32px 40px);margin-bottom:28px}
+.chk-accent{height:1px;background:rgba(255,255,255,0.12);margin-bottom:36px}
+h1{font-size:28px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#fff;line-height:1.2}
+h1 em{color:var(--accent-cyan);font-style:normal}
+p.sub{font-size:12px;color:var(--text-secondary);max-width:760px;line-height:1.6;margin-top:10px}
+.sec{margin-top:54px}
+.lab{
+  font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--accent-cyan);display:flex;align-items:center;gap:8px;margin-bottom:14px;
+}
+.lab-tag{color:var(--accent-pink)}
+p.note{font-size:11px;color:var(--text-secondary);line-height:1.55;max-width:720px;margin-bottom:20px}
+.panel{background:var(--bg-secondary);border:1px solid var(--border-subtle);padding:28px;position:relative}
+.panel-light{background:#eae6dc;color:#0a0a0a;border-color:rgba(0,0,0,0.14)}
+.panel-black{background:#0a0a0c}
+.panel-night{background:#0e111a}
+.panel-cream{background:#eae6dc;color:#0a0a0a}
+.inspector-layout{display:grid;grid-template-columns:1.2fr 1fr;gap:24px}
+@media(max-width:880px){.inspector-layout{grid-template-columns:1fr}}
+.btn-toggle{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border-subtle);
+  color:var(--text-primary);padding:6px 12px;font-family:inherit;font-size:10px;
+  letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:all 90ms steps(1,end);
+}
+.btn-toggle:hover{border-color:var(--accent-cyan);color:var(--accent-cyan);background:rgba(0,217,255,0.06)}
+.btn-toggle.is-active{
+  background:var(--accent-cyan);color:#0a0a0c;border-color:var(--accent-cyan);
+  font-weight:700;box-shadow:2px 2px 0px var(--accent-pink);
+}
+.code-box{
+  background:#070709;border:1px solid rgba(255,255,255,0.1);padding:14px;
+  font-size:10px;line-height:1.6;color:#00d9ff;overflow-x:auto;white-space:pre-wrap;margin-top:10px;
+}
+.swatch-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.swatch{width:24px;height:24px;border:1px solid rgba(255,255,255,0.25);position:relative;cursor:pointer;transition:transform 80ms}
+.swatch:hover{transform:scale(1.15);border-color:#fff}
+.swatch.is-selected{border:2px solid #00d9ff;box-shadow:0 0 0 1px #000, 2px 2px 0px #ff2d87}
+.swatch-label{font-size:8.5px;letter-spacing:0.1em;opacity:0.6;margin-top:2px;text-align:center}
+.ramp-grid{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.ramp-chip{width:18px;height:18px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;transition:transform 60ms}
+.ramp-chip:hover{transform:scale(1.2);border-color:#fff;z-index:2}
+.colorway-chip{
+  padding:4px 8px;font-size:9px;border:1px solid var(--border-subtle);background:rgba(255,255,255,0.04);
+  cursor:pointer;font-family:inherit;color:inherit;letter-spacing:0.1em;transition:all 70ms;
+}
+.colorway-chip:hover{border-color:var(--accent-lime);color:var(--accent-lime)}
+.colorway-chip.is-active{background:var(--accent-pink);color:#fff;border-color:var(--accent-pink);font-weight:700}
+</style>
+</head>
+<body>
+<div class="ambient-ascii" aria-hidden="true"></div>
+<div class="page-wrap">
+  <div class="chk"></div>
+  <div class="chk-accent"></div>
+  
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap">
+    <div>
+      <h1>Emblem <em>// Badges</em></h1>
+      <p class="sub">
+        Twelve vector cosmogram rosettes and planetary armillary badges.
+        High-contrast chromatic disks with stepped 45° hover mechanics, technical print registration marks,
+        radial rim stencils, custom colorway matrix generators, and psychedelic fluid turbulence melt.
+      </p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a href="/components/index.html" class="btn-toggle">← All Components</a>
+      <a href="/tools/index.html" class="btn-toggle">Tools Hub</a>
+    </div>
+  </div>
+
+  <div id="root"></div>
+</div>
+
+<script>
+const {
+  Emblem,
+  EmblemBadge,
+  EmblemCluster,
+  EmblemGrid,
+  EMBLEM_MOTIFS,
+  CANONICAL_CODES,
+  COLORWAYS,
+  RAMP_STOPS,
+  SIZES
+} = window.DigidelicDesignSystem_da5439 || window;
+
+const { createElement: h, Fragment, useState } = React;
+
+function DemoApp() {
+  const [selectedMotif, setSelectedMotif] = useState('0x04');
+  const [activeSize, setActiveSize] = useState('lg');
+  const [isInteractive, setIsInteractive] = useState(true);
+  const [codeLayout, setCodeLayout] = useState('both'); // 'rim' | 'pill' | 'both' | 'none'
+  const [rimPosition, setRimPosition] = useState('top'); // 3C: 'top' | 'bottom'
+  const [clusterLayout, setClusterLayout] = useState('fan'); // 2B: 'fan' | 'cascade' | 'orbit'
+  const [showMarks, setShowMarks] = useState(true);
+  const [activeSurface, setActiveSurface] = useState('black');
+  const [isMelt, setIsMelt] = useState(false);
+  const [activeColorway, setActiveColorway] = useState('custom');
+  const [customColors, setCustomColors] = useState({
+    base: '#1c3218',
+    accent: '#39ff6a',
+    contrast: '#000000',
+    aperture: '#ffffff'
+  });
+  const [activeSlot, setActiveSlot] = useState('accent');
+  const [copied, setCopied] = useState(false);
+
+  const meta = EMBLEM_MOTIFS[selectedMotif] || EMBLEM_MOTIFS['0x04'];
+
+  // Sync custom colors when motif changes unless user explicitly switched colorway
+  function handleSelectMotif(m) {
+    setSelectedMotif(m);
+    const mData = EMBLEM_MOTIFS[m] || EMBLEM_MOTIFS['0x01'];
+    setCustomColors({
+      base: mData.base,
+      accent: mData.accent,
+      contrast: mData.contrast,
+      aperture: mData.aperture
+    });
+    setActiveColorway('custom');
+  }
+
+  function handleSelectColorway(cwKey) {
+    setActiveColorway(cwKey);
+    if (COLORWAYS[cwKey]) {
+      const cw = COLORWAYS[cwKey];
+      setCustomColors({
+        base: cw.base,
+        accent: cw.accent,
+        contrast: cw.contrast,
+        aperture: cw.aperture
+      });
+    }
+  }
+
+  function handlePickRampStop(hex) {
+    setCustomColors(prev => ({
+      ...prev,
+      [activeSlot]: hex
+    }));
+    setActiveColorway('custom');
+  }
+
+  function randomizeColorway() {
+    const stops = RAMP_STOPS.map(s => s.hex);
+    const pick = () => stops[Math.floor(Math.random() * stops.length)];
+    setCustomColors({
+      base: pick(),
+      accent: pick(),
+      contrast: pick(),
+      aperture: '#ffffff'
+    });
+    setActiveColorway('custom');
+  }
+
+  // Generate live React JSX snippet
+  const hasCustomColors = activeColorway !== 'custom'
+    ? `colorway="${activeColorway}"`
+    : `colors={{\n    base: '${customColors.base}',\n    accent: '${customColors.accent}',\n    contrast: '${customColors.contrast}',\n    aperture: '${customColors.aperture}'\n  }}`;
+
+  const jsxSnippet = `<Emblem
+  motif="${selectedMotif}"
+  size="${activeSize}"
+  codeLayout="${codeLayout}"
+  rimPosition="${rimPosition}"
+  interactive={${isInteractive}}
+  registrationMarks={${showMarks}}
+  melt={${isMelt}}
+  surface="${activeSurface}"
+  ${hasCustomColors}
+/>`;
+
+  function copyCode() {
+    navigator.clipboard.writeText(jsxSnippet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  }
+
+  return h(Fragment, null,
+
+    /* ─── SECTION 01: Canonical Suite (0x01 - 0x0C) ─── */
+    h('div', { className: 'sec' },
+      h('div', { className: 'lab' },
+        h('span', { className: 'lab-tag' }, '01 ·'),
+        'Canonical Suite — 0x01 through 0x0C'
+      ),
+      h('p', { className: 'note' },
+        'The complete 3×4 geometric rosette suite. Each badge pairs hyper-saturated color fields with hairline print registration ticks and simple monospace code identifiers. Click any emblem to inspect.'
+      ),
+      h('div', { className: 'panel panel-light' },
+        h('div', { style: { textAlign: 'center', marginBottom: 26 } },
+          h('div', { style: { fontFamily: "'Geist Mono', monospace", fontSize: 11, fontWeight: 700, letterSpacing: '0.24em', textTransform: 'uppercase', color: '#333' }, id: 'emblem-suite-header' },
+            '// FORM IDENTIFIERS · 0x01 — 0x0C'
+          )
+        ),
+        h(EmblemGrid, {
+          motifs: CANONICAL_CODES,
+          size: 78,
+          codeLayout: codeLayout,
+          interactive: true,
+          melt: isMelt,
+          onSelect: (m) => handleSelectMotif(m)
+        })
+      )
+    ),
+
+    /* ─── SECTION 02: Cluster Stack & 3D Layouts (2B) ─── */
+    h('div', { className: 'sec' },
+      h('div', { className: 'lab' },
+        h('span', { className: 'lab-tag' }, '02 ·'),
+        'EmblemCluster — 3D Overlapping Fan Array, Orbit & Cascade (2B)'
+      ),
+      h('p', { className: 'note' },
+        'Multi-motif spatial configurations supporting 3D perspective fan arrays, harmonic orbits, and editorial risograph cascades with hover elevation and perimeter stencils.'
+      ),
+      h('div', { className: 'panel', style: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 20px', overflow: 'hidden' } },
+        h('div', { style: { display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 28, flexWrap: 'wrap' } },
+          [
+            { id: 'fan', label: '2B · 3D FAN ARRAY' },
+            { id: 'cascade', label: 'CASCADE STACK' },
+            { id: 'orbit', label: 'ORBIT HARMONIC' }
+          ].map((item) =>
+            h('button', {
+              key: item.id,
+              className: `btn-toggle ${clusterLayout === item.id ? 'is-active' : ''}`,
+              onClick: () => setClusterLayout(item.id),
+              style: { padding: '5px 12px', fontSize: 9 }
+            }, item.label)
+          )
+        ),
+        h(EmblemCluster, {
+          motifs: ['0x08', '0x0B', '0x04', '0x0A', '0x01', '0x02'],
+          layout: clusterLayout,
+          size: clusterLayout === 'orbit' ? 96 : 130,
+          spread: clusterLayout === 'fan' ? 44 : 46,
+          interactive: true,
+          codeLayout: 'rim',
+          rimPosition: rimPosition,
+          melt: isMelt
+        })
+      )
+    ),
+
+    /* ─── SECTION 03: Scale Matrix ─── */
+    h('div', { className: 'sec' },
+      h('div', { className: 'lab' },
+        h('span', { className: 'lab-tag' }, '03 ·'),
+        'Scale Matrix — xs to hero'
+      ),
+      h('p', { className: 'note' },
+        'Emblems scale from 24px micro-tags up to 180px hero focal points without raster degradation, preserving sharp registration hairlines and legible rim stencils.'
+      ),
+      h('div', { className: 'panel' },
+        h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-around', flexWrap: 'wrap', gap: 20 } },
+          ['xs', 'sm', 'md', 'lg', 'xl', 'hero'].map((sz) =>
+            h('div', { key: sz, style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 } },
+              h(Emblem, {
+                motif: selectedMotif,
+                size: sz,
+                interactive: true,
+                codeLayout: sz === 'lg' || sz === 'xl' || sz === 'hero' ? codeLayout : 'none',
+                colors: customColors,
+                melt: isMelt
+              }),
+              h('span', { style: { fontSize: 9.5, letterSpacing: '0.14em', opacity: 0.5 } },
+                `${sz} · ${SIZES[sz]}px`
+              )
+            )
+          )
+        )
+      )
+    ),
+
+    /* ─── SECTION 04: Vector Anatomy & Print Registration ─── */
+    h('div', { className: 'sec' },
+      h('div', { className: 'lab' },
+        h('span', { className: 'lab-tag' }, '04 ·'),
+        'Vector Anatomy & Print Registration — 0x04 · 0x06 · 0x03'
+      ),
+      h('p', { className: 'note' },
+        'High-zoom macro study showcasing cardinal registration ticks, coordinate orbit rings, high-contrast aperture eyes, and radial perimeter stencils.'
+      ),
+      h('div', { className: 'panel panel-light', style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, padding: '48px 24px' } },
+        h(Emblem, { motif: '0x04', size: 140, codeLayout: 'rim', interactive: true, surface: 'cream', melt: isMelt }),
+        h(Emblem, { motif: '0x06', size: 140, codeLayout: 'rim', interactive: true, surface: 'cream', melt: isMelt }),
+        h(Emblem, { motif: '0x03', size: 140, codeLayout: 'rim', interactive: true, surface: 'cream', melt: isMelt })
+      )
+    ),
+
+    /* ─── SECTION 05: Interactive Inspector & Colorway Matrix ─── */
+    h('div', { className: 'sec' },
+      h('div', { className: 'lab' },
+        h('span', { className: 'lab-tag' }, '05 ·'),
+        'Interactive Inspector & Colorway Matrix Generator'
+      ),
+      h('div', { className: 'inspector-layout' },
+
+        /* Left: Live Stage */
+        h('div', {
+          className: `panel panel-${activeSurface}`,
+          style: {
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', minHeight: 380, gap: 24
+          }
+        },
+          h(Emblem, {
+            motif: selectedMotif,
+            size: activeSize,
+            interactive: isInteractive,
+            codeLayout: codeLayout,
+            rimPosition: rimPosition,
+            registrationMarks: showMarks,
+            surface: activeSurface,
+            colors: customColors,
+            melt: isMelt
+          }),
+
+          /* Motif selector grid */
+          h('div', { style: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, maxWidth: 460 } },
+            CANONICAL_CODES.map((code) =>
+              h('button', {
+                key: code,
+                id: `btn-motif-${code}`,
+                className: `btn-toggle ${selectedMotif === code ? 'is-active' : ''}`,
+                onClick: () => handleSelectMotif(code),
+                style: { padding: '5px 8px', fontSize: 9 }
+              }, code)
+            )
+          )
+        ),
+
+        /* Right: Inspector Controls */
+        h('div', { className: 'panel' },
+          h('div', { style: { fontSize: 13, fontWeight: 700, marginBottom: 4, color: '#fff', letterSpacing: '0.14em' } },
+            `EMBLEM // ${meta.code}`
+          ),
+          h('div', { style: { fontSize: 10, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, marginBottom: 14 } },
+            meta.desc
+          ),
+
+          /* 3B: Colorway Presets */
+          h('div', { style: { fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.5, marginBottom: 6 } }, 'Spectral Colorway Presets (3B)'),
+          h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 14 } },
+            Object.keys(COLORWAYS).map((cwKey) =>
+              h('button', {
+                key: cwKey,
+                className: `colorway-chip ${activeColorway === cwKey ? 'is-active' : ''}`,
+                onClick: () => handleSelectColorway(cwKey)
+              }, COLORWAYS[cwKey].name)
+            ),
+            h('button', {
+              className: 'colorway-chip',
+              style: { color: '#00d9ff', borderColor: 'rgba(0,217,255,0.3)' },
+              onClick: randomizeColorway
+            }, '🎲 Randomize')
+          ),
+
+          /* Active 4-Plate Swatches & Ramp Selector */
+          h('div', { style: { fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.5, marginBottom: 4 } }, `Active Plates (Editing: ${activeSlot.toUpperCase()})`),
+          h('div', { className: 'swatch-row' },
+            ['base', 'accent', 'contrast', 'aperture'].map((slot) =>
+              h('div', {
+                key: slot,
+                style: { display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' },
+                onClick: () => setActiveSlot(slot)
+              },
+                h('div', {
+                  className: `swatch ${activeSlot === slot ? 'is-selected' : ''}`,
+                  style: { backgroundColor: customColors[slot] },
+                  title: `${slot}: ${customColors[slot]}`
+                }),
+                h('span', { className: 'swatch-label' }, slot)
+              )
+            )
+          ),
+
+          /* Ramp palette chips */
+          h('div', { style: { fontSize: 8.5, opacity: 0.5, marginBottom: 4 } }, 'Digidelic Canonical Ramp Stops:'),
+          h('div', { className: 'ramp-grid', style: { marginBottom: 16 } },
+            RAMP_STOPS.map((stop) =>
+              h('div', {
+                key: stop.name,
+                className: 'ramp-chip',
+                style: { backgroundColor: stop.hex },
+                title: `${stop.name} (${stop.hex})`,
+                onClick: () => handlePickRampStop(stop.hex)
+              })
+            )
+          ),
+          
+          /* Parameter Toggles */
+          h('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 } },
+
+            /* 1A: Psychedelic Fluid Melt Mode */
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,45,135,0.06)', padding: '6px 8px', border: '1px solid rgba(255,45,135,0.2)' } },
+              h('div', null,
+                h('div', { style: { fontSize: 9.5, fontWeight: 700, color: '#ff2d87' } }, '1A · Fluid Melt Mode'),
+                h('div', { style: { fontSize: 8, opacity: 0.6 } }, 'SVG fractal turbulence displacement map')
+              ),
+              h('button', {
+                className: `btn-toggle ${isMelt ? 'is-active' : ''}`,
+                onClick: () => setIsMelt(!isMelt),
+                style: { padding: '3px 8px', fontSize: 8 }
+              }, isMelt ? 'ACTIVE' : 'OFF')
+            ),
+
+            /* 2C: Radial Rim Stencil Layout */
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+              h('div', null,
+                h('div', { style: { fontSize: 9.5, opacity: 0.8 } }, '2C · Code Placement'),
+                h('div', { style: { fontSize: 8, opacity: 0.5 } }, 'Perimeter arc vs micro-chip pill')
+              ),
+              h('div', { style: { display: 'flex', gap: 4 } },
+                [
+                  { id: 'rim', label: 'RIM' },
+                  { id: 'pill', label: 'PILL' },
+                  { id: 'both', label: 'BOTH' },
+                  { id: 'none', label: 'NONE' }
+                ].map((item) =>
+                  h('button', {
+                    key: item.id,
+                    className: `btn-toggle ${codeLayout === item.id ? 'is-active' : ''}`,
+                    onClick: () => setCodeLayout(item.id),
+                    style: { padding: '3px 7px', fontSize: 8 }
+                  }, item.label)
+                )
+              )
+            ),
+
+            /* 3C: Rim Stencil Perimeter Curve (Inverted Top vs Bottom Arc) */
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+              h('div', null,
+                h('div', { style: { fontSize: 9.5, opacity: 0.8 } }, '3C · Rim Arc Orientation'),
+                h('div', { style: { fontSize: 8, opacity: 0.5 } }, 'Top crown vs bottom cradle curve')
+              ),
+              h('div', { style: { display: 'flex', gap: 4 } },
+                [
+                  { id: 'top', label: 'TOP CROWN' },
+                  { id: 'bottom', label: 'BOTTOM CRADLE' }
+                ].map((pos) =>
+                  h('button', {
+                    key: pos.id,
+                    className: `btn-toggle ${rimPosition === pos.id ? 'is-active' : ''}`,
+                    onClick: () => setRimPosition(pos.id),
+                    style: { padding: '3px 7px', fontSize: 8 }
+                  }, pos.label)
+                )
+              )
+            ),
+
+            /* Size selector */
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+              h('span', { style: { fontSize: 9.5, opacity: 0.6 } }, 'Size Token'),
+              h('div', { style: { display: 'flex', gap: 4 } },
+                ['sm', 'md', 'lg', 'xl'].map((sz) =>
+                  h('button', {
+                    key: sz,
+                    className: `btn-toggle ${activeSize === sz ? 'is-active' : ''}`,
+                    onClick: () => setActiveSize(sz),
+                    style: { padding: '3px 7px', fontSize: 8 }
+                  }, sz)
+                )
+              )
+            ),
+
+            /* Registration Marks Toggle */
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+              h('span', { style: { fontSize: 9.5, opacity: 0.6 } }, 'Print Registration'),
+              h('button', {
+                className: `btn-toggle ${showMarks ? 'is-active' : ''}`,
+                onClick: () => setShowMarks(!showMarks),
+                style: { padding: '3px 8px', fontSize: 8 }
+              }, showMarks ? 'ON' : 'OFF')
+            ),
+
+            /* Interactive Spin Toggle */
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+              h('span', { style: { fontSize: 9.5, opacity: 0.6 } }, 'Stepped Hover'),
+              h('button', {
+                className: `btn-toggle ${isInteractive ? 'is-active' : ''}`,
+                onClick: () => setIsInteractive(!isInteractive),
+                style: { padding: '3px 8px', fontSize: 8 }
+              }, isInteractive ? 'ON' : 'OFF')
+            ),
+
+            /* Surface Toggle */
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+              h('span', { style: { fontSize: 9.5, opacity: 0.6 } }, 'Surface Canvas'),
+              h('div', { style: { display: 'flex', gap: 4 } },
+                ['black', 'night', 'cream'].map((sfc) =>
+                  h('button', {
+                    key: sfc,
+                    className: `btn-toggle ${activeSurface === sfc ? 'is-active' : ''}`,
+                    onClick: () => setActiveSurface(sfc),
+                    style: { padding: '3px 7px', fontSize: 8 }
+                  }, sfc)
+                )
+              )
+            )
+          ),
+
+          /* React JSX Snippet Generator */
+          h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 } },
+            h('span', { style: { fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.5 } }, 'React JSX'),
+            h('button', {
+              className: 'btn-toggle',
+              id: 'btn-copy-jsx',
+              onClick: copyCode,
+              style: { padding: '2px 6px', fontSize: 8 }
+            }, copied ? 'COPIED!' : 'COPY')
+          ),
+          h('pre', { className: 'code-box', id: 'jsx-code-output' }, jsxSnippet)
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(DemoApp));
+</script>
+<script src="/nav-node.js" defer></script>
+</body>
+</html>
