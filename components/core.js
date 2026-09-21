@@ -78,7 +78,21 @@ function resolveSurface(surface) {
 
 export function hueOf({ accent, id, label, surface = 'black' }) {
   surface = resolveSurface(surface);
-  const name = accent && RAMP.indexOf(accent) > -1 ? accent : RAMP[stopIndex(id != null ? id : label)];
+  let name = null;
+  if (accent && RAMP.indexOf(accent) > -1) {
+    name = accent;
+  } else if (accent && typeof accent === 'string') {
+    const hex = accent.toLowerCase();
+    for (const [k, v] of Object.entries(RAMP_BLACK)) {
+      if (v.toLowerCase() === hex) { name = k; break; }
+    }
+  }
+  if (!name) {
+    if (accent && typeof accent === 'string' && accent.startsWith('#')) {
+      return { name: 'custom', fill: accent, ink: '#000000' };
+    }
+    name = RAMP[stopIndex(id != null ? id : label)];
+  }
   if (surface === 'cream') return { name, fill: RAMP_CREAM[name], ink: '#ffffff' };
   if (surface === 'night') return { name, fill: RAMP_NIGHT[name], ink: '#000000' };
   return { name, fill: RAMP_BLACK[name], ink: INK_BLACK[name] };

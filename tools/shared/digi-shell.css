@@ -1,0 +1,203 @@
+/**
+ * digi-shell.css — Canonical Digidelic instrument shell & HUD styling
+ * Provides: top checker strip, quick tool switcher HUD, cybernetic sound feedback indicators,
+ * CRT/glitch phosphor stages, and zero-radius enforcement across all tools.
+ */
+
+/* Canonical Digidelic Top Checkerboard Trim */
+.chk-strip {
+  height: 7px;
+  width: 100%;
+  flex: none;
+  position: relative;
+  z-index: 90;
+  background-color: #ff6050;
+  background-image: linear-gradient(45deg, #2d6cff 25%, transparent 25%, transparent 75%, #2d6cff 75%),
+                    linear-gradient(45deg, #2d6cff 25%, transparent 25%, transparent 75%, #2d6cff 75%);
+  background-size: 14px 14px;
+  background-position: 0 0, 7px 7px;
+}
+.chk-strip-accent {
+  height: 2px;
+  width: 100%;
+  flex: none;
+  position: relative;
+  z-index: 90;
+  background: linear-gradient(90deg, #2d6cff 0%, #a82fff 50%, #ff2d87 100%);
+}
+
+/* Ambient Hard-Light ASCII Grid Layer */
+.ambient-ascii {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url('/assets/tex-ascii-dense.png');
+  background-size: 480px;
+  background-repeat: repeat;
+  mix-blend-mode: hard-light;
+  opacity: 0.055;
+  filter: contrast(180%) brightness(120%);
+}
+
+/* Tool Switcher Component */
+.tool-switcher-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-right: 1px solid var(--border, rgba(255,255,255,.12));
+  z-index: 60;
+}
+.tool-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--white-soft, #fff);
+  border: 0;
+  padding: 0 16px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  height: 100%;
+  transition: background 100ms cubic-bezier(.2,0,0,1), color 100ms cubic-bezier(.2,0,0,1);
+  white-space: nowrap;
+}
+.tool-switcher-btn:hover {
+  background: rgba(45,108,255,0.2);
+  color: #00d9ff;
+}
+.tool-switcher-btn .pip {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #39ff6a;
+  box-shadow: 0 0 6px #39ff6a;
+}
+.tool-switcher-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 320px;
+  background: #08080a;
+  border: 1px solid rgba(255,255,255,.25);
+  box-shadow: 0 16px 36px rgba(0,0,0,.95), 0 0 0 1px rgba(45,108,255,.3);
+  display: none;
+  flex-direction: column;
+  z-index: 999;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.tool-switcher-wrap.is-open .tool-switcher-menu {
+  display: flex;
+}
+.tool-menu-hd {
+  padding: 8px 12px;
+  background: #111114;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+  letter-spacing: .2em;
+  color: rgba(255,255,255,.5);
+}
+.tool-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  color: #fff;
+  text-decoration: none;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  transition: background 80ms ease, color 80ms ease;
+}
+.tool-menu-item:hover {
+  background: rgba(45,108,255,0.25);
+  color: #00d9ff;
+}
+.tool-menu-item.is-current {
+  background: #2d6cff;
+  color: #fff;
+  font-weight: 700;
+}
+.tool-menu-code {
+  font-size: 8.5px;
+  color: #ff2d87;
+  letter-spacing: .12em;
+  margin-left: 8px;
+}
+.tool-menu-item.is-current .tool-menu-code {
+  color: #fff;
+}
+
+/* Audio & CRT Toggle Controls */
+.hud-quick-toggles {
+  display: flex;
+  align-items: stretch;
+  border-right: 1px solid var(--border, rgba(255,255,255,.12));
+}
+.hud-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  color: rgba(255,255,255,.65);
+  border: 0;
+  border-right: 1px solid var(--border, rgba(255,255,255,.12));
+  padding: 0 12px;
+  font-family: var(--font-mono, monospace);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  height: 100%;
+  transition: all 90ms ease;
+  white-space: nowrap;
+}
+.hud-btn:hover {
+  background: rgba(255,255,255,.1);
+  color: #fff;
+}
+.hud-btn.is-active {
+  background: rgba(57,255,106,0.15);
+  color: #39ff6a;
+  border-color: rgba(57,255,106,0.3);
+}
+.hud-btn.is-glitching {
+  background: rgba(255,45,135,0.2);
+  color: #ff2d87;
+}
+
+/* Glitch & CRT Filter Effects */
+body.glitch-active canvas#art {
+  filter: contrast(140%) saturate(150%) hue-rotate(15deg);
+  animation: digiGlitchShake 240ms steps(2, start) infinite;
+}
+@keyframes digiGlitchShake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2px, 1px); }
+  50% { transform: translate(1px, -1px); }
+  75% { transform: translate(-1px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+body.crt-active .stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%),
+              linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 3px, 6px 100%;
+  z-index: 30;
+}
+
+/* Enforce Zero Radius Everywhere */
+*, *::before, *::after {
+  border-radius: 0 !important;
+}

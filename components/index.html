@@ -119,8 +119,8 @@ h1 em {
   height: 6px;
   flex: none;
   background-color: var(--card-accent, #2d6cff);
-  background-image: linear-gradient(45deg, var(--card-accent, #2d6cff) 25%, transparent 25%, transparent 75%, var(--card-accent, #2d6cff) 75%),
-                    linear-gradient(45deg, var(--card-accent, #2d6cff) 25%, transparent 25%, transparent 75%, var(--card-accent, #2d6cff) 75%);
+  background-image: linear-gradient(45deg, #000000 25%, transparent 25%, transparent 75%, #000000 75%),
+                    linear-gradient(45deg, #000000 25%, transparent 25%, transparent 75%, #000000 75%);
   background-size: 12px 12px;
   background-position: 0 0, 6px 6px;
 }
@@ -132,7 +132,7 @@ h1 em {
   flex: 1;
   min-width: 0;
 }
-.comp-card-lab {
+.comp-card-lab, .dd-card-lab {
   font-size: 9px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -141,10 +141,17 @@ h1 em {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
 }
 .comp-card-code {
   color: var(--card-accent, #2d6cff);
   font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  padding: 2px 6px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--card-accent, #2d6cff);
+  display: inline-block;
 }
 .comp-card-title {
   font-family: 'Space Grotesk', sans-serif;
@@ -180,22 +187,46 @@ h1 em {
   font-weight: 700;
   margin-top: auto;
   padding-top: 8px;
-  transition: color 100ms ease;
+  transition: color 120ms ease, transform 120ms ease;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 .comp-card:hover .comp-card-go {
-  color: #ff2d87;
+  color: #ffffff;
+  transform: translateX(3px);
 }
 
 /* Digidelic bundle styles */
 .p { font-size: 11px; line-height: 1.7; margin: 0 0 12px; opacity: 0.72; }
 .exports { font-size: 9.5px; letter-spacing: .05em; color: rgba(255,255,255,.4); margin: 0; }
 .exports b { color: rgba(255,255,255,.7); font-weight: 400; }
-.go { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: #2d6cff; font-weight: 700; margin-top: auto; padding-top: 6px; transition: color 100ms ease; }
-.dd-card-int:hover .go { color: #ff2d87; }
-.dd-card-int:hover { box-shadow: 0 10px 28px rgba(0,0,0,0.85), 0 0 0 1px var(--dd-hbd, #2d6cff); }
+.go {
+  font-size: 9px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--card-accent, #2d6cff);
+  font-weight: 700;
+  margin-top: auto;
+  padding-top: 6px;
+  transition: color 120ms ease, transform 120ms ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dd-card-int:hover .go {
+  color: #ffffff !important;
+  transform: translateX(3px);
+}
+.dd-card-int {
+  --dd-hbd: var(--card-accent, #2d6cff);
+  transition: border-color .12s linear, box-shadow .12s ease, transform .12s ease !important;
+}
+.dd-card-int:hover {
+  border-color: var(--dd-hbd, var(--card-accent, #2d6cff)) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.85), 0 0 0 1px var(--dd-hbd, var(--card-accent, #2d6cff)) !important;
+  transform: translateY(-2px);
+}
 code { color: #00d9ff; }
 ::selection { background: #ff2d87; color: #000; }
 </style>
@@ -206,7 +237,7 @@ code { color: #00d9ff; }
   <div class="chk"></div>
   <div class="chk-accent"></div>
   <h1>Components <em>// Spec</em></h1>
-  <p class="sub">Seven source files, twenty-five exports. Each card opens that component's own demo page — every variant, surface and state, standalone.</p>
+  <p class="sub">Thirteen source files, fifty-two exports. Each card opens that component's own demo page — every variant, surface and state, standalone.</p>
 
   <div id="root">
     <!-- Resilient zero-flash static card grid matching the live design system -->
@@ -315,6 +346,96 @@ code { color: #00d9ff; }
           <div class="comp-card-go">view Progress →</div>
         </div>
       </a>
+
+      <!-- Navigation -->
+      <a href="/components/Nav/Nav.html" class="comp-card" id="card-Nav" style="--card-accent: #ff6050;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xNV</span>
+          </div>
+          <h2 class="comp-card-title">Navigation</h2>
+          <p class="comp-card-desc">Top bar, side rails, segmented tabs, breadcrumb trails, steppers and pagination.</p>
+          <p class="comp-card-exports"><b>TopBar</b> · <b>NavItem</b> · <b>Tabs</b> · <b>Breadcrumbs</b> · <b>Stepper</b> · <b>Pagination</b></p>
+          <div class="comp-card-go">view Navigation →</div>
+        </div>
+      </a>
+
+      <!-- Overlay -->
+      <a href="/components/Overlay/Overlay.html" class="comp-card" id="card-Overlay" style="--card-accent: #4653e8;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xOV</span>
+          </div>
+          <h2 class="comp-card-title">Overlay</h2>
+          <p class="comp-card-desc">Modal dialogs, elevated toast alert stacks, directional tooltips and HUD command palette.</p>
+          <p class="comp-card-exports"><b>Modal</b> · <b>Toast</b> · <b>Tooltip</b> · <b>CommandPalette</b></p>
+          <div class="comp-card-go">view Overlay →</div>
+        </div>
+      </a>
+
+      <!-- Menu -->
+      <a href="/components/Menu/Menu.html" class="comp-card" id="card-Menu" style="--card-accent: #8a3fb0;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xMN</span>
+          </div>
+          <h2 class="comp-card-title">Menu</h2>
+          <p class="comp-card-desc">Action dropdowns, popover callouts, typeahead comboboxes, tags input and multiselect.</p>
+          <p class="comp-card-exports"><b>DropdownMenu</b> · <b>Popover</b> · <b>Combobox</b> · <b>TagsInput</b></p>
+          <div class="comp-card-go">view Menu →</div>
+        </div>
+      </a>
+
+      <!-- Data -->
+      <a href="/components/Data/Data.html" class="comp-card" id="card-Data" style="--card-accent: #03888c;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xDT</span>
+          </div>
+          <h2 class="comp-card-title">Data Display</h2>
+          <p class="comp-card-desc">Tabular data grid, telemetry HUD metric tiles, key-value inspectors and status avatars.</p>
+          <p class="comp-card-exports"><b>DataGrid</b> · <b>MetricTile</b> · <b>KeyValueList</b> · <b>Avatar</b> · <b>EmptyState</b></p>
+          <div class="comp-card-go">view Data Display →</div>
+        </div>
+      </a>
+
+      <!-- Disclosure -->
+      <a href="/components/Disclosure/Disclosure.html" class="comp-card" id="card-Disclosure" style="--card-accent: #0008ff;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xDC</span>
+          </div>
+          <h2 class="comp-card-title">Disclosure</h2>
+          <p class="comp-card-desc">Multi-panel accordions, collapsible telemetry blocks, hierarchical tree views and drawers.</p>
+          <p class="comp-card-exports"><b>Accordion</b> · <b>Collapsible</b> · <b>TreeView</b> · <b>Drawer</b></p>
+          <div class="comp-card-go">view Disclosure →</div>
+        </div>
+      </a>
+
+      <!-- Chart & Data Viz -->
+      <a href="/components/Chart/Chart.html" class="comp-card" id="card-Chart" style="--card-accent: #00d9ff;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xVZ</span>
+          </div>
+          <h2 class="comp-card-title">Chart &amp; Data Viz</h2>
+          <p class="comp-card-desc">Non-standard visualizers: waterfall spectrograms, phase-space cosmoradars, braided horizon scopes, and hatched sector treemaps.</p>
+          <p class="comp-card-exports"><b>WaterfallSpectrogram</b> · <b>CosmoRadar</b> · <b>BraidedHorizon</b> · <b>SectorTreemap</b> · <b>SignalFluxChord</b> · <b>RadialTachometer</b></p>
+          <div class="comp-card-go">view Chart &amp; Data Viz →</div>
+        </div>
+      </a>
     </div>
   </div>
 </div>
@@ -322,13 +443,19 @@ code { color: #00d9ff; }
 <script>
 (function () {
   const COMPONENTS = [
-    { slug: 'Badge', code: '0xBG', accent: '#ff5a00', blurb: 'Fixed-meaning status chips and seeded label chips — three surfaces.', exports: ['Badge', 'BadgeCount', 'BadgeRow'] },
-    { slug: 'Emblem', code: '0xEM', accent: '#00d9ff', blurb: 'Vector cosmogram rosettes, planetary armillaries, clovers, starbursts & stepped code emblems.', exports: ['Emblem', 'EmblemBadge', 'EmblemCluster', 'EmblemGrid'] },
-    { slug: 'Button', code: '0xBT', accent: '#2d6cff', blurb: 'Seeded hue, four variants, flat texture and stepped motion — black, night and cream.', exports: ['Button', 'ButtonRow'] },
-    { slug: 'Card', code: '0xCD', accent: '#39ff6a', blurb: 'Panel, raised, flat, accent and outline grounds — with checker trim and flat texture.', exports: ['Card', 'CardSection', 'CardGrid'] },
-    { slug: 'Field', code: '0xFD', accent: '#c6ff3a', blurb: 'Inputs, selects, checkboxes — seeded focus ring, validation, three surfaces.', exports: ['Field', 'Input', 'Select', 'Checkbox'] },
-    { slug: 'NodeCard', code: '0xNC', accent: '#ff2d87', blurb: 'The signature form — node panels, sector roll-ups, stat tiles, ASCII meters.', exports: ['NodeCard', 'SectorCard', 'StatCard', 'NodeMeter'] },
-    { slug: 'Progress', code: '0xPG', accent: '#c800ff', blurb: 'Solid bars, discrete segments, stacked breakdowns, ASCII meters and stepped spinners.', exports: ['Progress', 'ProgressSegments', 'ProgressStack', 'ProgressAscii', 'Spinner'] },
+    { slug: 'Badge', code: '0xBG', ramp: 'orange', hex: '#ff5a00', blurb: 'Fixed-meaning status chips and seeded label chips — three surfaces.', exports: ['Badge', 'BadgeCount', 'BadgeRow'] },
+    { slug: 'Emblem', code: '0xEM', ramp: 'cyan', hex: '#00d9ff', blurb: 'Vector cosmogram rosettes, planetary armillaries, clovers, starbursts & stepped code emblems.', exports: ['Emblem', 'EmblemBadge', 'EmblemCluster', 'EmblemGrid'] },
+    { slug: 'Button', code: '0xBT', ramp: 'cobalt', hex: '#2d6cff', blurb: 'Seeded hue, four variants, flat texture and stepped motion — black, night and cream.', exports: ['Button', 'ButtonRow'] },
+    { slug: 'Card', code: '0xCD', ramp: 'green', hex: '#39ff6a', blurb: 'Panel, raised, flat, accent and outline grounds — with checker trim and flat texture.', exports: ['Card', 'CardSection', 'CardGrid'] },
+    { slug: 'Field', code: '0xFD', ramp: 'lime', hex: '#c6ff3a', blurb: 'Inputs, selects, checkboxes — seeded focus ring, validation, three surfaces.', exports: ['Field', 'Input', 'Select', 'Checkbox'] },
+    { slug: 'NodeCard', code: '0xNC', ramp: 'pink', hex: '#ff2d87', blurb: 'The signature form — node panels, sector roll-ups, stat tiles, ASCII meters.', exports: ['NodeCard', 'SectorCard', 'StatCard', 'NodeMeter'] },
+    { slug: 'Progress', code: '0xPG', ramp: 'magenta', hex: '#c800ff', blurb: 'Solid bars, discrete segments, stacked breakdowns, ASCII meters and stepped spinners.', exports: ['Progress', 'ProgressSegments', 'ProgressStack', 'ProgressAscii', 'Spinner'] },
+    { slug: 'Nav', code: '0xNV', ramp: 'coral', hex: '#ff6050', blurb: 'Top bar, side rails, segmented tabs, breadcrumb trails, steppers and pagination.', exports: ['TopBar', 'NavItem', 'Tabs', 'Breadcrumbs', 'Stepper', 'Pagination'] },
+    { slug: 'Overlay', code: '0xOV', ramp: 'indigo', hex: '#4653e8', blurb: 'Modal dialogs, elevated toast alert stacks, directional tooltips and HUD command palette.', exports: ['Modal', 'Toast', 'Tooltip', 'CommandPalette'] },
+    { slug: 'Menu', code: '0xMN', ramp: 'violet', hex: '#8a3fb0', blurb: 'Action dropdowns, popover callouts, typeahead comboboxes, tags input and multiselect.', exports: ['DropdownMenu', 'Popover', 'Combobox', 'TagsInput'] },
+    { slug: 'Data', code: '0xDT', ramp: 'teal', hex: '#03888c', blurb: 'Tabular data grid, telemetry HUD metric tiles, key-value inspectors and status avatars.', exports: ['DataGrid', 'MetricTile', 'KeyValueList', 'Avatar', 'EmptyState'] },
+    { slug: 'Disclosure', code: '0xDC', ramp: 'electric', hex: '#0008ff', blurb: 'Multi-panel accordions, collapsible telemetry blocks, hierarchical tree views and drawers.', exports: ['Accordion', 'Collapsible', 'TreeView', 'Drawer'] },
+    { slug: 'Chart', code: '0xVZ', ramp: 'cyan', hex: '#00d9ff', blurb: 'Waterfall spectrograms, phase-space cosmoradars, braided horizon scopes, and hatched sector treemaps.', exports: ['WaterfallSpectrogram', 'CosmoRadar', 'BraidedHorizon', 'SectorTreemap', 'SignalFluxChord', 'RadialTachometer'] },
   ];
 
   function openComponent(slug) {
@@ -348,17 +475,24 @@ code { color: #00d9ff; }
             ...COMPONENTS.map(c => h(Card, {
               key: c.slug,
               id: 'card-' + c.slug,
-              label: 'component // ' + c.code,
+              label: h('span', { className: 'comp-card-lab' },
+                h('span', null, 'COMPONENT'),
+                h('span', { className: 'comp-card-code', style: { color: c.hex, borderColor: c.hex } }, c.code)
+              ),
               title: c.slug,
               interactive: true,
               strip: true,
-              accent: c.accent,
+              accent: c.ramp,
               onClick: () => openComponent(c.slug),
-              style: { minHeight: 172 }
+              style: {
+                minHeight: 172,
+                '--card-accent': c.hex,
+                '--dd-hbd': c.hex
+              }
             },
               h('p', { className: 'p' }, c.blurb),
               h('p', { className: 'exports' }, c.exports.map((e, i) => h(Fragment, { key: e }, i > 0 ? ' · ' : '', h('b', null, e)))),
-              h('div', { className: 'go' }, 'view ' + c.slug + ' →')
+              h('div', { className: 'go', style: { color: c.hex } }, 'view ' + c.slug + ' →')
             ))
           );
         }

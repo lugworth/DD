@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>digidelic — readout</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/digi-shell.css">
 <style>
 @font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
@@ -54,11 +55,15 @@ main{display:flex;flex:1;min-height:0}
 .stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
 .corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
 .corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
-.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi);transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),box-shadow 160ms ease;will-change:transform}
 .frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
 .frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
 .frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
-canvas#art{display:block;background:#3a22ee}
+canvas#art{
+  display:block;background:#3a22ee;
+  transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),opacity 120ms var(--e-flow),filter 120ms var(--e-flow),background-color 160ms var(--e-flow);
+  will-change:transform;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
 .stage .hint{
   position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
   color:var(--white-dim);font-size:10px;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;text-align:center;
@@ -107,20 +112,23 @@ button:disabled{opacity:.5;cursor:default}
 .param:last-child{margin-bottom:0}
 .param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
-.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right;font-variant-numeric:tabular-nums;-webkit-font-feature-settings:"tnum";font-feature-settings:"tnum";transition:color var(--d-fast) var(--e-snap),opacity 80ms ease}
 
 input[type=range]{
   -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;--p:50%;
+  transition:opacity var(--d-fast) var(--e-flow),filter var(--d-fast) var(--e-flow);will-change:transform;
 }
-input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
-  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+  background:var(--white);border:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
-input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
-input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform}
 input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 input[type=text]{
   width:100%;height:32px;background:var(--black-panel);border:1px solid var(--border);
@@ -276,11 +284,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
           </div>
           <div class="param">
             <div class="lab"><span class="name">Palette</span></div>
-            <div class="seg" id="segPalette" role="group" aria-label="palette">
-              <button data-pal="ultramarine" class="is-active">Ultramarine</button>
-              <button data-pal="digidelic">Digidelic</button>
-              <button data-pal="terminal">Terminal</button>
-              <button data-pal="mono">Mono</button>
+            <div class="seg" id="segPalette" role="group" aria-label="palette" style="flex-wrap:wrap">
+              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
+              <button data-pal="acid" style="flex:1 1 30%">Acid</button>
+              <button data-pal="cyber" style="flex:1 1 30%">Cyber</button>
+              <button data-pal="ultramarine" style="flex:1 1 30%">Ultramarine</button>
+              <button data-pal="terminal" style="flex:1 1 30%">Terminal</button>
+              <button data-pal="mono" style="flex:1 1 30%">Mono</button>
             </div>
           </div>
           <div class="param">
@@ -297,11 +307,12 @@ footer .fill{flex:1;border-right:0;text-align:right}
 
       <div class="actions">
         <button id="btnReroll">⟳ Reroll</button>
+        <button id="btnDataScramble" style="color:#00d9ff">⚡ Cipher Scramble</button>
         <button id="btnCopy">⧉ Copy text</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
         <button id="btnTxt" title="download the mosaic as a .txt file">⤓ .txt</button>
         <button id="btnLink" title="copy a link to these settings">⧉ Copy Link</button>
         <button id="btnShare" hidden>⇪ Share</button>
-        <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
   </main>
@@ -318,10 +329,14 @@ footer .fill{flex:1;border-right:0;text-align:right}
 'use strict';
 
 const PALETTES={
+  digidelic:{   bg:'#000000', ink:'#eaff00', tile:'#eaff00', tileInk:'#000000',
+                accents:['#ff2d87','#00d9ff','#39ff6a','#ffffff'] },
+  acid:{        bg:'#020e06', ink:'#39ff6a', tile:'#39ff6a', tileInk:'#020e06',
+                accents:['#eaff00','#00d9ff','#ffffff'] },
+  cyber:{       bg:'#080010', ink:'#00d9ff', tile:'#00d9ff', tileInk:'#080010',
+                accents:['#ff2d87','#b026ff','#eaff00'] },
   ultramarine:{ bg:'#3a22ee', ink:'#ffffff', tile:'#ffffff', tileInk:'#2c19c4',
                 accents:['#ff3b30','#00d9ff','#ff2d87'] },
-  digidelic:{   bg:'#0a0a0a', ink:'#eaff00', tile:'#eaff00', tileInk:'#0a0a0a',
-                accents:['#ff2d87','#00d9ff','#39ff6a'] },
   terminal:{    bg:'#04120c', ink:'#39ff6a', tile:'#39ff6a', tileInk:'#04120c',
                 accents:['#eaff00','#00d9ff','#ffffff'] },
   mono:{        bg:'#0b0b0b', ink:'#f2f2f0', tile:'#f2f2f0', tileInk:'#0b0b0b',
@@ -342,7 +357,7 @@ function charSet(name){
 }
 
 const state={
-  palette:'ultramarine', set:'metrics', fmt:'source',
+  palette:'digidelic', set:'metrics', fmt:'source',
   img:null, imgURL:null, imgName:'',
   cols:0, rows:0, cells:null, seed:(Math.random()*1e9)|0,
   inked:0, dirty:true,
@@ -835,6 +850,40 @@ wireSeg('segFormat','fmt',v=>{ state.fmt=v; });
 document.getElementById('btnReroll').addEventListener('click',()=>{
   state.seed=(Math.random()*1e9)|0; markDirty(); pushHistory();
 });
+
+const btnScramble = document.getElementById('btnDataScramble');
+if(btnScramble){
+  btnScramble.addEventListener('click', ()=>{
+    state.seed = (Math.random()*1e9)|0;
+    const sets = ['metrics', 'numeric', 'hex', 'ramp'];
+    const curIdx = sets.indexOf(state.set);
+    state.set = sets[(curIdx + 1) % sets.length];
+    const segSet = document.getElementById('segSet');
+    if(segSet){
+      segSet.querySelectorAll('button').forEach(b=>{
+        b.classList.toggle('is-active', b.dataset.set === state.set);
+      });
+    }
+    const inFlicker = document.getElementById('flicker');
+    if(inFlicker){
+      inFlicker.value = 65;
+      inFlicker.dispatchEvent(new Event('input'));
+    }
+    markDirty();
+    if(window.DigiSynth){
+      window.DigiSynth.glitch();
+      window.DigiSynth.click(1200);
+    }
+    pushHistory();
+  });
+}
+
+canvas.addEventListener('pointerdown', ()=>{
+  state.seed = (Math.random()*1e9)|0;
+  markDirty();
+  if(window.DigiSynth) window.DigiSynth.click(800);
+});
+
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnCopy').addEventListener('click',copyText);
 document.getElementById('btnTxt').addEventListener('click',downloadText);
@@ -859,6 +908,7 @@ canvas.style.background=PALETTES[state.palette].bg;
 pushHistory();
 requestAnimationFrame(frame);
 </script>
+  <script src="../shared/digi-shell.js"></script>
   <script src="/nav-node.js" defer></script>
 </body>
 </html>

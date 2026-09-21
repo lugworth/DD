@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>digidelic — cosmogram generator</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/digi-shell.css">
 <style>
 @font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
@@ -54,11 +55,15 @@ main{display:flex;flex:1;min-height:0}
 .stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
 .corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
 .corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
-.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi);transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),box-shadow 160ms ease;will-change:transform}
 .frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--cobalt);pointer-events:none}
 .frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
 .frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
-canvas#art{display:block;background:#e8dab8}
+canvas#art{
+  display:block;background:#e8dab8;
+  transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),opacity 120ms var(--e-flow),filter 120ms var(--e-flow),background-color 160ms var(--e-flow);
+  will-change:transform;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
 
 .rack{width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
 .rack-scroll{flex:1;overflow-y:auto;min-height:0}
@@ -92,22 +97,24 @@ button.primary:hover{background:var(--white);border-color:var(--white)}
 .param:last-child{margin-bottom:0}
 .param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
-.param .lab .val{font-size:11px;color:var(--cobalt);letter-spacing:.06em;min-width:44px;text-align:right}
+.param .lab .val{font-size:11px;color:var(--cobalt);letter-spacing:.06em;min-width:44px;text-align:right;font-variant-numeric:tabular-nums;-webkit-font-feature-settings:"tnum";font-feature-settings:"tnum";transition:color var(--d-fast) var(--e-snap),opacity 80ms ease}
 
 input[type=range]{
   -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
-  --p:50%;
+  --p:50%;transition:opacity var(--d-fast) var(--e-flow),filter var(--d-fast) var(--e-flow);will-change:transform;
 }
-input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
-  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+  background:var(--white);border:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,
 input[type=range]:active::-webkit-slider-thumb{background:var(--cobalt)}
-input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p))}
-input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform}
 input[type=range]:hover::-moz-range-thumb{background:var(--cobalt)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 .seg{display:flex;border:1px solid var(--border-hi)}
 .seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
@@ -208,13 +215,27 @@ footer .fill{flex:1;border-right:0;text-align:right}
         </div>
 
         <div class="sect">
-          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="sect-head"><h2>Cosmology Mode</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="seg" id="segMode" role="group" aria-label="cosmology mode" style="flex-wrap:wrap">
+              <button data-mode="spheres" class="is-active" style="flex:1 1 45%">Spheres</button>
+              <button data-mode="mandala" style="flex:1 1 45%">Mandala</button>
+              <button data-mode="alchemical" style="flex:1 1 45%">Alchemical</button>
+              <button data-mode="quantum" style="flex:1 1 45%">Quantum</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style & Palettes</h2><span class="coord">S.04</span></div>
           <div class="param">
             <div class="lab"><span class="name">Palette</span></div>
-            <div class="seg" id="segPalette" role="group" aria-label="palette">
-              <button data-pal="codex" class="is-active">Codex</button>
-              <button data-pal="mono">Mono</button>
-              <button data-pal="digidelic">Digidelic</button>
+            <div class="seg" id="segPalette" role="group" aria-label="palette" style="flex-wrap:wrap">
+              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
+              <button data-pal="nebula" style="flex:1 1 30%">Nebula</button>
+              <button data-pal="solarpunk" style="flex:1 1 30%">Solarpunk</button>
+              <button data-pal="codex" style="flex:1 1 30%">Codex</button>
+              <button data-pal="mono" style="flex:1 1 30%">Mono</button>
             </div>
           </div>
           <div class="param">
@@ -237,7 +258,8 @@ footer .fill{flex:1;border-right:0;text-align:right}
       </div>
 
       <div class="actions">
-        <button id="btnRegen">⟳ Regenerate</button>
+        <button id="btnGyro" style="color:#00d9ff">▶ Gyro Orbit</button>
+        <button id="btnRegen">⟳ Mutate</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -273,7 +295,40 @@ const TAU=Math.PI*2;
 
 /* ═══════════════════ PALETTES ═══════════════════ */
 const PALETTES={
-  /* aged occult-codex paper — sampled from the reference plate */
+  digidelic:{
+    bg:'#000000', ink:'rgba(255,255,255,0.92)', reg:'rgba(0,217,255,0.7)',
+    stain:'rgba(45,108,255,',
+    colors:[
+      ['#2d6cff',2.6],  // cobalt
+      ['#ff2d87',2.5],  // neon pink
+      ['#00d9ff',2.2],  // cyan
+      ['#39ff6a',1.8],  // green
+      ['#eaff00',1.5],  // laser yellow
+      ['#c800ff',1.0],  // magenta
+    ],
+  },
+  nebula:{
+    bg:'#06020c', ink:'rgba(240,225,255,0.85)', reg:'rgba(255,45,135,0.6)',
+    stain:'rgba(138,63,176,',
+    colors:[
+      ['#c800ff',2.6],  // magenta
+      ['#ff2d87',2.4],  // pink
+      ['#4653e8',2.0],  // electric indigo
+      ['#00d9ff',1.8],  // cyan
+      ['#ffffff',1.2],  // white
+    ],
+  },
+  solarpunk:{
+    bg:'#020d04', ink:'rgba(230,255,235,0.85)', reg:'rgba(57,255,106,0.6)',
+    stain:'rgba(57,255,106,',
+    colors:[
+      ['#39ff6a',2.6],  // bio green
+      ['#eaff00',2.4],  // lime
+      ['#00d9ff',1.8],  // cyan
+      ['#ffffff',1.2],  // white
+      ['#ff5a00',1.0],  // solar flare
+    ],
+  },
   codex:{
     bg:'#e8dab8', ink:'#211d16', reg:'rgba(198,66,48,0.55)',
     stain:'rgba(120,88,40,',
@@ -287,29 +342,20 @@ const PALETTES={
     ],
   },
   mono:{
-    bg:'#e8dab8', ink:'#1d1a14', reg:'rgba(29,26,20,0.35)',
-    stain:'rgba(110,95,60,',
-    colors:[['#1d1a14',1]],
-  },
-  digidelic:{
-    bg:'#0a0a0a', ink:'rgba(255,255,255,0.78)', reg:'rgba(255,45,135,0.55)',
-    stain:'rgba(45,108,255,',
-    colors:[
-      ['#2d6cff',2.6],  // cobalt
-      ['#00d9ff',2.2],  // cyan
-      ['#ff2d87',2.0],  // pink
-      ['#39ff6a',1.4],  // green
-      ['#2d6cff',1.4],  // blue
-      ['#c800ff',0.8],  // magenta
-    ],
+    bg:'#0a0a0a', ink:'#ffffff', reg:'rgba(255,255,255,0.4)',
+    stain:'rgba(255,255,255,',
+    colors:[['#ffffff',1], ['#888888',0.6]],
   },
 };
 
 /* ═══════════════════ STATE ═══════════════════ */
 const state={
   seed:(Math.random()*0xffffffff)>>>0,
-  palette:'codex',
+  palette:'digidelic',
   format:'square',
+  mode:'spheres',
+  gyro:false,
+  gyroAngle:0,
 };
 const sliders=['orbs','orbits','circuits','border','scatter','redgrid','age','stroke','margin'];
 function params(){
@@ -319,6 +365,7 @@ function params(){
     border:g('border')/100, scatter:g('scatter')/100, redgrid:g('redgrid')/100,
     age:g('age')/100, stroke:g('stroke'), margin:g('margin'),
     palette:state.palette, format:state.format,
+    mode:state.mode,
   };
 }
 
@@ -863,9 +910,14 @@ function draw(){
   document.getElementById('seedHex').textContent=hex;
   document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
   canvas.style.background=PALETTES[p.palette].bg;
+
+  if(state.gyro){
+    state.gyroAngle += 0.015;
+    requestAnimationFrame(draw);
+  }
 }
 function requestDraw(){
-  if(!rafPending){ rafPending=true; requestAnimationFrame(draw); }
+  if(!rafPending && !state.gyro){ rafPending=true; requestAnimationFrame(draw); }
 }
 
 /* ═══════════════════ EXPORT ═══════════════════ */
@@ -902,12 +954,15 @@ function syncSlider(el){
 }
 sliders.forEach(id=>{
   const el=document.getElementById(id);
-  el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
-  syncSlider(el);
+  if(el){
+    el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
+    syncSlider(el);
+  }
 });
 
 function wireSeg(segId,attr,onPick){
   const seg=document.getElementById(segId);
+  if(!seg) return;
   seg.addEventListener('click',e=>{
     const btn=e.target.closest('button'); if(!btn) return;
     seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
@@ -918,12 +973,45 @@ function wireSeg(segId,attr,onPick){
 }
 wireSeg('segPalette','pal',v=>{ state.palette=v; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; });
+wireSeg('segMode','mode',v=>{
+  state.mode=v;
+  if(v==='mandala'){ document.getElementById('orbs').value=16; document.getElementById('circuits').value=90; }
+  else if(v==='spheres'){ document.getElementById('orbits').value=85; document.getElementById('orbs').value=9; }
+  else if(v==='alchemical'){ document.getElementById('redgrid').value=80; document.getElementById('border').value=90; }
+  else if(v==='quantum'){ document.getElementById('scatter').value=95; document.getElementById('circuits').value=85; }
+  ['orbs','circuits','orbits','redgrid','border','scatter'].forEach(k=>syncSlider(document.getElementById(k)));
+  if(window.DigiSynth) window.DigiSynth.chord(432, [1, 1.25, 1.5, 1.75]);
+  requestDraw();
+});
+
+const btnGyro = document.getElementById('btnGyro');
+if(btnGyro){
+  btnGyro.addEventListener('click', ()=>{
+    state.gyro = !state.gyro;
+    btnGyro.classList.toggle('primary', state.gyro);
+    btnGyro.textContent = state.gyro ? '❚❚ Stop Gyro' : '▶ Gyro Orbit';
+    if(window.DigiSynth) window.DigiSynth.blip(state.gyro ? 864 : 432);
+    if(state.gyro) requestAnimationFrame(draw);
+  });
+}
+
+/* Interactive Canvas Click */
+canvas.addEventListener('pointerdown', e=>{
+  const r = canvas.getBoundingClientRect();
+  const u = (e.clientX - r.left) / r.width;
+  const v = (e.clientY - r.top) / r.height;
+  state.seed = ((state.seed ^ ((u * 0x3ffff) | 0)) + ((v * 0x5ffff) | 0)) >>> 0;
+  if(window.DigiSynth) window.DigiSynth.chord(540, [1, 1.25, 1.5, 2]);
+  requestDraw();
+});
 
 document.getElementById('btnRandom').addEventListener('click',()=>{
   state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
 });
 document.getElementById('btnRegen').addEventListener('click',()=>{
-  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
+  state.seed=(Math.random()*0xffffffff)>>>0;
+  if(window.DigiSynth) window.DigiSynth.glitch();
+  requestDraw();
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 window.addEventListener('resize',requestDraw);
@@ -934,6 +1022,7 @@ window.addEventListener('keydown',e=>{
 
 draw();
 </script>
+  <script src="../shared/digi-shell.js"></script>
   <script src="/nav-node.js" defer></script>
 </body>
 </html>

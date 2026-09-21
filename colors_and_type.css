@@ -405,6 +405,87 @@ a:hover { color: var(--white); border-bottom-color: var(--cyan); }
 }
 
 /* ============================================================
+   PARAMETER RACK & CANVAS LIVE INTERACTION MOTIONS
+   Smooth transitions prevent visual jitter during live slider
+   and canvas parameter manipulation.
+   ============================================================ */
+.rack,
+aside.rack {
+  contain: layout style;
+}
+
+.rack input[type=range],
+input[type=range] {
+  transition: opacity var(--dur-fast) var(--ease-flow),
+              filter var(--dur-fast) var(--ease-flow);
+  will-change: transform;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  transition: background 90ms var(--ease-flow);
+}
+
+input[type=range]::-moz-range-track {
+  transition: background 90ms var(--ease-flow);
+}
+
+input[type=range]::-webkit-slider-thumb {
+  transition: transform 90ms var(--ease-flow),
+              background var(--dur-fast) var(--ease-snap),
+              box-shadow var(--dur-base) ease;
+  will-change: transform;
+}
+
+input[type=range]:active::-webkit-slider-thumb {
+  transform: scale(1.18);
+}
+
+input[type=range]::-moz-range-thumb {
+  transition: transform 90ms var(--ease-flow),
+              background var(--dur-fast) var(--ease-snap),
+              box-shadow var(--dur-base) ease;
+  will-change: transform;
+}
+
+input[type=range]:active::-moz-range-thumb {
+  transform: scale(1.18);
+}
+
+/* Tabular figures for param readouts prevent character width wobble */
+.param .lab .val,
+.val[data-val] {
+  font-variant-numeric: tabular-nums;
+  -webkit-font-feature-settings: "tnum";
+  font-feature-settings: "tnum";
+  transition: color var(--dur-fast) var(--ease-snap), opacity 80ms ease;
+}
+
+/* Canvas anti-jitter compositing and responsive format transitions */
+canvas#art,
+.stage canvas,
+.frame canvas,
+.card canvas {
+  transition: width 120ms var(--ease-flow),
+              height 120ms var(--ease-flow),
+              transform 120ms var(--ease-flow),
+              opacity 120ms var(--ease-flow),
+              filter 120ms var(--ease-flow),
+              background-color 160ms var(--ease-flow);
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.frame {
+  transition: width 120ms var(--ease-flow),
+              height 120ms var(--ease-flow),
+              transform 120ms var(--ease-flow),
+              box-shadow 160ms ease;
+  will-change: transform;
+}
+
+/* ============================================================
    REDUCED MOTION — honour the OS setting everywhere.
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {

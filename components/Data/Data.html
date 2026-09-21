@@ -1,0 +1,255 @@
+<!-- @dsCard group="Components" name="Data" subtitle="Tabular data grid, telemetry HUD metric tiles, key-value inspectors and status avatars" viewport="1280x1600" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Data Display</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/vendor/react.production.min.js"></script>
+<script>if (!window.React) document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\\/script>');</script>
+<script src="/vendor/react-dom.production.min.js"></script>
+<script>if (!window.ReactDOM) document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\\/script>');</script>
+<script src="/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#2d6cff}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:68ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:34px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:72ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px;border:1px solid rgba(255,255,255,.1)}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px;border:1px solid rgba(0,0,0,.15)}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px 24px}
+code{color:#2d6cff}
+.box{background:#0a0a0a;border:1px solid rgba(255,255,255,.12);padding:18px}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Data Display</h1>
+<p class="sub">Structured data presentation for heavy telemetry and tabular datasets. Features sortable tabular DataGrids with interactive row focus, fluctuating numeric metric HUDs, key-value inspector lists, monospace status avatars, and dashed empty states.</p>
+<div id="root"></div>
+
+<script>
+const { createElement: h, Fragment, useState, useEffect } = React;
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+const Col = (label, children) => h('div', null, h('p', { className: 'lab' }, label), children);
+
+function Demo() {
+  const [selectedNode, setSelectedNode] = useState('NODE-047');
+  const [sortKey, setSortKey] = useState('load');
+  const [sortAsc, setSortAsc] = useState(false);
+  const [pulseVal, setPulseVal] = useState(48.2);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setPulseVal(v => +(v + (Math.random() * 2 - 0.95)).toFixed(1));
+    }, 1200);
+    return () => clearInterval(t);
+  }, []);
+
+  const rawData = [
+    { id: 'NODE-047', sector: 'A1.2', load: 72, ping: 12, status: 'nominal', statusCol: '#39ff6a' },
+    { id: 'NODE-088', sector: 'B6.0', load: 34, ping: 48, status: 'warning', statusCol: '#ff5a00' },
+    { id: 'NODE-003', sector: 'X.06', load: 96, ping: 184, status: 'critical', statusCol: '#ff0066' },
+    { id: 'NODE-112', sector: 'A1.4', load: 18, ping: 9, status: 'nominal', statusCol: '#39ff6a' },
+    { id: 'NODE-204', sector: 'C3.8', load: 55, ping: 26, status: 'nominal', statusCol: '#39ff6a' }
+  ];
+
+  const sortedData = [...rawData].sort((a, b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (typeof va === 'string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    return sortAsc ? va - vb : vb - va;
+  });
+
+  const handleSort = key => {
+    if (sortKey === key) setSortAsc(!sortAsc);
+    else { setSortKey(key); setSortAsc(true); }
+  };
+
+  const kvItems = [
+    { key: 'RUNTIME PROTOCOL', value: 'WEBSOCKET MESH // V2.8' },
+    { key: 'CARRIER FREQUENCY', value: '433.920 MHz (SPREAD)' },
+    { key: 'PACKET PARITY', value: '0xDEADBEEF // PASS' },
+    { key: 'ENCRYPTION SUITE', value: 'CHACHA20-POLY1305' },
+    { key: 'PEER QUORUM', value: '14 OF 16 VALIDATED' }
+  ];
+
+  return h(Fragment, null,
+    Sec('01 · telemetry datagrid', 'Dense table with sortable columns, tabular figures, mini load bars, and row selection.',
+      h('div', { className: 'box', style: { padding: 0, overflowX: 'auto' } },
+        h('table', { style: { width: '100%', borderCollapse: 'collapse', fontSize: 11, textAlign: 'left' } },
+          h('thead', null,
+            h('tr', { style: { background: '#080808', borderBottom: '1px solid rgba(255,255,255,.14)' } },
+              [
+                { key: 'id', label: 'NODE CODE' },
+                { key: 'sector', label: 'SECTOR' },
+                { key: 'load', label: 'LOAD %' },
+                { key: 'ping', label: 'RTT PING' },
+                { key: 'status', label: 'HEALTH' }
+              ].map(col => h('th', {
+                key: col.key,
+                onClick: () => handleSort(col.key),
+                style: {
+                  padding: '9px 14px', fontSize: 9, letterSpacing: '.16em',
+                  textTransform: 'uppercase', color: sortKey === col.key ? '#2d6cff' : 'rgba(255,255,255,.4)',
+                  cursor: 'pointer'
+                }
+              },
+                col.label,
+                sortKey === col.key ? (sortAsc ? ' ▲' : ' ▼') : ''
+              ))
+            )
+          ),
+          h('tbody', null,
+            sortedData.map(r => {
+              const isSelected = r.id === selectedNode;
+              return h('tr', {
+                key: r.id,
+                onClick: () => setSelectedNode(r.id),
+                style: {
+                  background: isSelected ? 'rgba(45,108,255,.15)' : 'transparent',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid rgba(255,255,255,.06)',
+                  transition: 'background 100ms'
+                }
+              },
+                h('td', { style: { padding: '9px 14px', fontWeight: isSelected ? 700 : 400, color: isSelected ? '#fff' : 'rgba(255,255,255,.8)' } }, r.id),
+                h('td', { style: { padding: '9px 14px', color: 'rgba(255,255,255,.6)' } }, r.sector),
+                h('td', { style: { padding: '9px 14px' } },
+                  h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+                    h('div', { style: { width: 60, height: 6, background: '#1a1a18', overflow: 'hidden' } },
+                      h('div', { style: { width: `${r.load}%`, height: '100%', background: r.load > 85 ? '#ff0066' : r.load > 50 ? '#ff5a00' : '#2d6cff' } })
+                    ),
+                    h('span', { style: { fontVariantNumeric: 'tabular-nums' } }, `${r.load}%`)
+                  )
+                ),
+                h('td', { style: { padding: '9px 14px', fontVariantNumeric: 'tabular-nums' } }, `${r.ping}ms`),
+                h('td', { style: { padding: '9px 14px', color: r.statusCol, fontWeight: 700 } }, `▶ ${r.status}`)
+              );
+            })
+          )
+        ),
+        h('div', { style: { padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.08)', fontSize: 10, color: 'rgba(255,255,255,.4)', letterSpacing: '.08em' } },
+          'FOCUSED NODE: ', h('b', { style: { color: '#2d6cff' } }, selectedNode)
+        )
+      )
+    ),
+
+    Sec('02 · real-time telemetry HUD metric tiles', 'Live numerical indicators with spark updates and delta variance.',
+      h('div', { className: 'grid' },
+        [
+          { label: 'THROUGHPUT', val: pulseVal, unit: 'MB/s', delta: '+3.4%', type: 'pos', accent: '#2d6cff' },
+          { label: 'SOCKET CARRIER', val: '99.98', unit: '%', delta: 'STABLE', type: 'neu', accent: '#39ff6a' },
+          { label: 'ERROR BURST', val: '0.04', unit: 'PPM', delta: '-12%', type: 'pos', accent: '#00d9ff' },
+          { label: 'CORE THERMAL', val: '71.2', unit: '°C', delta: '+1.8°C', type: 'neg', accent: '#ff2d87' }
+        ].map(m => h('div', {
+          key: m.label,
+          className: 'box',
+          style: { display: 'flex', flexDirection: 'column', gap: 6 }
+        },
+          h('div', { style: { fontSize: 9, letterSpacing: '.18em', color: 'rgba(255,255,255,.4)', textTransform: 'uppercase' } }, m.label),
+          h('div', { style: { fontFamily: 'Space Grotesk', fontSize: 28, fontWeight: 900, color: m.accent } },
+            m.val,
+            h('span', { style: { fontSize: 13, marginLeft: 6, color: 'rgba(255,255,255,.45)' } }, m.unit)
+          ),
+          h('div', { style: { fontSize: 10, color: m.type === 'pos' ? '#39ff6a' : m.type === 'neg' ? '#ff0066' : 'rgba(255,255,255,.5)', letterSpacing: '.08em' } },
+            m.delta
+          )
+        ))
+      )
+    ),
+
+    Sec('03 · key-value inspector list', 'Detailed telemetry manifest pairing monospace tags with values.',
+      h('div', { className: 'box', style: { maxWidth: 520 } },
+        kvItems.map(it => h('div', {
+          key: it.key,
+          style: {
+            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+            padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.08)', fontSize: 11
+          }
+        },
+          h('span', { style: { fontSize: 9, color: 'rgba(255,255,255,.45)', letterSpacing: '.12em' } }, it.key),
+          h('span', { style: { fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' } }, it.value)
+        ))
+      )
+    ),
+
+    Sec('04 · monospace identity avatars', 'Square operator initials with live status beacons.',
+      h('div', { className: 'box', style: { display: 'flex', gap: 24, alignItems: 'center' } },
+        [
+          { inits: 'DD', st: '#39ff6a', sz: 46, col: '#2d6cff' },
+          { inits: 'X0', st: '#ff5a00', sz: 38, col: '#00d9ff' },
+          { inits: 'OP', st: '#ff0066', sz: 30, col: '#ff2d87' }
+        ].map(av => h('div', {
+          key: av.inits,
+          style: {
+            position: 'relative', width: av.sz, height: av.sz, background: '#181816',
+            border: '1px solid rgba(255,255,255,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'Space Grotesk', fontWeight: 900, color: av.col, fontSize: av.sz * 0.4
+          }
+        },
+          av.inits,
+          h('span', {
+            style: {
+              position: 'absolute', bottom: -2, right: -2, width: 8, height: 8,
+              background: av.st, border: '2px solid #000'
+            }
+          })
+        ))
+      )
+    ),
+
+    Sec('05 · void empty state', 'Zero-data fallback placeholder with dashed contour.',
+      h('div', { className: 'box' },
+        h('div', {
+          style: {
+            border: '1px dashed rgba(255,255,255,.2)', padding: '34px 20px',
+            textAlign: 'center', background: 'rgba(255,255,255,.01)'
+          }
+        },
+          h('div', { style: { fontSize: 28, color: '#2d6cff', marginBottom: 8 } }, '◈'),
+          h('div', { style: { fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 16, textTransform: 'uppercase', marginBottom: 6 } }, 'NO ACTIVE VECTORS'),
+          h('p', { style: { fontSize: 11, color: 'rgba(255,255,255,.5)', maxWidth: 360, margin: '0 auto 16px', lineHeight: 1.6 } },
+            'Sector grid is waiting for routing assignment. Connect to an upstream relay to begin streaming.'
+          ),
+          h('button', {
+            type: 'button',
+            onClick: () => alert('Initiating relay connection...'),
+            style: { padding: '7px 16px', background: '#2d6cff', border: 'none', color: '#000', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', cursor: 'pointer' }
+          }, 'INITIALIZE RELAY ▶')
+        )
+      )
+    ),
+
+    Sec('06 · surfaces — night and cream grounds', 'Legibility check on alternate background grounds.',
+      h('div', null,
+        h('div', { className: 'night' },
+          h('p', { className: 'lab', style: { color: 'rgba(255,255,255,.5)' } }, '// NIGHT SURFACE (#150a1c)'),
+          h('div', { style: { display: 'flex', gap: 14 } },
+            h('span', { style: { color: '#2d6cff', fontWeight: 700 } }, 'NODE-047'),
+            h('span', { style: { color: '#39ff6a' } }, '72% NOMINAL')
+          )
+        ),
+        h('div', { className: 'cream' },
+          h('p', { className: 'lab' }, '// CREAM SURFACE (#e8e3d0)'),
+          h('div', { style: { display: 'flex', gap: 14 } },
+            h('span', { style: { color: '#0a0a0a', fontWeight: 700 } }, 'NODE-047'),
+            h('span', { style: { color: '#0a0a0a' } }, '72% NOMINAL')
+          )
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.render(h(Demo), document.getElementById('root'));
+</script>
+  <script src="/nav-node.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!-- @dsCard group="Components" name="Overlay" subtitle="Modal dialogs, live toast notification queues, directional tooltips and HUD command palette" viewport="1280x1600" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Overlay</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/vendor/react.production.min.js"></script>
+<script>if (!window.React) document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\\/script>');</script>
+<script src="/vendor/react-dom.production.min.js"></script>
+<script>if (!window.ReactDOM) document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\\/script>');</script>
+<script src="/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#ff2d87}a:hover{color:#00d9ff}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:68ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:34px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:72ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px;border:1px solid rgba(255,255,255,.1)}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px;border:1px solid rgba(0,0,0,.15)}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#ff2d87 25%,transparent 25%,transparent 75%,#ff2d87 75%),linear-gradient(45deg,#ff2d87 25%,transparent 25%,transparent 75%,#ff2d87 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px 26px}
+code{color:#ff2d87}
+.box{background:#0a0a0a;border:1px solid rgba(255,255,255,.12);padding:18px}
+.hud-search{display:flex;align-items:center;padding:10px 14px;border:1px solid #2d6cff;background:#111110}
+.hud-list{border:1px solid rgba(255,255,255,.14);border-top:none;background:#0d0d0c}
+.hud-item{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;cursor:pointer;transition:background 100ms}
+.hud-item:hover{background:#1a1a18;color:#00d9ff}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Overlay</h1>
+<p class="sub">Modal viewports, elevated toast alerts, hover tooltips, and command palette HUDs. All overlays sit above the primary content plane with explicit geometric framing, darkened scrims, and sharp visual feedback.</p>
+<div id="root"></div>
+
+<script>
+const { createElement: h, Fragment, useState } = React;
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+const Col = (label, children) => h('div', null, h('p', { className: 'lab' }, label), children);
+
+function Demo() {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState('deploy');
+  const [toasts, setToasts] = useState([
+    { id: '1', status: 'ok', title: 'SYNCHRONIZED', msg: '14 nodes re-authenticated via mesh.' },
+    { id: '2', status: 'warn', title: 'LATENCY DEVIATION', msg: 'Sector B6 ping increased to 240ms.' },
+    { id: '3', status: 'err', title: 'SIGNAL INTERRUPT', msg: 'Node-003 dropped packet stream.' }
+  ]);
+  const [cmdSearch, setCmdSearch] = useState('');
+  const [cmdActive, setCmdActive] = useState(false);
+
+  const addToast = (status, title, msg) => {
+    const newT = { id: Date.now().toString(), status, title, msg };
+    setToasts(prev => [newT, ...prev.slice(0, 4)]);
+  };
+
+  const removeToast = id => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const cmdItems = [
+    { cat: 'SECTORS', label: 'Scan Sector Alpha-1', code: '0x01' },
+    { cat: 'SECTORS', label: 'Re-calibrate Optical Relays', code: '0x02' },
+    { cat: 'ROUTING', label: 'Flush Route Cache Buffer', code: '0x03' },
+    { cat: 'ROUTING', label: 'Switch to Low-Power Standby', code: '0x04' },
+    { cat: 'DIAGNOSTICS', label: 'Run Memory Parity Check', code: '0x05' },
+    { cat: 'SYSTEM', label: 'Reboot Core Telemetry Engine', code: '0x06' }
+  ].filter(it => it.label.toLowerCase().includes(cmdSearch.toLowerCase()) || it.cat.toLowerCase().includes(cmdSearch.toLowerCase()));
+
+  return h(Fragment, null,
+    Sec('01 · modal dialogs', 'Focus-trapped dialog windows with header border accent, confirmation triggers, and cancellation.',
+      h('div', { className: 'box' },
+        h('div', { style: { display: 'flex', gap: 12, flexWrap: 'wrap' } },
+          h('button', {
+            type: 'button',
+            onClick: () => { setModalType('deploy'); setModalOpen(true); },
+            style: { padding: '8px 16px', background: '#2d6cff', border: 'none', color: '#000', font: '700 11px Geist Mono, monospace', letterSpacing: '.12em', cursor: 'pointer' }
+          }, 'OPEN DEPLOY MODAL'),
+          h('button', {
+            type: 'button',
+            onClick: () => { setModalType('purge'); setModalOpen(true); },
+            style: { padding: '8px 16px', background: '#ff0066', border: 'none', color: '#fff', font: '700 11px Geist Mono, monospace', letterSpacing: '.12em', cursor: 'pointer' }
+          }, 'OPEN PURGE WARNING')
+        )
+      )
+    ),
+
+    // Active Modal Scrim
+    modalOpen && h('div', {
+      style: {
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,.82)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20
+      },
+      onClick: () => setModalOpen(false)
+    },
+      h('div', {
+        style: {
+          width: '100%', maxWidth: 440, background: '#111110',
+          border: modalType === 'purge' ? '1px solid #ff0066' : '1px solid #2d6cff',
+          boxShadow: '0 20px 60px rgba(0,0,0,.95)',
+          fontFamily: 'Geist Mono, monospace'
+        },
+        onClick: e => e.stopPropagation()
+      },
+        h('div', {
+          style: {
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,.1)'
+          }
+        },
+          h('span', { style: { fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 16, textTransform: 'uppercase' } },
+            modalType === 'purge' ? 'CONFIRM PURGE VECTOR' : 'DEPLOY MESH ROUTE'
+          ),
+          h('button', {
+            type: 'button',
+            onClick: () => setModalOpen(false),
+            style: { background: 'none', border: 'none', color: 'rgba(255,255,255,.5)', fontSize: 16, cursor: 'pointer' }
+          }, '✕')
+        ),
+        h('div', { style: { padding: 18, fontSize: 12, lineHeight: 1.7, color: 'rgba(255,255,255,.7)' } },
+          modalType === 'purge'
+            ? 'Warning: This will terminate live socket listeners on 6 worker nodes in Sector B6. This action is logged permanently to the immutable event ledger.'
+            : 'Initiating dispatch to Sector A1.2. The payload will synchronize 14 telemetry daemons across the optical subnet. Acknowledge to commit.'
+        ),
+        h('div', {
+          style: {
+            display: 'flex', justifyContent: 'flex-end', gap: 10,
+            padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,.1)'
+          }
+        },
+          h('button', {
+            type: 'button',
+            onClick: () => setModalOpen(false),
+            style: { padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,.25)', color: '#fff', fontSize: 10, cursor: 'pointer' }
+          }, 'CANCEL'),
+          h('button', {
+            type: 'button',
+            onClick: () => {
+              alert(modalType === 'purge' ? 'PURGED' : 'DISPATCHED');
+              setModalOpen(false);
+            },
+            style: {
+              padding: '7px 16px',
+              background: modalType === 'purge' ? '#ff0066' : '#2d6cff',
+              border: 'none', color: modalType === 'purge' ? '#fff' : '#000',
+              fontSize: 10, fontWeight: 700, cursor: 'pointer'
+            }
+          }, modalType === 'purge' ? 'EXECUTE PURGE' : 'CONFIRM DEPLOY ▶')
+        )
+      )
+    ),
+
+    Sec('02 · toast notification stack', 'Real-time asynchronous notification alerts with color-coded severity strips.',
+      h('div', { className: 'grid' },
+        h('div', { className: 'box', style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+          h('p', { className: 'lab' }, '// INJECT TOAST EVENT'),
+          h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+            h('button', {
+              type: 'button',
+              onClick: () => addToast('ok', 'TELEMETRY SYNCED', 'Channel verified at 120 FPS.'),
+              style: { padding: '6px 12px', background: '#39ff6a', color: '#000', border: 'none', fontSize: 10, fontWeight: 700, cursor: 'pointer' }
+            }, '+ OK EVENT'),
+            h('button', {
+              type: 'button',
+              onClick: () => addToast('warn', 'THERMAL SPIKE', 'Sensor 0x77 approaching 84°C threshold.'),
+              style: { padding: '6px 12px', background: '#ff5a00', color: '#000', border: 'none', fontSize: 10, fontWeight: 700, cursor: 'pointer' }
+            }, '+ WARN EVENT'),
+            h('button', {
+              type: 'button',
+              onClick: () => addToast('err', 'KERNEL PANIC', 'Worker process exited with code 137.'),
+              style: { padding: '6px 12px', background: '#ff0066', color: '#fff', border: 'none', fontSize: 10, fontWeight: 700, cursor: 'pointer' }
+            }, '+ CRIT EVENT'),
+            h('button', {
+              type: 'button',
+              onClick: () => addToast('info', 'SWEEP COMPLETE', 'Scanned 1,024 memory addresses.'),
+              style: { padding: '6px 12px', background: '#00d9ff', color: '#000', border: 'none', fontSize: 10, fontWeight: 700, cursor: 'pointer' }
+            }, '+ INFO EVENT')
+          )
+        ),
+        h('div', { className: 'box', style: { display: 'flex', flexDirection: 'column', gap: 10 } },
+          h('p', { className: 'lab' }, '// ACTIVE NOTIFICATION QUEUE'),
+          toasts.length === 0
+            ? h('p', { style: { color: 'rgba(255,255,255,.3)', fontSize: 11 } }, 'Queue idle — no pending alerts.')
+            : toasts.map(t => {
+                const borderCol = t.status === 'ok' ? '#39ff6a' : t.status === 'warn' ? '#ff5a00' : t.status === 'err' ? '#ff0066' : '#00d9ff';
+                const icon = t.status === 'ok' ? '▶' : t.status === 'warn' ? '▲' : t.status === 'err' ? '▲' : '◈';
+                return h('div', {
+                  key: t.id,
+                  style: {
+                    display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px',
+                    background: '#111110', border: '1px solid rgba(255,255,255,.1)',
+                    borderLeft: `4px solid ${borderCol}`
+                  }
+                },
+                  h('span', { style: { color: borderCol, fontSize: 12, flexShrink: 0 } }, icon),
+                  h('div', { style: { flex: 1 } },
+                    h('div', { style: { fontSize: 10, fontWeight: 700, letterSpacing: '.1em', color: borderCol } }, t.title),
+                    h('div', { style: { fontSize: 10, color: 'rgba(255,255,255,.6)', marginTop: 2 } }, t.msg)
+                  ),
+                  h('button', {
+                    type: 'button',
+                    onClick: () => removeToast(t.id),
+                    style: { background: 'none', border: 'none', color: 'rgba(255,255,255,.3)', cursor: 'pointer', fontSize: 11 }
+                  }, '✕')
+                );
+              })
+        )
+      )
+    ),
+
+    Sec('03 · tooltips & directional hotspots', 'Hoverable context callouts with high contrast neon fills.',
+      h('div', { className: 'box', style: { display: 'flex', gap: 60, padding: '36px 30px', flexWrap: 'wrap', alignItems: 'center' } },
+        ['TOP TOOLTIP', 'RIGHT TOOLTIP', 'BOTTOM TOOLTIP'].map((pos, idx) => {
+          const colors = ['#2d6cff', '#ff2d87', '#00d9ff'];
+          return h('div', {
+            key: pos,
+            style: { position: 'relative', display: 'inline-block' }
+          },
+            h('div', {
+              style: {
+                position: 'absolute',
+                top: idx === 2 ? 36 : -30,
+                left: idx === 1 ? 48 : '50%',
+                transform: idx === 1 ? 'none' : 'translateX(-50%)',
+                background: colors[idx],
+                color: '#000',
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '.1em',
+                padding: '4px 8px',
+                whiteSpace: 'nowrap'
+              }
+            }, `HOTSPOT // ${idx + 1}`),
+            h('button', {
+              type: 'button',
+              style: { width: 34, height: 34, background: '#111', border: '1px solid rgba(255,255,255,.3)', color: '#fff', fontSize: 12, cursor: 'pointer' }
+            }, '◈')
+          );
+        })
+      )
+    ),
+
+    Sec('04 · command palette HUD (⌘K)', 'Centrally anchored tactical search interface for keyboard-first navigation.',
+      h('div', { className: 'box' },
+        h('div', { className: 'hud-search' },
+          h('span', { style: { color: '#2d6cff', marginRight: 10, fontSize: 14 } }, '▶'),
+          h('input', {
+            type: 'text',
+            value: cmdSearch,
+            onChange: e => setCmdSearch(e.target.value),
+            placeholder: 'Type command or sector name (e.g. "scan", "route", "memory")...',
+            style: {
+              flex: 1, background: 'transparent', border: 'none', color: '#fff',
+              font: '12px Geist Mono, monospace', outline: 'none'
+            }
+          }),
+          h('span', { style: { fontSize: 9, border: '1px solid rgba(255,255,255,.2)', padding: '2px 5px', color: 'rgba(255,255,255,.4)' } }, 'ESC')
+        ),
+        h('div', { className: 'hud-list' },
+          cmdItems.length === 0
+            ? h('div', { style: { padding: '14px', fontSize: 11, color: 'rgba(255,255,255,.4)' } }, 'No matching command found.')
+            : cmdItems.map(it => h('div', {
+                key: it.label,
+                onClick: () => alert('Executed: ' + it.label),
+                className: 'hud-item'
+              },
+                h('span', { style: { fontSize: 8, color: '#ff2d87', width: 70, letterSpacing: '.12em' } }, it.cat),
+                h('span', { style: { flex: 1 } }, it.label),
+                h('span', { style: { fontSize: 9, opacity: 0.4, border: '1px solid rgba(255,255,255,.2)', padding: '1px 5px' } }, it.code)
+              ))
+        )
+      )
+    ),
+
+    Sec('05 · surfaces — night and cream grounds', 'Visual proofing across all three brand grounds.',
+      h('div', null,
+        h('div', { className: 'night' },
+          h('p', { className: 'lab', style: { color: 'rgba(255,255,255,.5)' } }, '// NIGHT SURFACE (#150a1c)'),
+          h('div', { style: { padding: '10px 14px', background: '#0a0a0a', borderLeft: '4px solid #39ff6a', color: '#fff', fontSize: 11 } },
+            '▶ ACTIVE PROXY // All sockets nominal'
+          )
+        ),
+        h('div', { className: 'cream' },
+          h('p', { className: 'lab' }, '// CREAM SURFACE (#e8e3d0)'),
+          h('div', { style: { padding: '10px 14px', background: '#fff', borderLeft: '4px solid #ff2d87', color: '#0a0a0a', fontSize: 11 } },
+            '▲ ALERT NOTICE // Sector scan in progress'
+          )
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.render(h(Demo), document.getElementById('root'));
+</script>
+  <script src="/nav-node.js" defer></script>
+</body>
+</html>

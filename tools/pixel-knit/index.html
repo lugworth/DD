@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>digidelic — pixel knit</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/digi-shell.css">
 <style>
 @font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
@@ -54,11 +55,15 @@ main{display:flex;flex:1;min-height:0}
 .stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
 .corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
 .corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
-.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi);transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),box-shadow 160ms ease;will-change:transform}
 .frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
 .frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
 .frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
-canvas#art{display:block;background:#faf7f2;touch-action:none;cursor:grab}
+canvas#art{
+  display:block;background:#faf7f2;touch-action:none;cursor:grab;
+  transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),opacity 120ms var(--e-flow),filter 120ms var(--e-flow),background-color 160ms var(--e-flow);
+  will-change:transform;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
 canvas#art.is-drag{cursor:grabbing}
 .stage .hint{
   position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
@@ -110,20 +115,23 @@ button:disabled{opacity:.5;cursor:default}
 .param:last-child{margin-bottom:0}
 .param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
-.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right;font-variant-numeric:tabular-nums;-webkit-font-feature-settings:"tnum";font-feature-settings:"tnum";transition:color var(--d-fast) var(--e-snap),opacity 80ms ease}
 
 input[type=range]{
   -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;--p:50%;
+  transition:opacity var(--d-fast) var(--e-flow),filter var(--d-fast) var(--e-flow);will-change:transform;
 }
-input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
-  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+  background:var(--white);border:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
-input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
-input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform}
 input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 input[type=text]{
   width:100%;height:32px;background:var(--black-panel);border:1px solid var(--border);
@@ -287,10 +295,12 @@ footer .fill{flex:1;border-right:0;text-align:right}
           </div>
           <div class="param">
             <div class="lab"><span class="name">Paper</span></div>
-            <div class="seg" id="segPaper" role="group" aria-label="paper">
-              <button data-paper="bone" class="is-active">Bone</button>
-              <button data-paper="void">Void</button>
-              <button data-paper="acid">Acid</button>
+            <div class="seg" id="segPaper" role="group" aria-label="paper" style="flex-wrap:wrap">
+              <button data-paper="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
+              <button data-paper="cyber" style="flex:1 1 30%">Cyber</button>
+              <button data-paper="acid" style="flex:1 1 30%">Acid</button>
+              <button data-paper="bone" style="flex:1 1 30%">Bone</button>
+              <button data-paper="void" style="flex:1 1 30%">Void</button>
             </div>
           </div>
         </div>
@@ -298,10 +308,10 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <div class="sect">
           <div class="sect-head"><h2>Caption</h2><span class="coord">S.05</span></div>
           <div class="param">
-            <input type="text" id="cap1" value="Ethereal. Meadow. Flight — dancing through a floral haze">
+            <input type="text" id="cap1" value="DIGIDELIC // KNIT MATRIX — CHROMATIC TEXTURE MATRIX">
           </div>
           <div class="param">
-            <input type="text" id="cap2" value="Botanical &amp; Winged Motif · Colorway: Azure, Blue, Blush &amp; Gold">
+            <input type="text" id="cap2" value="ELECTRO-SYNTHETIC WEAVE · COLORWAY: CYBERPUNK HIGH-VOLT">
           </div>
         </div>
 
@@ -309,12 +319,13 @@ footer .fill{flex:1;border-right:0;text-align:right}
 
       <div class="actions">
         <button id="btnPlay">❚❚ Pause</button>
+        <button id="btnKnitGlitch" style="color:#39ff6a">⚡ Knit Invert</button>
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
         <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
         <button id="btnMp4" title="capture 6s as MP4 — plays inline where WebM does not">▣ MP4 6s</button>
         <button id="btnLink" title="copy a link to these settings (texture/subject not included)">⧉ Copy Link</button>
         <button id="btnShare" hidden>⇪ Share</button>
-        <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
   </main>
@@ -334,6 +345,8 @@ footer .fill{flex:1;border-right:0;text-align:right}
 const ART_W=900, ART_H=1200;
 const TAU=Math.PI*2;
 const PAPERS={
+  digidelic:{ bg:'#000000', dot:'rgba(234,255,0,0.22)', ink:'#eaff00', rule:'rgba(234,255,0,0.3)' },
+  cyber:{ bg:'#080210', dot:'rgba(255,45,135,0.22)', ink:'#00d9ff', rule:'rgba(255,45,135,0.3)' },
   bone:{ bg:'#faf7f2', dot:'rgba(30,26,20,0.16)', ink:'#1b1a17', rule:'rgba(30,26,20,0.22)' },
   void:{ bg:'#08080a', dot:'rgba(255,255,255,0.14)', ink:'#f2f2f0', rule:'rgba(255,255,255,0.2)' },
   acid:{ bg:'#eaff00', dot:'rgba(0,0,0,0.22)', ink:'#0a0a0a', rule:'rgba(0,0,0,0.3)' },
@@ -341,7 +354,7 @@ const PAPERS={
 
 /* ═══════════════════ STATE ═══════════════════ */
 const state={
-  paper:'bone', layout:'split', sym:'none', blend:'knockout',
+  paper:'digidelic', layout:'split', sym:'none', blend:'knockout',
   playing:true, frame:0, stitches:0,
   tex:null,                       // {el, w, h, name}  — HTMLImageElement
   sub:null,                       // {el, w, h, name, kind:'video'|'image'}
@@ -1247,6 +1260,30 @@ document.getElementById('btnPlay').addEventListener('click',()=>{
     if(state.playing) state.sub.el.play().catch(()=>{}); else state.sub.el.pause();
   }
 });
+
+const btnKnit = document.getElementById('btnKnitGlitch');
+if(btnKnit){
+  btnKnit.addEventListener('click', ()=>{
+    const chkInv = document.getElementById('invert');
+    if(chkInv){ chkInv.checked = !chkInv.checked; }
+    const syms = ['none', 'lr', 'ud', 'quad', 'kaleido'];
+    const curIdx = syms.indexOf(state.sym);
+    const nextSym = syms[(curIdx + 1) % syms.length];
+    state.sym = nextSym;
+    const segSym = document.getElementById('segSym');
+    if(segSym){
+      segSym.querySelectorAll('button').forEach(b=>{
+        b.classList.toggle('is-active', b.dataset.sym === nextSym);
+      });
+    }
+    if(window.DigiSynth){
+      window.DigiSynth.glitch();
+      window.DigiSynth.click(740);
+    }
+    pushHistory();
+  });
+}
+
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('btnRecord').addEventListener('click',recordClip);
 document.getElementById('btnGif').addEventListener('click',recordGIF);
@@ -1275,10 +1312,12 @@ window.addEventListener('keydown',ev=>{
   const fromLink=location.hash?decodeState(location.hash.slice(1)):null;
   if(fromLink) applyState(fromLink);
 }
+canvas.style.background=PAPERS[state.paper].bg;
 updateSourceTag(); syncScrubUI();
 pushHistory();
 requestAnimationFrame(frame);
 </script>
+  <script src="../shared/digi-shell.js"></script>
   <script src="/nav-node.js" defer></script>
 </body>
 </html>

@@ -529,9 +529,9 @@ const TOOLS=[
     },
   },
   {
-    slug:'reaction-field', name:'Reaction Field', bg:'#04120c',
-    blurb:'Gray-Scott reaction–diffusion, shaded as 3D relief — coral, mitosis and maze regimes.',
-    tags:['animated'],
+    slug:'reaction-field', name:'Diffusion Field', bg:'#04120c',
+    blurb:'Gray-Scott reaction–diffusion WebGL2 engine — mitosis, coral, labyrinth regimes & text morphing.',
+    tags:['animated','interactive'],
     draw(g,w,h,t){
       const step=7;
       for(let y=0;y<h;y+=step)for(let x=0;x<w;x+=step){

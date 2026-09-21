@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Charts & Data Viz" subtitle="Waterfall spectrogram, cosmoradar, braided horizon, treemap, and flux chord" viewport="740x460" -->
+<html><head><meta charset="UTF-8"><style>
+@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;padding:14px 16px;font-family:'Geist Mono',monospace;color:#fff;overflow:hidden;height:460px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px}
+.chk-strip{height:6px;width:100%;margin-bottom:10px;background-color:#ff6050;background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);background-size:12px 12px;background-position:0 0,6px 6px}
+
+/* Top toolbar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:8px}
+.tabs{display:flex;gap:4px}
+.tab{background:#0d0d0c;border:1px solid rgba(255,255,255,.16);color:rgba(255,255,255,.6);padding:4px 9px;font-family:'Geist Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all 100ms}
+.tab:hover{background:#181816;color:#fff}
+.tab.active{background:#2d6cff;color:#000;border-color:#2d6cff}
+.btn-anomaly{background:#181816;border:1px solid #ff2d87;color:#ff2d87;padding:4px 10px;font-family:'Geist Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-anomaly:hover{background:#ff2d87;color:#000}
+
+/* Grid layout */
+.view-panel{display:none;height:370px}
+.view-panel.active{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel{border:1px solid rgba(255,255,255,.14);background:#080808;overflow:hidden;position:relative}
+.panel-hd{padding:6px 10px;background:#111110;border-bottom:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center;font-size:9px;letter-spacing:.12em}
+.spark{font-variant-numeric:tabular-nums;letter-spacing:.04em}
+
+/* HUD tooltip */
+.hud-box{position:absolute;top:32px;right:8px;background:rgba(0,0,0,.88);border:1px solid rgba(255,255,255,.2);padding:5px 8px;font-size:9px;line-height:1.4;pointer-events:none;z-index:10}
+</style>
+<link rel="stylesheet" href="../glitch.css">
+<script src="/vendor/d3.min.js"></script>
+</head>
+<body class="gl-stage">
+<div class="chk-strip"></div>
+
+<div class="bar">
+  <div class="tabs">
+    <button class="tab active" data-v="v1">01 // SPECTRAL & RADAR</button>
+    <button class="tab" data-v="v2">02 // HORIZON & TREEMAP</button>
+    <button class="tab" data-v="v3">03 // FLUX CHORD & TACH</button>
+  </div>
+  <button id="btnGlitch" class="btn-anomaly">⚡ INJECT ANOMALY</button>
+</div>
+
+<!-- VIEW 1: SPECTRAL & RADAR -->
+<div id="v1" class="view-panel active">
+  <div class="col">
+    <div class="panel" style="flex:1;display:flex;flex-direction:column">
+      <div class="panel-hd">
+        <span style="color:#00d9ff;font-weight:700">0x01 // WATERFALL SPECTROGRAM</span>
+        <span id="specPeak" style="color:#39ff6a">4.82 kHz</span>
+      </div>
+      <div style="flex:1;position:relative">
+        <canvas id="spec" width="340" height="200" style="display:block;width:100%;height:100%"></canvas>
+        <div id="specHud" class="hud-box" style="display:none">
+          <div>FREQ: <span id="specFreq" style="color:#00d9ff;font-weight:700">4.12 kHz</span></div>
+          <div>PWR: <span id="specPwr" style="color:#ff2d87;font-weight:700">-18 dBm</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="padding:8px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div class="lab">// QUANTUM BRAILLE STREAM</div>
+        <div id="brailleStream" class="spark" style="font-size:13px;color:#39ff6a">⠁⠃⠇⡇⡧⡷⣷⣿⣷⡷⡇⠇⠃⠁⠁⠃⠇⡇⡧⣷</div>
+        <div style="font-size:8px;color:rgba(255,255,255,.4);margin-top:3px">JITTER Δ 0.04ms · BUS 0xAF</div>
+      </div>
+      <div style="text-align:right">
+        <div class="lab">// FLUX TACH</div>
+        <div id="fluxVal" style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:900;color:#00d9ff">84.2</div>
+        <div style="font-size:8px;color:rgba(255,255,255,.4)">MBIT/SEC</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="panel" style="height:100%;display:flex;flex-direction:column">
+      <div class="panel-hd">
+        <span style="color:#ff2d87;font-weight:700">0x02 // COSMORADAR POLAR</span>
+        <span id="radarCoord" style="color:rgba(255,255,255,.5)">θ = 142.8°</span>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative">
+        <svg id="radar" width="310" height="310" viewBox="0 0 310 310" style="display:block;width:100%;height:100%"></svg>
+        <div style="position:absolute;bottom:8px;right:8px;font-size:8px;color:rgba(255,255,255,.4);line-height:1.4">
+          <div>TRAJECTORY: <span id="radarLock" style="color:#39ff6a">LOCKED</span></div>
+          <div>ORBIT: <span id="radarOrbit" style="color:#00d9ff">0.78 RAD</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW 2: HORIZON & TREEMAP -->
+<div id="v2" class="view-panel">
+  <div class="col">
+    <div class="panel" style="height:100%;display:flex;flex-direction:column">
+      <div class="panel-hd">
+        <span style="color:#00d9ff;font-weight:700">0x03 // BRAIDED HORIZON SCOPE</span>
+        <span style="color:#ff6050">GATE 82%</span>
+      </div>
+      <div style="flex:1;position:relative" id="horizonWrap">
+        <svg id="horizonSvg" width="340" height="300" style="display:block;width:100%;height:100%"></svg>
+        <div id="horizonHud" class="hud-box" style="display:none">
+          <div>CH-A: <span id="hzChA" style="color:#00d9ff;font-weight:700">74%</span></div>
+          <div>CH-B: <span id="hzChB" style="color:#ff2d87;font-weight:700">48%</span></div>
+          <div>DIFF Δ: <span id="hzDiff" style="color:#eaff00;font-weight:700">26%</span></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:4px 8px;font-size:8px;color:rgba(255,255,255,.4);background:#0d0d0c;border-top:1px solid rgba(255,255,255,.08)">
+        <span>T+0.00s</span><span>CH-A / CH-B DIFFERENTIAL HATCH</span><span>T+3.00s</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="panel" style="height:100%;display:flex;flex-direction:column">
+      <div class="panel-hd">
+        <span style="color:#39ff6a;font-weight:700">0x04 // PARTITION ALLOCATION TREEMAP</span>
+        <span style="color:rgba(255,255,255,.5)">9.98 GB ALLOCATED</span>
+      </div>
+      <div style="flex:1;position:relative">
+        <svg id="treemapSvg" width="340" height="310" style="display:block;width:100%;height:100%"></svg>
+        <div id="tmHud" class="hud-box" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW 3: FLUX CHORD & TACH -->
+<div id="v3" class="view-panel">
+  <div class="col">
+    <div class="panel" style="height:100%;display:flex;flex-direction:column">
+      <div class="panel-hd">
+        <span style="color:#c800ff;font-weight:700">0x05 // SIGNAL FLUX CHORD BUS</span>
+        <span style="color:#00d9ff">7 PACKET STREAMS</span>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative">
+        <svg id="chordSvg" width="310" height="310" viewBox="0 0 310 310" style="display:block;width:100%;height:100%"></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="panel" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
+      <div class="panel-hd" style="width:100%">
+        <span style="color:#ff5a00;font-weight:700">0x06 // DISCRETE ARC TACH</span>
+        <span style="color:#39ff6a">32 LED SEGMENTS</span>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;width:100%">
+        <svg id="tachSvg" width="220" height="220" viewBox="0 0 220 220"></svg>
+        <div style="position:absolute;text-align:center;pointer-events:none">
+          <div style="font-size:8px;color:rgba(255,255,255,.4);letter-spacing:.16em">BUS FLUX</div>
+          <div id="tachCenter" style="font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:900;color:#00d9ff;line-height:1.1">74</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.5)">MBIT/SEC</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="padding:8px 10px;flex-shrink:0">
+      <div class="lab">// TELEMETRY REGISTERS</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;font-variant-numeric:tabular-nums">
+        <span>REG_0x01: <b style="color:#39ff6a">0xFA71</b></span>
+        <span>CRC: <b style="color:#00d9ff">PASS</b></span>
+        <span>ENTROPY: <b style="color:#ff2d87">0.428</b></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tab switching
+const tabs = document.querySelectorAll('.tab');
+tabs.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const target = document.getElementById(btn.dataset.v);
+    if (target) target.classList.add('active');
+  });
+});
+
+// Audio feedback synthesizer
+const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
+function playGlitchSfx() {
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.15);
+  gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.16);
+}
+
+let glitchPulse = 0;
+document.getElementById('btnGlitch').addEventListener('click', () => {
+  glitchPulse = 1.0;
+  playGlitchSfx();
+  document.body.classList.add('gl-active');
+  setTimeout(() => document.body.classList.remove('gl-active'), 180);
+});
+
+// 1. LIVE WATERFALL SPECTROGRAM
+(function() {
+  const canvas = document.getElementById('spec');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const bins = 52;
+  const history = [];
+  const ramp = ['#c800ff','#ff2d87','#ff6050','#ff5a00','#c6ff3a','#39ff6a','#00d9ff','#2d6cff'];
+  const palette = ramp.map(hex => {
+    const c = (window.d3 ? d3.color(hex) : null) || { r: 0, g: 217, b: 255 };
+    return [c.r, c.g, c.b];
+  });
+
+  let t = 0;
+  function loop() {
+    t += 0.08;
+    if (glitchPulse > 0) glitchPulse -= 0.03;
+
+    const frame = new Float32Array(bins);
+    let peakBin = 0;
+    let peakVal = 0;
+    for (let i = 0; i < bins; i++) {
+      const nx = i / bins;
+      const carrier = Math.exp(-Math.pow((nx - 0.45 - Math.sin(t * 0.3) * 0.2) * 12, 2));
+      const harm = Math.sin(nx * 14 + t) * 0.2;
+      const noise = (Math.random() - 0.5) * 0.12 + (glitchPulse > 0 ? Math.random() * 0.6 : 0);
+      const val = Math.max(0, Math.min(1, carrier + harm + noise));
+      frame[i] = val;
+      if (val > peakVal) { peakVal = val; peakBin = i; }
+    }
+    history.unshift(frame);
+    if (history.length > h) history.pop();
+
+    const img = ctx.createImageData(w, h);
+    const d = img.data;
+    for (let y = 0; y < history.length; y++) {
+      const row = history[y];
+      for (let x = 0; x < w; x++) {
+        const b = Math.floor((x / w) * bins);
+        const val = row[b] || 0;
+        let rgb = [8, 8, 8];
+        if (val > 0.04) {
+          const idx = Math.min(palette.length - 1, Math.floor(val * palette.length));
+          rgb = palette[idx];
+        }
+        const px = (y * w + x) * 4;
+        d[px] = rgb[0]; d[px+1] = rgb[1]; d[px+2] = rgb[2]; d[px+3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    // Overlay grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 1; i < 6; i++) {
+      ctx.moveTo((w / 6) * i, 0); ctx.lineTo((w / 6) * i, h);
+    }
+    for (let j = 1; j < 4; j++) {
+      ctx.moveTo(0, (h / 4) * j); ctx.lineTo(w, (h / 4) * j);
+    }
+    ctx.stroke();
+
+    const peakElem = document.getElementById('specPeak');
+    if (peakElem && Math.random() > 0.8) {
+      peakElem.textContent = ((peakBin / bins) * 12.8 + 0.1).toFixed(2) + ' kHz';
+    }
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  // Mouse hover frequency probe
+  const hud = document.getElementById('specHud');
+  const fLab = document.getElementById('specFreq');
+  const pLab = document.getElementById('specPwr');
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    hud.style.display = 'block';
+    fLab.textContent = ((x / rect.width) * 12.8 + 0.1).toFixed(2) + ' kHz';
+    pLab.textContent = (-10 - (1 - y / rect.height) * 75).toFixed(0) + ' dBm';
+  });
+  canvas.addEventListener('mouseleave', () => { hud.style.display = 'none'; });
+})();
+
+// 2. LIVE BRAILLE SPARKFIELD & FLUX TACH
+(function() {
+  const brailleChars = ['⠁','⠃','⠇','⡇','⡧','⡷','⣷','⣿'];
+  const el = document.getElementById('brailleStream');
+  const fl = document.getElementById('fluxVal');
+  setInterval(() => {
+    if (!el) return;
+    let s = '';
+    for (let i = 0; i < 20; i++) {
+      const idx = Math.floor(Math.random() * brailleChars.length);
+      s += brailleChars[idx];
+    }
+    el.textContent = s;
+    if (fl && Math.random() > 0.6) {
+      fl.textContent = (78 + Math.random() * 18 + (glitchPulse * 30)).toFixed(1);
+    }
+  }, 120);
+})();
+
+// 3. COSMORADAR POLAR 8-VECTOR
+(function() {
+  const svg = document.getElementById('radar');
+  if (!svg) return;
+  const c = 155;
+  const r = 105;
+  const axes = 8;
+  const labels = ['LAT','QRM','ENT','BW','JIT','PAR','FLX','VLT'];
+  let t = 0;
+
+  function drawRadar() {
+    t += 0.04;
+    const metrics = [
+      0.75 + Math.sin(t) * 0.15,
+      0.88 + Math.cos(t * 0.8) * 0.08,
+      0.45 + (glitchPulse > 0 ? 0.4 : Math.sin(t * 1.5) * 0.1),
+      0.82 + Math.cos(t * 1.2) * 0.12,
+      0.30 + (glitchPulse > 0 ? 0.5 : Math.sin(t * 2) * 0.1),
+      0.92 + Math.sin(t * 0.5) * 0.06,
+      0.65 + Math.cos(t * 1.7) * 0.15,
+      0.78 + Math.sin(t * 0.9) * 0.12
+    ];
+
+    let html = '';
+    // Concentric decagons
+    [0.25, 0.5, 0.75, 1.0].forEach(frac => {
+      let pts = [];
+      for (let i = 0; i < axes; i++) {
+        const a = (Math.PI * 2 * i) / axes - Math.PI / 2;
+        pts.push(`${(c + Math.cos(a)*r*frac).toFixed(1)},${(c + Math.sin(a)*r*frac).toFixed(1)}`);
+      }
+      html += `<polygon points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="${frac === 1.0 ? 'none' : '2 2'}" />`;
+    });
+
+    // Spokes & labels
+    for (let i = 0; i < axes; i++) {
+      const a = (Math.PI * 2 * i) / axes - Math.PI / 2;
+      const x2 = c + Math.cos(a)*r;
+      const y2 = c + Math.sin(a)*r;
+      const lx = c + Math.cos(a)*(r + 14);
+      const ly = c + Math.sin(a)*(r + 14);
+      html += `<line x1="${c}" y1="${c}" x2="${x2}" y2="${y2}" stroke="rgba(255,255,255,0.18)" stroke-width="1" />`;
+      html += `<text x="${lx}" y="${ly + 3}" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="8" font-family="'Geist Mono',monospace">${labels[i]}</text>`;
+    }
+
+    // Shadow polygon
+    let sPts = metrics.map((v, i) => {
+      const a = (Math.PI * 2 * i) / axes - Math.PI / 2;
+      const sVal = Math.max(0.1, v - 0.2);
+      return `${(c + Math.cos(a)*r*sVal).toFixed(1)},${(c + Math.sin(a)*r*sVal).toFixed(1)}`;
+    });
+    html += `<polygon points="${sPts.join(' ')}" fill="#ff2d87" fill-opacity="0.18" stroke="#ff2d87" stroke-width="1.5" stroke-dasharray="3 2" />`;
+
+    // Primary data polygon
+    let pPts = metrics.map((v, i) => {
+      const a = (Math.PI * 2 * i) / axes - Math.PI / 2;
+      return `${(c + Math.cos(a)*r*v).toFixed(1)},${(c + Math.sin(a)*r*v).toFixed(1)}`;
+    });
+    html += `<polygon points="${pPts.join(' ')}" fill="#00d9ff" fill-opacity="0.25" stroke="#00d9ff" stroke-width="2" />`;
+
+    // Orbiting trajectory point
+    const orbAngle = t * 1.4;
+    const orbDist = (0.4 + Math.sin(t * 2.2) * 0.3) * r;
+    const ox = c + Math.cos(orbAngle) * orbDist;
+    const oy = c + Math.sin(orbAngle) * orbDist;
+    html += `<line x1="${c}" y1="${c}" x2="${ox}" y2="${oy}" stroke="rgba(255,96,80,0.5)" stroke-width="1" stroke-dasharray="2 2" />`;
+    html += `<circle cx="${ox}" cy="${oy}" r="3.5" fill="#ff6050" />`;
+    html += `<circle cx="${ox}" cy="${oy}" r="7" fill="none" stroke="#ff6050" stroke-width="1" />`;
+
+    // Center pip
+    html += `<circle cx="${c}" cy="${c}" r="3" fill="#fff" />`;
+
+    svg.innerHTML = html;
+
+    const coordEl = document.getElementById('radarCoord');
+    if (coordEl) {
+      const deg = ((orbAngle * 180 / Math.PI) % 360 + 360) % 360;
+      coordEl.textContent = `θ = ${deg.toFixed(1)}°`;
+    }
+    const orbitEl = document.getElementById('radarOrbit');
+    if (orbitEl) orbitEl.textContent = (orbDist / r).toFixed(2) + ' RAD';
+
+    requestAnimationFrame(drawRadar);
+  }
+  drawRadar();
+})();
+
+// 4. BRAIDED HORIZON OSCILLOSCOPE
+(function() {
+  const svg = document.getElementById('horizonSvg');
+  if (!svg) return;
+  const w = 340;
+  const h = 280;
+  const pts = 48;
+  const stepX = w / (pts - 1);
+  const yScale = h - 40;
+  let t = 0;
+
+  function renderHorizon() {
+    t += 0.08;
+    const arrA = [];
+    const arrB = [];
+    for (let i = 0; i < pts; i++) {
+      const x = i / pts;
+      let vA = Math.sin(x * 12 + t) * 0.32 + Math.cos(x * 22 - t * 0.7) * 0.18 + 0.45;
+      let vB = Math.sin(x * 8 - t * 1.1) * 0.36 + Math.sin(x * 16 + t) * 0.14 + 0.45;
+      if (glitchPulse > 0 && i > pts * 0.3 && i < pts * 0.7) {
+        vA = Math.random() > 0.5 ? 0.95 : 0.1;
+        vB = Math.random() > 0.5 ? 0.9 : 0.15;
+      }
+      arrA.push(Math.max(0.04, Math.min(0.96, vA)));
+      arrB.push(Math.max(0.04, Math.min(0.96, vB)));
+    }
+
+    // Build stepped paths
+    let pathA = `M 0 ${(h - arrA[0]*yScale).toFixed(1)}`;
+    let areaA = `M 0 ${h} L 0 ${(h - arrA[0]*yScale).toFixed(1)}`;
+    let pathB = `M 0 ${(h - arrB[0]*yScale).toFixed(1)}`;
+    for (let i = 1; i < pts; i++) {
+      const currX = (i * stepX).toFixed(1);
+      const yA = (h - arrA[i]*yScale).toFixed(1);
+      const yB = (h - arrB[i]*yScale).toFixed(1);
+      pathA += ` H ${currX} V ${yA}`;
+      areaA += ` H ${currX} V ${yA}`;
+      pathB += ` H ${currX} V ${yB}`;
+    }
+    areaA += ` L ${w} ${h} Z`;
+
+    const threshY = h - 0.82 * yScale;
+    let html = `
+      <defs>
+        <pattern id="hzHatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0" x2="0" y2="8" stroke="#00d9ff" stroke-width="1.5" stroke-opacity="0.35" />
+        </pattern>
+      </defs>
+      <!-- Grid ticks -->
+      <line x1="0" y1="${h - 0.25*yScale}" x2="${w}" y2="${h - 0.25*yScale}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="2 2" />
+      <line x1="0" y1="${h - 0.5*yScale}" x2="${w}" y2="${h - 0.5*yScale}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="2 2" />
+      <line x1="0" y1="${h - 0.75*yScale}" x2="${w}" y2="${h - 0.75*yScale}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="2 2" />
+      <!-- Limit gate -->
+      <line x1="0" y1="${threshY}" x2="${w}" y2="${threshY}" stroke="#ff6050" stroke-width="1" stroke-dasharray="5 3" />
+      <!-- Under-area hatch -->
+      <path d="${areaA}" fill="url(#hzHatch)" />
+      <!-- Trace A -->
+      <path d="${pathA}" fill="none" stroke="#00d9ff" stroke-width="2" />
+      <!-- Trace B -->
+      <path d="${pathB}" fill="none" stroke="#ff2d87" stroke-width="1.5" stroke-dasharray="3 2" />
+    `;
+
+    svg.innerHTML = html;
+    requestAnimationFrame(renderHorizon);
+  }
+  renderHorizon();
+})();
+
+// 5. SECTOR PARTITION TREEMAP
+(function() {
+  const svg = document.getElementById('treemapSvg');
+  if (!svg) return;
+  const w = 340;
+  const h = 300;
+  const sectors = [
+    { code: 'SEC-A1', label: 'NEURAL WEIGHTS', bytes: '4.18 GB', val: 42, color: '#2d6cff' },
+    { code: 'SEC-B4', label: 'TELEMETRY BUFFER', bytes: '2.40 GB', val: 24, color: '#00d9ff' },
+    { code: 'SEC-C0', label: 'FRAME PARITY', bytes: '1.60 GB', val: 16, color: '#39ff6a' },
+    { code: 'SEC-D8', label: 'PACKET QUORUM', bytes: '1.00 GB', val: 10, color: '#c6ff3a' },
+    { code: 'SEC-E2', label: 'CRYPTO ROOT', bytes: '0.80 GB', val: 8, color: '#ff2d87' }
+  ];
+
+  // Manual treemap partition for predictable, responsive layout
+  let html = `
+    <!-- SEC-A1 (Left half) -->
+    <g>
+      <rect x="2" y="2" width="166" height="296" fill="#2d6cff" fill-opacity="0.22" stroke="#2d6cff" stroke-width="1" />
+      <text x="12" y="22" fill="#fff" font-size="11" font-weight="700" font-family="'Geist Mono',monospace">SEC-A1</text>
+      <text x="12" y="36" fill="rgba(255,255,255,0.6)" font-size="9" font-family="'Geist Mono',monospace">NEURAL WEIGHTS</text>
+      <text x="12" y="284" fill="#2d6cff" font-size="10" font-weight="700" font-family="'Geist Mono',monospace">4.18 GB // 42%</text>
+    </g>
+    <!-- SEC-B4 (Top right) -->
+    <g>
+      <rect x="172" y="2" width="166" height="150" fill="#00d9ff" fill-opacity="0.22" stroke="#00d9ff" stroke-width="1" />
+      <text x="182" y="22" fill="#fff" font-size="11" font-weight="700" font-family="'Geist Mono',monospace">SEC-B4</text>
+      <text x="182" y="36" fill="rgba(255,255,255,0.6)" font-size="9" font-family="'Geist Mono',monospace">TELEMETRY BUF</text>
+      <text x="182" y="142" fill="#00d9ff" font-size="10" font-weight="700" font-family="'Geist Mono',monospace">2.40 GB // 24%</text>
+    </g>
+    <!-- SEC-C0 (Mid bottom right) -->
+    <g>
+      <rect x="172" y="156" width="166" height="74" fill="#39ff6a" fill-opacity="0.22" stroke="#39ff6a" stroke-width="1" />
+      <text x="182" y="174" fill="#fff" font-size="10" font-weight="700" font-family="'Geist Mono',monospace">SEC-C0</text>
+      <text x="182" y="220" fill="#39ff6a" font-size="10" font-weight="700" font-family="'Geist Mono',monospace">1.60 GB // 16%</text>
+    </g>
+    <!-- SEC-D8 & E2 (Bottom right split) -->
+    <g>
+      <rect x="172" y="234" width="80" height="64" fill="#c6ff3a" fill-opacity="0.22" stroke="#c6ff3a" stroke-width="1" />
+      <text x="180" y="252" fill="#fff" font-size="9" font-weight="700" font-family="'Geist Mono',monospace">SEC-D8</text>
+      <text x="180" y="290" fill="#c6ff3a" font-size="8" font-weight="700" font-family="'Geist Mono',monospace">1.0 GB</text>
+    </g>
+    <g>
+      <rect x="256" y="234" width="82" height="64" fill="#ff2d87" fill-opacity="0.22" stroke="#ff2d87" stroke-width="1" />
+      <text x="264" y="252" fill="#fff" font-size="9" font-weight="700" font-family="'Geist Mono',monospace">SEC-E2</text>
+      <text x="264" y="290" fill="#ff2d87" font-size="8" font-weight="700" font-family="'Geist Mono',monospace">0.8 GB</text>
+    </g>
+  `;
+  svg.innerHTML = html;
+})();
+
+// 6. SIGNAL FLUX CHORD
+(function() {
+  const svg = document.getElementById('chordSvg');
+  if (!svg) return;
+  const c = 155;
+  const r = 100;
+  const nodes = [
+    { id: 'ALPHA', label: '0xAL', color: '#2d6cff' },
+    { id: 'BETA',  label: '0xBT', color: '#00d9ff' },
+    { id: 'GAMMA', label: '0xGM', color: '#39ff6a' },
+    { id: 'DELTA', label: '0xDL', color: '#ff5a00' },
+    { id: 'EPSIL', label: '0xEP', color: '#ff2d87' },
+    { id: 'OMEGA', label: '0xOM', color: '#c800ff' }
+  ];
+  const links = [
+    [0, 1, '#2d6cff'], [0, 2, '#00d9ff'], [1, 3, '#ff5a00'],
+    [2, 4, '#39ff6a'], [3, 5, '#ff2d87'], [4, 5, '#c800ff'], [5, 0, '#2d6cff']
+  ];
+
+  let pOff = 0;
+  function renderChord() {
+    pOff = (pOff + 0.04) % 1.0;
+    const pos = nodes.map((_, i) => {
+      const a = (Math.PI * 2 * i) / nodes.length - Math.PI / 2;
+      return { x: c + Math.cos(a)*r, y: c + Math.sin(a)*r };
+    });
+
+    let html = `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3 3" />`;
+
+    // Draw links
+    links.forEach(([i1, i2, col], idx) => {
+      const p1 = pos[i1];
+      const p2 = pos[i2];
+      const midX = c * 0.4 + (p1.x + p2.x) * 0.3;
+      const midY = c * 0.4 + (p1.y + p2.y) * 0.3;
+      const d = `M ${p1.x} ${p1.y} Q ${midX} ${midY} ${p2.x} ${p2.y}`;
+      html += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-opacity="0.5" />`;
+
+      // Traveling packet
+      const t = (pOff + idx * 0.16) % 1.0;
+      const px = Math.pow(1 - t, 2) * p1.x + 2 * (1 - t) * t * midX + Math.pow(t, 2) * p2.x;
+      const py = Math.pow(1 - t, 2) * p1.y + 2 * (1 - t) * t * midY + Math.pow(t, 2) * p2.y;
+      html += `<circle cx="${px}" cy="${py}" r="3" fill="#fff" />`;
+    });
+
+    // Draw nodes
+    nodes.forEach((node, i) => {
+      const p = pos[i];
+      html += `
+        <rect x="${p.x - 12}" y="${p.y - 12}" width="24" height="24" fill="#000" stroke="${node.color}" stroke-width="2" />
+        <text x="${p.x}" y="${p.y + 3}" text-anchor="middle" fill="#fff" font-size="8" font-family="'Geist Mono',monospace" font-weight="700">${node.label}</text>
+      `;
+    });
+
+    svg.innerHTML = html;
+    requestAnimationFrame(renderChord);
+  }
+  renderChord();
+})();
+
+// 7. RADIAL TACHOMETER
+(function() {
+  const svg = document.getElementById('tachSvg');
+  if (!svg) return;
+  const c = 110;
+  const r = 85;
+  const numSegs = 32;
+  const startA = -Math.PI * 1.25;
+  const sweepA = Math.PI * 1.5;
+
+  let val = 74;
+  setInterval(() => {
+    val = Math.max(20, Math.min(98, val + (Math.random() - 0.5) * 8 + (glitchPulse > 0 ? 20 : 0)));
+    const ctr = document.getElementById('tachCenter');
+    if (ctr) ctr.textContent = Math.round(val);
+  }, 100);
+
+  function drawTach() {
+    const pct = val / 100;
+    const active = Math.round(pct * numSegs);
+    let html = '';
+    for (let i = 0; i < numSegs; i++) {
+      const frac = i / numSegs;
+      const a = startA + frac * sweepA;
+      const isRed = (frac * 100) >= 82;
+      const isOn = i < active;
+      const rIn = r - 10;
+      const rOut = r + 8;
+      const x1 = c + Math.cos(a) * rIn;
+      const y1 = c + Math.sin(a) * rIn;
+      const x2 = c + Math.cos(a) * rOut;
+      const y2 = c + Math.sin(a) * rOut;
+      const stroke = isRed ? (isOn ? '#ff0066' : 'rgba(255,0,102,0.2)') : (isOn ? '#00d9ff' : 'rgba(255,255,255,0.12)');
+      html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="3" />`;
+    }
+    svg.innerHTML = html;
+    requestAnimationFrame(drawTach);
+  }
+  drawTach();
+})();
+</script>
+<script src="/nav-node.js" defer></script>
+</body>
+</html>

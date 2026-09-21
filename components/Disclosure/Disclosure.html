@@ -1,0 +1,273 @@
+<!-- @dsCard group="Components" name="Disclosure" subtitle="Multi-panel accordions, collapsible telemetry blocks, hierarchical tree views and slide-out parameter drawers" viewport="1280x1600" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Disclosure</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/vendor/react.production.min.js"></script>
+<script>if (!window.React) document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\\/script>');</script>
+<script src="/vendor/react-dom.production.min.js"></script>
+<script>if (!window.ReactDOM) document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\\/script>');</script>
+<script src="/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#ff5a00}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:68ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:34px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:72ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px;border:1px solid rgba(255,255,255,.1)}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px;border:1px solid rgba(0,0,0,.15)}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#ff5a00 25%,transparent 25%,transparent 75%,#ff5a00 75%),linear-gradient(45deg,#ff5a00 25%,transparent 25%,transparent 75%,#ff5a00 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px 30px}
+code{color:#ff5a00}
+.box{background:#0a0a0a;border:1px solid rgba(255,255,255,.12);padding:18px}
+.coll-block{border-left:2px solid #00d9ff;padding-left:14px;margin-bottom:14px}
+.coll-head{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#00d9ff;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Disclosure</h1>
+<p class="sub">Progressive discovery containers for dense telemetry trees and hidden parameter panels. Highlights accordions with rotating chevrons, hierarchical directory trees, collapsible detail blocks, and slide-out operator drawers.</p>
+<div id="root"></div>
+
+<script>
+const { createElement: h, Fragment, useState } = React;
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+const Col = (label, children) => h('div', null, h('p', { className: 'lab' }, label), children);
+
+function Demo() {
+  const [openAcc, setOpenAcc] = useState('p1');
+  const [collOpen, setCollOpen] = useState(true);
+  const [selectedTreeId, setSelectedTreeId] = useState('t-2');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const accItems = [
+    {
+      id: 'p1',
+      title: '01 · INTAKE RELAY CONFIGURATION',
+      badge: 'NOMINAL',
+      body: 'Configured for dual-carrier mode at 10 Gbps. Buffers allocate 256MB scratch ring memory with hardware CRC32 checksums enabled on ingress frames.'
+    },
+    {
+      id: 'p2',
+      title: '02 · SPECTRAL CLUSTERING WEIGHTS',
+      badge: 'CALIBRATING',
+      body: 'Eigenvector decomposition running over 4096 graph edges. Convergence tolerance threshold set to 1e-6 with adaptive step scaling.'
+    },
+    {
+      id: 'p3',
+      title: '03 · TELEMETRY SINK BUFFER',
+      badge: 'STANDBY',
+      body: 'Disk storage array writes stream partitions directly to NVMe journal. Retention policy enforces 48-hour circular log rotation.'
+    }
+  ];
+
+  const treeData = [
+    {
+      id: 'root-1', label: 'SECTOR-ALPHA (0x01)',
+      children: [
+        { id: 't-1', label: 'router-core.bin' },
+        { id: 't-2', label: 'parity-table.hex' },
+        {
+          id: 'sub-1', label: 'CALIBRATION',
+          children: [
+            { id: 't-3', label: 'oscillator-map.dat' },
+            { id: 't-4', label: 'phase-shift.log' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'root-2', label: 'SECTOR-BETA (0x02)',
+      children: [
+        { id: 't-5', label: 'relay-socket.ipc' },
+        { id: 't-6', label: 'mesh-topology.json' }
+      ]
+    }
+  ];
+
+  return h(Fragment, null,
+    Sec('01 · interactive accordion panels', 'Multi-panel disclosure with rotating indicators and status tags.',
+      h('div', { className: 'box', style: { padding: 0 } },
+        accItems.map(it => {
+          const isOpen = it.id === openAcc;
+          return h('div', {
+            key: it.id,
+            style: { borderBottom: '1px solid rgba(255,255,255,.08)' }
+          },
+            h('button', {
+              type: 'button',
+              onClick: () => setOpenAcc(isOpen ? null : it.id),
+              style: {
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                padding: '12px 16px', background: isOpen ? '#111' : 'transparent',
+                border: 'none', color: isOpen ? '#ff5a00' : 'rgba(255,255,255,.7)',
+                fontSize: 11, fontWeight: 700, letterSpacing: '.12em', cursor: 'pointer',
+                textAlign: 'left', transition: 'all 120ms'
+              }
+            },
+              h('span', {
+                style: {
+                  display: 'inline-block', width: 12, transition: 'transform 180ms ease',
+                  transform: isOpen ? 'rotate(90deg)' : 'none', color: isOpen ? '#ff5a00' : 'rgba(255,255,255,.3)'
+                }
+              }, '▶'),
+              h('span', { style: { flex: 1 } }, it.title),
+              h('span', { style: { fontSize: 9, opacity: 0.6, border: '1px solid currentColor', padding: '1px 5px' } }, it.badge)
+            ),
+            isOpen && h('div', {
+              style: { padding: '0 16px 14px 38px', fontSize: 11, lineHeight: 1.6, color: 'rgba(255,255,255,.55)' }
+            }, it.body)
+          );
+        })
+      )
+    ),
+
+    Sec('02 · collapsible telemetry block', 'Inline collapsible component with left accent line for compact specs.',
+      h('div', { className: 'box' },
+        h('div', { className: 'coll-block' },
+          h('div', {
+            className: 'coll-head',
+            onClick: () => setCollOpen(!collOpen)
+          },
+            h('span', null, collOpen ? '▼' : '▶'),
+            'HARDWARE BUS SPECIFICATIONS (CLICK TO TOGGLE)'
+          ),
+          collOpen && h('div', { style: { marginTop: 10, fontSize: 11, lineHeight: 1.6, color: 'rgba(255,255,255,.6)' } },
+            'PCIe 4.0 x16 interface clocked at 16 GT/s. 64 lanes dedicated to optical transceiver array with zero DMA contention.'
+          )
+        )
+      )
+    ),
+
+    Sec('03 · hierarchical directory tree view', 'Expandable file and node trees with depth connectors and selection.',
+      h('div', { className: 'box', style: { maxWidth: 360 } },
+        h('div', { style: { padding: 4, background: '#080808', border: '1px solid rgba(255,255,255,.1)' } },
+          treeData.map(rt => h('div', { key: rt.id },
+            h('div', { style: { padding: '6px 10px', fontSize: 10, fontWeight: 700, color: '#ff5a00', letterSpacing: '.1em' } },
+              '📁 ' + rt.label
+            ),
+            rt.children.map(ch => {
+              const hasSub = !!ch.children;
+              const isSel = ch.id === selectedTreeId;
+              return h('div', { key: ch.id },
+                h('div', {
+                  onClick: () => setSelectedTreeId(ch.id),
+                  style: {
+                    display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px 5px 24px',
+                    fontSize: 11, cursor: 'pointer',
+                    background: isSel ? '#ff5a00' : 'transparent',
+                    color: isSel ? '#000' : 'rgba(255,255,255,.7)',
+                    fontWeight: isSel ? 700 : 400
+                  }
+                },
+                  h('span', { style: { opacity: 0.5 } }, hasSub ? '📁' : '📄'),
+                  ch.label
+                ),
+                hasSub && ch.children.map(sub => {
+                  const isSubSel = sub.id === selectedTreeId;
+                  return h('div', {
+                    key: sub.id,
+                    onClick: () => setSelectedTreeId(sub.id),
+                    style: {
+                      display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px 5px 38px',
+                      fontSize: 10, cursor: 'pointer',
+                      background: isSubSel ? '#ff5a00' : 'transparent',
+                      color: isSubSel ? '#000' : 'rgba(255,255,255,.6)',
+                      fontWeight: isSubSel ? 700 : 400
+                    }
+                  },
+                    h('span', { style: { opacity: 0.5 } }, '📄'),
+                    sub.label
+                  );
+                })
+              );
+            })
+          ))
+        ),
+        h('div', { style: { marginTop: 8, fontSize: 10, color: 'rgba(255,255,255,.4)' } },
+          'Selected File: ', h('b', { style: { color: '#ff5a00' } }, selectedTreeId)
+        )
+      )
+    ),
+
+    Sec('04 · slide-out parameter drawer', 'Slide-in side panel with backdrop scrim for configuration workflows.',
+      h('div', { className: 'box' },
+        h('button', {
+          type: 'button',
+          onClick: () => setDrawerOpen(true),
+          style: { padding: '8px 16px', background: '#ff5a00', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, letterSpacing: '.12em', cursor: 'pointer' }
+        }, 'OPEN INSPECTOR DRAWER ➔'),
+
+        drawerOpen && h('div', {
+          style: {
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,.78)', zIndex: 9999
+          },
+          onClick: () => setDrawerOpen(false)
+        },
+          h('div', {
+            style: {
+              position: 'fixed', top: 0, right: 0, bottom: 0, width: 340,
+              background: '#111110', borderLeft: '1px solid #ff5a00', padding: 20,
+              display: 'flex', flexDirection: 'column', boxShadow: '-12px 0 48px rgba(0,0,0,.9)'
+            },
+            onClick: e => e.stopPropagation()
+          },
+            h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,.1)', paddingBottom: 12 } },
+              h('span', { style: { fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 16 } }, 'INSPECTOR PANEL'),
+              h('button', {
+                type: 'button',
+                onClick: () => setDrawerOpen(false),
+                style: { background: 'none', border: 'none', color: 'rgba(255,255,255,.4)', fontSize: 16, cursor: 'pointer' }
+              }, '✕')
+            ),
+            h('div', { style: { padding: '16px 0', flex: 1, fontSize: 11, lineHeight: 1.7, color: 'rgba(255,255,255,.7)' } },
+              h('p', null, 'Target: NODE-047 [SECTOR-A1]'),
+              h('p', null, 'Carrier frequency: 433.92 MHz'),
+              h('p', null, 'Active peers: 14 nodes synchronized'),
+              h('p', null, 'Ring buffer health: 99.8% verified')
+            ),
+            h('div', { style: { display: 'flex', gap: 8, borderTop: '1px solid rgba(255,255,255,.1)', paddingTop: 14 } },
+              h('button', {
+                type: 'button',
+                onClick: () => setDrawerOpen(false),
+                style: { flex: 1, padding: '8px 0', background: '#ff5a00', border: 'none', color: '#000', fontSize: 11, fontWeight: 700, cursor: 'pointer' }
+              }, 'SAVE SPECS'),
+              h('button', {
+                type: 'button',
+                onClick: () => setDrawerOpen(false),
+                style: { padding: '8px 12px', background: 'transparent', border: '1px solid rgba(255,255,255,.2)', color: '#fff', fontSize: 11, cursor: 'pointer' }
+              }, 'CLOSE')
+            )
+          )
+        )
+      )
+    ),
+
+    Sec('05 · surfaces — night and cream grounds', 'Visual proofing of disclosure elements across dark and cream environments.',
+      h('div', null,
+        h('div', { className: 'night' },
+          h('p', { className: 'lab', style: { color: 'rgba(255,255,255,.5)' } }, '// NIGHT SURFACE (#150a1c)'),
+          h('div', { style: { padding: '8px 12px', border: '1px solid rgba(255,255,255,.15)', color: '#ff5a00', fontSize: 11, fontWeight: 700 } }, '▶ DISCLOSURE ACTIVE')
+        ),
+        h('div', { className: 'cream' },
+          h('p', { className: 'lab' }, '// CREAM SURFACE (#e8e3d0)'),
+          h('div', { style: { padding: '8px 12px', border: '1px solid rgba(0,0,0,.2)', color: '#0a0a0a', fontSize: 11, fontWeight: 700 } }, '▶ DISCLOSURE ACTIVE')
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.render(h(Demo), document.getElementById('root'));
+</script>
+  <script src="/nav-node.js" defer></script>
+</body>
+</html>

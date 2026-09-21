@@ -1,0 +1,294 @@
+<!-- @dsCard group="Components" name="Menu" subtitle="Action dropdowns, popover callouts, typeahead comboboxes, tags input and multiselect" viewport="1280x1600" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Menu</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/vendor/react.production.min.js"></script>
+<script>if (!window.React) document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\\/script>');</script>
+<script src="/vendor/react-dom.production.min.js"></script>
+<script>if (!window.ReactDOM) document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\\/script>');</script>
+<script src="/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#c6ff3a}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:68ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:34px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:72ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px;border:1px solid rgba(255,255,255,.1)}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px;border:1px solid rgba(0,0,0,.15)}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#c6ff3a 25%,transparent 25%,transparent 75%,#c6ff3a 75%),linear-gradient(45deg,#c6ff3a 25%,transparent 25%,transparent 75%,#c6ff3a 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px 30px}
+code{color:#c6ff3a}
+.box{background:#0a0a0a;border:1px solid rgba(255,255,255,.12);padding:18px}
+.trig{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 14px;border:1px solid rgba(255,255,255,.22);font-size:11px;letter-spacing:.08em;color:#fff;cursor:pointer;background:#111110;text-transform:uppercase}
+.trig:hover{border-color:#c6ff3a;color:#c6ff3a}
+.menu-panel{width:220px;background:#111110;border:1px solid rgba(255,255,255,.18);padding:4px 0;box-shadow:0 12px 36px rgba(0,0,0,.9)}
+.mi{display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;transition:background 100ms}
+.mi:hover{background:#1c1c1a;color:#fff}
+.mi-k{margin-left:auto;font-size:8px;letter-spacing:.08em;color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.15);padding:1px 4px}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Menu</h1>
+<p class="sub">Selection mechanisms and floating command tiers. Encompasses action dropdown menus with keyboard accelerator tags, anchored popovers, auto-filtering comboboxes, interactive tags inputs, and checkbox multiselects.</p>
+<div id="root"></div>
+
+<script>
+const { createElement: h, Fragment, useState } = React;
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+const Col = (label, children) => h('div', null, h('p', { className: 'lab' }, label), children);
+
+function Demo() {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [selectedAction, setSelectedAction] = useState('None');
+  const [cbQuery, setCbQuery] = useState('');
+  const [cbValue, setCbValue] = useState('NODE-047');
+  const [tags, setTags] = useState(['SECTOR-A1', 'ENCRYPTED', 'OPTICAL-RELAY']);
+  const [tagInput, setTagInput] = useState('');
+  const [multiSelected, setMultiSelected] = useState(['alpha', 'gamma']);
+
+  const cbOptions = [
+    { id: 'NODE-047', label: 'NODE-047 (Sector A1)', tag: 'PRIMARY' },
+    { id: 'NODE-088', label: 'NODE-088 (Sector B6)', tag: 'STANDBY' },
+    { id: 'NODE-003', label: 'NODE-003 (Sector X0)', tag: 'CRITICAL' },
+    { id: 'RELAY-X12', label: 'RELAY-X12 (Mesh Core)', tag: 'CORE' },
+    { id: 'BUFFER-09', label: 'BUFFER-09 (Ring In)', tag: 'MEMORY' }
+  ].filter(it => it.label.toLowerCase().includes(cbQuery.toLowerCase()));
+
+  const handleAddTag = () => {
+    const val = tagInput.trim().toUpperCase();
+    if (val && !tags.includes(val)) {
+      setTags([...tags, val]);
+      setTagInput('');
+    }
+  };
+
+  const toggleMulti = id => {
+    setMultiSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  return h(Fragment, null,
+    Sec('01 · action dropdown menu', 'Command menu with category headings, keyboard accelerators, and danger actions.',
+      h('div', { className: 'box', style: { position: 'relative', minHeight: 180 } },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 14 } },
+          h('button', {
+            type: 'button',
+            className: 'trig',
+            onClick: () => setDropdownOpen(!dropdownOpen)
+          }, 'OPTIONS ▾'),
+          h('span', { style: { fontSize: 11, color: 'rgba(255,255,255,.5)' } },
+            'Last Dispatched: ', h('b', { style: { color: '#c6ff3a' } }, selectedAction)
+          )
+        ),
+        dropdownOpen && h('div', {
+          className: 'menu-panel',
+          style: { position: 'absolute', top: 56, left: 18, zIndex: 50 }
+        },
+          h('div', { style: { padding: '5px 12px', fontSize: 8, letterSpacing: '.18em', color: 'rgba(255,255,255,.3)', textTransform: 'uppercase' } }, '// OPERATIONS'),
+          h('div', {
+            className: 'mi',
+            onClick: () => { setSelectedAction('Commit Snapshot'); setDropdownOpen(false); }
+          },
+            h('span', { style: { color: '#c6ff3a' } }, '◈'),
+            h('span', null, 'Commit Snapshot'),
+            h('span', { className: 'mi-k' }, '⌘S')
+          ),
+          h('div', {
+            className: 'mi',
+            onClick: () => { setSelectedAction('Broadcast Ping'); setDropdownOpen(false); }
+          },
+            h('span', { style: { color: '#00d9ff' } }, '▶'),
+            h('span', null, 'Broadcast Ping'),
+            h('span', { className: 'mi-k' }, '⌘P')
+          ),
+          h('div', { style: { height: 1, background: 'rgba(255,255,255,.1)', margin: '4px 0' } }),
+          h('div', { style: { padding: '5px 12px', fontSize: 8, letterSpacing: '.18em', color: 'rgba(255,255,255,.3)', textTransform: 'uppercase' } }, '// DANGER ZONE'),
+          h('div', {
+            className: 'mi',
+            style: { color: '#ff0066' },
+            onClick: () => { setSelectedAction('Purge Buffer'); setDropdownOpen(false); }
+          },
+            h('span', null, '▲'),
+            h('span', null, 'Purge Memory Buffer'),
+            h('span', { className: 'mi-k', style: { borderColor: 'rgba(255,0,102,.3)', color: '#ff0066' } }, '⇧⌘D')
+          )
+        )
+      )
+    ),
+
+    Sec('02 · anchored popover callout', 'Floating card anchored to a trigger for contextual parameter adjustments.',
+      h('div', { className: 'box', style: { position: 'relative', minHeight: 180 } },
+        h('button', {
+          type: 'button',
+          className: 'trig',
+          onClick: () => setPopoverOpen(!popoverOpen)
+        }, 'CALIBRATE FREQUENCY ⚙'),
+        popoverOpen && h('div', {
+          style: {
+            position: 'absolute', top: 56, left: 18, width: 260, background: '#111110',
+            border: '1px solid #00d9ff', padding: 14, zIndex: 50, boxShadow: '0 12px 36px rgba(0,0,0,.9)'
+          }
+        },
+          h('div', { style: { fontSize: 10, fontWeight: 700, letterSpacing: '.12em', color: '#00d9ff', textTransform: 'uppercase', marginBottom: 8 } }, 'OSCILLATOR SPECS'),
+          h('p', { style: { fontSize: 11, lineHeight: 1.5, color: 'rgba(255,255,255,.6)', margin: '0 0 12px' } },
+            'Adjust harmonics offset between primary clock and carrier wave.'
+          ),
+          h('div', { style: { display: 'flex', gap: 6 } },
+            h('button', {
+              type: 'button',
+              onClick: () => setPopoverOpen(false),
+              style: { flex: 1, padding: '6px 0', background: '#00d9ff', border: 'none', color: '#000', fontSize: 10, fontWeight: 700, cursor: 'pointer' }
+            }, 'LOCK FREQ'),
+            h('button', {
+              type: 'button',
+              onClick: () => setPopoverOpen(false),
+              style: { padding: '6px 10px', background: 'transparent', border: '1px solid rgba(255,255,255,.2)', color: '#fff', fontSize: 10, cursor: 'pointer' }
+            }, 'CANCEL')
+          )
+        )
+      )
+    ),
+
+    Sec('03 · combobox typeahead autocomplete', 'Searchable selector with live filter matching and selection feedback.',
+      h('div', { className: 'box' },
+        h('div', { style: { maxWidth: 360 } },
+          h('div', { style: { display: 'flex', alignItems: 'center', background: '#111', border: '1px solid #c6ff3a', padding: '0 12px', height: 34 } },
+            h('span', { style: { color: '#c6ff3a', marginRight: 8 } }, '🔍'),
+            h('input', {
+              type: 'text',
+              value: cbQuery,
+              onChange: e => setCbQuery(e.target.value),
+              placeholder: 'Type node code...',
+              style: { flex: 1, background: 'transparent', border: 'none', color: '#fff', font: '11px Geist Mono, monospace', outline: 'none' }
+            })
+          ),
+          h('div', { style: { border: '1px solid rgba(255,255,255,.14)', borderTop: 'none', background: '#0e0e0d' } },
+            cbOptions.map(op => {
+              const active = op.id === cbValue;
+              return h('div', {
+                key: op.id,
+                onClick: () => setCbValue(op.id),
+                style: {
+                  display: 'flex', alignItems: 'center', padding: '8px 12px', fontSize: 11,
+                  background: active ? '#2d6cff' : 'transparent',
+                  color: active ? '#000' : 'rgba(255,255,255,.7)',
+                  cursor: 'pointer'
+                }
+              },
+                h('span', { style: { fontWeight: active ? 700 : 400 } }, op.label),
+                h('span', {
+                  style: {
+                    marginLeft: 'auto', fontSize: 8, padding: '1px 5px',
+                    border: '1px solid currentColor', opacity: active ? 1 : 0.4
+                  }
+                }, op.tag)
+              );
+            })
+          ),
+          h('div', { style: { marginTop: 8, fontSize: 10, color: 'rgba(255,255,255,.4)' } },
+            'Selected Target: ', h('span', { style: { color: '#fff', fontWeight: 700 } }, cbValue)
+          )
+        )
+      )
+    ),
+
+    Sec('04 · tags collector input', 'Dynamic chip manager with interactive removal and creation.',
+      h('div', { className: 'box' },
+        h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', padding: 8, background: '#111', border: '1px solid rgba(255,255,255,.2)', minHeight: 42 } },
+          tags.map(t => h('span', {
+            key: t,
+            style: {
+              display: 'inline-flex', alignItems: 'center', gap: 6, height: 22,
+              padding: '0 6px 0 8px', background: '#c6ff3a', color: '#000',
+              fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase'
+            }
+          },
+            t,
+            h('span', {
+              onClick: () => setTags(tags.filter(x => x !== t)),
+              style: { cursor: 'pointer', opacity: 0.6, fontSize: 11 }
+            }, '✕')
+          )),
+          h('input', {
+            type: 'text',
+            value: tagInput,
+            onChange: e => setTagInput(e.target.value),
+            onKeyDown: e => { if (e.key === 'Enter') handleAddTag(); },
+            placeholder: '+ Add tag [ENTER]...',
+            style: {
+              flex: 1, minWidth: 140, background: 'transparent', border: 'none',
+              color: '#fff', font: '11px Geist Mono, monospace', outline: 'none'
+            }
+          })
+        ),
+        h('div', { style: { marginTop: 8, fontSize: 10, color: 'rgba(255,255,255,.4)' } },
+          `${tags.length} TAGS ACTIVE // PRESS ENTER TO APPEND`
+        )
+      )
+    ),
+
+    Sec('05 · multiselect checklist', 'Dense checkbox matrix for batch routing configuration.',
+      h('div', { className: 'box', style: { maxWidth: 320 } },
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,.1)', fontSize: 9, letterSpacing: '.14em', color: 'rgba(255,255,255,.4)' } },
+          h('span', null, '// RELAY PARTICIPANTS'),
+          h('span', { style: { color: '#c6ff3a' } }, `${multiSelected.length} SELECTED`)
+        ),
+        [
+          { id: 'alpha', label: 'ROUTER-ALPHA (10.0.1.1)' },
+          { id: 'beta', label: 'ROUTER-BETA (10.0.1.2)' },
+          { id: 'gamma', label: 'GATEWAY-GAMMA (10.0.2.1)' },
+          { id: 'delta', label: 'PROXY-DELTA (10.0.3.9)' }
+        ].map(it => {
+          const checked = multiSelected.includes(it.id);
+          return h('div', {
+            key: it.id,
+            onClick: () => toggleMulti(it.id),
+            style: {
+              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 6px',
+              borderBottom: '1px solid rgba(255,255,255,.05)', cursor: 'pointer',
+              color: checked ? '#fff' : 'rgba(255,255,255,.6)',
+              fontSize: 11
+            }
+          },
+            h('div', {
+              style: {
+                width: 14, height: 14, border: checked ? '1px solid #c6ff3a' : '1px solid rgba(255,255,255,.3)',
+                background: checked ? '#c6ff3a' : 'transparent', color: '#000',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900
+              }
+            }, checked ? '✓' : ''),
+            it.label
+          );
+        })
+      )
+    ),
+
+    Sec('06 · surfaces — night and cream grounds', 'Proofing menu overlays against night and cream surfaces.',
+      h('div', null,
+        h('div', { className: 'night' },
+          h('p', { className: 'lab', style: { color: 'rgba(255,255,255,.5)' } }, '// NIGHT SURFACE (#150a1c)'),
+          h('button', { type: 'button', style: { padding: '6px 12px', background: '#c6ff3a', color: '#000', border: 'none', fontWeight: 700, fontSize: 11 } }, 'SELECT ITEM ▾')
+        ),
+        h('div', { className: 'cream' },
+          h('p', { className: 'lab' }, '// CREAM SURFACE (#e8e3d0)'),
+          h('button', { type: 'button', style: { padding: '6px 12px', background: '#0a0a0a', color: '#fff', border: 'none', fontWeight: 700, fontSize: 11 } }, 'SELECT ITEM ▾')
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.render(h(Demo), document.getElementById('root'));
+</script>
+  <script src="/nav-node.js" defer></script>
+</body>
+</html>

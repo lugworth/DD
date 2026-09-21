@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>digidelic — overprint</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/digi-shell.css">
 <style>
 @font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
@@ -54,11 +55,15 @@ main{display:flex;flex:1;min-height:0}
 .stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
 .corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
 .corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
-.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi);transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),box-shadow 160ms ease;will-change:transform}
 .frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
 .frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
 .frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
-canvas#art{display:block;background:#0a0a0a;cursor:crosshair;touch-action:none}
+canvas#art{
+  display:block;background:#0a0a0a;cursor:crosshair;touch-action:none;
+  transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),opacity 120ms var(--e-flow),filter 120ms var(--e-flow),background-color 160ms var(--e-flow);
+  will-change:transform;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
 .stage .hint{
   position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
   color:var(--white-dim);font-size:10px;letter-spacing:.2em;text-transform:uppercase;pointer-events:none;
@@ -97,22 +102,24 @@ button:disabled{opacity:.5;cursor:default}
 .param:last-child{margin-bottom:0}
 .param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
-.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right;font-variant-numeric:tabular-nums;-webkit-font-feature-settings:"tnum";font-feature-settings:"tnum";transition:color var(--d-fast) var(--e-snap),opacity 80ms ease}
 
 input[type=range]{
   -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
-  --p:50%;
+  --p:50%;transition:opacity var(--d-fast) var(--e-flow),filter var(--d-fast) var(--e-flow);will-change:transform;
 }
-input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
-  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+  background:var(--white);border:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,
 input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
-input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
-input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform}
 input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 .seg{display:flex;flex-wrap:wrap;border:1px solid var(--border-hi)}
 .seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em;min-width:0;padding:0 6px}
@@ -254,14 +261,16 @@ footer .fill{flex:1;border-right:0;text-align:right}
         </div>
 
         <div class="sect">
-          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="sect-head"><h2>Style & Inks</h2><span class="coord">S.03</span></div>
           <div class="param">
             <div class="lab"><span class="name">Ink set</span></div>
-            <div class="seg" id="segInk" role="group" aria-label="ink set">
-              <button data-ink="riso" class="is-active">Riso</button>
-              <button data-ink="process">CMYK</button>
-              <button data-ink="digidelic">Digidelic</button>
-              <button data-ink="mono">Mono</button>
+            <div class="seg" id="segInk" role="group" aria-label="ink set" style="flex-wrap:wrap">
+              <button data-ink="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
+              <button data-ink="acid" style="flex:1 1 30%">Acid</button>
+              <button data-ink="cyber" style="flex:1 1 30%">Cyber</button>
+              <button data-ink="riso" style="flex:1 1 30%">Riso</button>
+              <button data-ink="process" style="flex:1 1 30%">CMYK</button>
+              <button data-ink="mono" style="flex:1 1 30%">Mono</button>
             </div>
           </div>
           <div class="param">
@@ -278,6 +287,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
 
       <div class="actions">
         <button id="btnRegen">⟳ Re-press</button>
+        <button id="btnMisregPulse" style="color:#ff2d87">⚡ Misreg Shift</button>
         <button id="btnShare" hidden>⇪ Share</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
@@ -368,12 +378,30 @@ const INKS={
     ],
   },
   digidelic:{
-    paper:'#050505', blend:'screen', dark:true,
+    paper:'#000000', blend:'screen', dark:true,
     inks:[
       {name:'electric yellow',hex:'#eaff00', angle:15},
       {name:'hot pink',       hex:'#ff2d87', angle:75},
       {name:'biolume green',  hex:'#39ff6a', angle:0},
       {name:'data cyan',      hex:'#00d9ff', angle:45},
+    ],
+  },
+  acid:{
+    paper:'#020c06', blend:'screen', dark:true,
+    inks:[
+      {name:'acid green', hex:'#39ff6a', angle:15},
+      {name:'solar yellow', hex:'#eaff00', angle:60},
+      {name:'flux cyan', hex:'#00d9ff', angle:0},
+      {name:'pure white', hex:'#ffffff', angle:45},
+    ],
+  },
+  cyber:{
+    paper:'#090210', blend:'screen', dark:true,
+    inks:[
+      {name:'neon magenta', hex:'#ff2d87', angle:15},
+      {name:'hyper violet', hex:'#b026ff', angle:75},
+      {name:'laser cyan', hex:'#00d9ff', angle:45},
+      {name:'deep blue', hex:'#2d4cff', angle:0},
     ],
   },
   mono:{
@@ -398,7 +426,7 @@ POOLS.auto=[...POOLS.bio,...POOLS.wave,...POOLS.tech];
 /* ═══════════════════ STATE ═══════════════════ */
 const state={
   seed:(Math.random()*0xffffffff)>>>0,
-  ink:'riso',
+  ink:'digidelic',
   format:'square',
   pool:'auto',
   marks:true,
@@ -1186,6 +1214,24 @@ canvas.addEventListener('pointerdown',ev=>{
 
 document.getElementById('btnRandom').addEventListener('click',newSeed);
 document.getElementById('btnRegen').addEventListener('click',newSeed);
+
+const btnMis = document.getElementById('btnMisregPulse');
+if(btnMis){
+  btnMis.addEventListener('click', ()=>{
+    const inputMis = document.getElementById('misreg');
+    if(inputMis){
+      inputMis.value = Math.min(100, Math.floor(Math.random() * 80 + 20));
+      inputMis.dispatchEvent(new Event('input'));
+    }
+    requestDraw();
+    if(window.DigiSynth){
+      window.DigiSynth.glitch();
+      window.DigiSynth.click(320);
+    }
+    flashStatus('misregistration matrix re-aligned_');
+  });
+}
+
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 document.getElementById('seedReadout').addEventListener('click',copyPermalink);
 if(navigator.share) document.getElementById('btnShare').hidden=false;
@@ -1211,6 +1257,7 @@ window.addEventListener('keydown',e=>{
 }
 pushHistory();
 </script>
+  <script src="../shared/digi-shell.js"></script>
   <script src="/nav-node.js" defer></script>
 </body>
 </html>

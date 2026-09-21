@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>digidelic — culture</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/digi-shell.css">
 <style>
 @font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
@@ -72,11 +73,15 @@ main{display:flex;flex:1;min-height:0}
 .stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
 .corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
 .corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
-.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi);transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),box-shadow 160ms ease;will-change:transform}
 .frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
 .frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
 .frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
-canvas#art{display:block;background:#04060d;touch-action:none;cursor:crosshair}
+canvas#art{
+  display:block;background:#04060d;touch-action:none;cursor:crosshair;
+  transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),opacity 120ms var(--e-flow),filter 120ms var(--e-flow),background-color 160ms var(--e-flow);
+  will-change:transform;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
 .stage .hint{
   position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
   color:var(--white-dim);font-size:10px;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;text-align:center;
@@ -109,20 +114,23 @@ button:disabled{opacity:.5;cursor:default}
 .param:last-child{margin-bottom:0}
 .param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
-.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:52px;text-align:right;font-variant-numeric:tabular-nums;-webkit-font-feature-settings:"tnum";font-feature-settings:"tnum";transition:color var(--d-fast) var(--e-snap),opacity 80ms ease}
 
 input[type=range]{
   -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;--p:50%;
+  transition:opacity var(--d-fast) var(--e-flow),filter var(--d-fast) var(--e-flow);will-change:transform;
 }
-input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
-  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+  background:var(--white);border:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
-input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
-input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform}
 input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 .checks{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px}
 .chk{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--white-soft)}
@@ -246,14 +254,16 @@ footer .fill{flex:1;border-right:0;text-align:right}
         </div>
 
         <div class="sect">
-          <div class="sect-head"><h2>Style</h2><span class="coord">S.02</span></div>
+          <div class="sect-head"><h2>Style & Palettes</h2><span class="coord">S.02</span></div>
           <div class="param">
             <div class="lab"><span class="name">Palette</span></div>
-            <div class="seg" id="segPalette" role="group" aria-label="palette">
-              <button data-pal="cobalt" class="is-active">Cobalt</button>
-              <button data-pal="digidelic">Digidelic</button>
-              <button data-pal="spore">Spore</button>
-              <button data-pal="bone">Bone</button>
+            <div class="seg" id="segPalette" role="group" aria-label="palette" style="flex-wrap:wrap">
+              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
+              <button data-pal="acid" style="flex:1 1 30%">Acid</button>
+              <button data-pal="laser" style="flex:1 1 30%">Laser</button>
+              <button data-pal="cobalt" style="flex:1 1 30%">Cobalt</button>
+              <button data-pal="spore" style="flex:1 1 30%">Spore</button>
+              <button data-pal="bone" style="flex:1 1 30%">Bone</button>
             </div>
           </div>
           <div class="param">
@@ -274,7 +284,9 @@ footer .fill{flex:1;border-right:0;text-align:right}
       </div>
 
       <div class="actions">
+        <button id="btnMitosisShock" style="color:#00d9ff">⚡ Mitosis Surge</button>
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
         <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
         <button id="btnMp4" title="capture 6s as MP4 — plays inline where WebM does not">▣ MP4 6s</button>
         <button id="btnLapse" title="timelapse — ~34s of growth packed into a short loop">◷ Lapse</button>
@@ -282,7 +294,6 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <button id="btnSave" title="save the dish — cells, filaments and settings">⤓ Dish</button>
         <button id="btnOpen" title="load a saved dish">⤒ Open</button>
         <button id="btnShare" hidden>⇪ Share</button>
-        <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
   </main>
@@ -302,14 +313,16 @@ footer .fill{flex:1;border-right:0;text-align:right}
 const TAU=Math.PI*2;
 const FORMATS={ '11':[1080,1080], '45':[1080,1350], '169':[1920,1080] };
 const PALETTES={
+  digidelic:{ bg:'#000000', ramp:['#eaff00','#ff2d87','#00d9ff','#39ff6a','#2d6cff'], hi:'#ffffff' },
+  acid:{ bg:'#020d04', ramp:['#39ff6a','#eaff00','#00d9ff','#ffffff'], hi:'#eaff00' },
+  laser:{ bg:'#08020e', ramp:['#ff2d87','#00d9ff','#c800ff','#ffffff'], hi:'#ff2d87' },
   cobalt:{ bg:'#04060d', ramp:['#1b57ff','#2f7bff','#0f3ddb'], hi:'#8fb6ff' },
-  digidelic:{ bg:'#08080a', ramp:['#eaff00','#ff2d87','#00d9ff','#39ff6a'], hi:'#ffffff' },
   spore:{ bg:'#0a0704', ramp:['#ff7a1a','#ffc247','#ff3b30'], hi:'#fff0c9' },
   bone:{ bg:'#f2efe7', ramp:['#1a1814','#3f3a30','#6b6152'], hi:'#a8452c' },
 };
 
 const state={
-  tool:'cells', palette:'cobalt', fmt:'11',
+  tool:'cells', palette:'digidelic', fmt:'11',
   W:1080, H:1080,
   frozen:false, painting:false,
   pointer:{x:540,y:540}, last:null,
@@ -1160,6 +1173,24 @@ function wireSeg(segId,attr,onPick){
 wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; });
 wireSeg('segFormat','fmt',applyFormat);
 
+const btnMitosis = document.getElementById('btnMitosisShock');
+if(btnMitosis){
+  btnMitosis.addEventListener('click', ()=>{
+    for(let i=0; i<3; i++){
+      growCells(params());
+      growFilaments(params());
+    }
+    if(window.DigiSynth){
+      window.DigiSynth.chord(520, [1, 1.25, 1.5, 1.875]);
+      window.DigiSynth.glitch();
+    }
+  });
+}
+
+canvas.addEventListener('pointerdown', ()=>{
+  if(window.DigiSynth) window.DigiSynth.click(820);
+});
+
 document.getElementById('btnFreeze').addEventListener('click',()=>{
   state.frozen=!state.frozen;
   const b=document.getElementById('btnFreeze');
@@ -1196,6 +1227,7 @@ canvas.style.background=PALETTES[state.palette].bg;
 pushHistory();
 requestAnimationFrame(frame);
 </script>
+  <script src="../shared/digi-shell.js"></script>
   <script src="/nav-node.js" defer></script>
 </body>
 </html>

@@ -37,6 +37,14 @@
     } catch (_) {}
   }
 
+  function safeStorageRemove(key) {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(key);
+      }
+    } catch (_) {}
+  }
+
   // Navigation catalog of all digidelic tools, components, and kits
   const DESTINATIONS = [
     // Primary Hubs
@@ -69,6 +77,7 @@
     { id: 'comp-field', cat: 'comps', name: 'FIELD SPEC', desc: 'Inputs, selects, checkboxes', path: '/components/Field/Field.html', code: '0xFD' },
     { id: 'comp-badge', cat: 'comps', name: 'BADGE SPEC', desc: 'Status chips & coordinate tags', path: '/components/Badge/Badge.html', code: '0xBG' },
     { id: 'comp-progress', cat: 'comps', name: 'PROGRESS SPEC', desc: 'Bars, segments & block ramps', path: '/components/Progress/Progress.html', code: '0xPG' },
+    { id: 'comp-chart', cat: 'comps', name: 'CHART & DATA VIZ', desc: 'Waterfall, cosmoradar, horizon, treemap', path: '/components/Chart/Chart.html', code: '0xVZ' },
 
     // Foundations & Docs
     { id: 'fnd-motifs', cat: 'docs', name: 'MOTIFS & TEXTURES', desc: 'Stripes, checker, dither, ASCII', path: '/preview/brand-motifs.html', code: '0xMT' },
@@ -98,6 +107,7 @@
     if (p.includes('/glyph-foundry')) return { name: 'GLYPH FOUNDRY', code: '0x04' };
     if (p.includes('/colony-display')) return { name: 'COLONY DISPLAY', code: '0x05' };
     if (p.includes('/circuit-matrix')) return { name: 'CIRCUIT MATRIX', code: '0x06' };
+    if (p.includes('/components/Chart')) return { name: 'CHART SPEC', code: '0xVZ' };
     if (p.includes('/components/Emblem')) return { name: 'EMBLEM BADGE', code: '0xEM' };
     if (p.includes('/components')) return { name: 'COMPONENTS', code: '0xCP' };
     if (p.includes('/tools')) return { name: 'TOOLS RACK', code: '0xTL' };
@@ -133,6 +143,7 @@
       '0xFD': { base: '#b5bdc6', accent: '#ffffff', core: '#000' },
       '0xBG': { base: '#ff5a00', accent: '#ff6050', core: '#fff' },
       '0xPG': { base: '#c800ff', accent: '#ff66d0', core: '#fff' },
+      '0xVZ': { base: '#00d9ff', accent: '#ff2d87', core: '#fff' },
       '0xMT': { base: '#ff2d87', accent: '#00d9ff', core: '#fff' },
       '0xPL': { base: '#2d6cff', accent: '#ff2d87', core: '#c6ff3a' },
       '0xAA': { base: '#c6ff3a', accent: '#000000', core: '#fff' },
@@ -168,6 +179,7 @@
         color: #ffffff;
         box-sizing: border-box;
         line-height: 1.4;
+        touch-action: none;
       }
       #dd-floating-nav-root *,
       #dd-floating-nav-root *::before,
@@ -193,13 +205,16 @@
         font-weight: 700;
         letter-spacing: 0.16em;
         text-transform: uppercase;
-        cursor: pointer;
+        cursor: grab;
         box-shadow: 0 8px 28px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(45, 108, 255, 0.25);
         transition: background 120ms cubic-bezier(0.2, 0, 0, 1),
                     color 120ms cubic-bezier(0.2, 0, 0, 1),
                     transform 80ms linear,
                     box-shadow 120ms ease;
         user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: none;
       }
       #dd-nav-min-btn .dd-nav-min-ascii {
         position: absolute;
@@ -302,9 +317,34 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         cursor: grab;
         user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: none;
       }
-      .dd-nav-hd:active {
+      .dd-nav-hd:active,
+      .dd-nav-hd.is-dragging {
         cursor: grabbing;
+      }
+      #dd-nav-min-btn:active,
+      #dd-nav-min-btn.is-dragging {
+        cursor: grabbing;
+      }
+      .dd-nav-drag-grip {
+        display: inline-flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.38);
+        font-size: 11px;
+        letter-spacing: -1px;
+        line-height: 1;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+        margin-right: 3px;
+      }
+      .dd-nav-hd.is-dragging .dd-nav-drag-grip,
+      #dd-nav-min-btn.is-dragging .dd-nav-drag-grip {
+        cursor: grabbing;
+        color: #00d9ff;
       }
       .dd-nav-title-wrap {
         display: flex;
@@ -666,7 +706,72 @@
         #dd-nav-card {
           width: calc(100vw - 20px);
           max-width: 340px;
+          max-height: calc(100vh - 20px);
         }
+        .dd-nav-list {
+          max-height: 180px;
+        }
+      }
+
+      /* ── Parameter Rack & Canvas Smooth Live Interaction Transitions ── */
+      .rack input[type=range],
+      input[type=range] {
+        transition: opacity 120ms cubic-bezier(0.16, 1, 0.3, 1),
+                    filter 120ms cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform;
+      }
+      input[type=range]::-webkit-slider-runnable-track {
+        transition: background 90ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      input[type=range]::-moz-range-track {
+        transition: background 90ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      input[type=range]::-webkit-slider-thumb {
+        transition: transform 90ms cubic-bezier(0.16, 1, 0.3, 1),
+                    background 100ms cubic-bezier(0.2, 0, 0, 1),
+                    box-shadow 120ms ease;
+        will-change: transform;
+      }
+      input[type=range]:active::-webkit-slider-thumb {
+        transform: scale(1.18);
+      }
+      input[type=range]::-moz-range-thumb {
+        transition: transform 90ms cubic-bezier(0.16, 1, 0.3, 1),
+                    background 100ms cubic-bezier(0.2, 0, 0, 1),
+                    box-shadow 120ms ease;
+        will-change: transform;
+      }
+      input[type=range]:active::-moz-range-thumb {
+        transform: scale(1.18);
+      }
+      .param .lab .val,
+      .val[data-val] {
+        font-variant-numeric: tabular-nums;
+        -webkit-font-feature-settings: "tnum";
+        font-feature-settings: "tnum";
+        transition: color 100ms cubic-bezier(0.2, 0, 0, 1), opacity 80ms ease;
+      }
+      canvas#art,
+      .stage canvas,
+      .frame canvas,
+      .card canvas {
+        transition: width 120ms cubic-bezier(0.16, 1, 0.3, 1),
+                    height 120ms cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 120ms cubic-bezier(0.16, 1, 0.3, 1),
+                    opacity 120ms cubic-bezier(0.16, 1, 0.3, 1),
+                    filter 120ms cubic-bezier(0.16, 1, 0.3, 1),
+                    background-color 160ms cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+      }
+      .frame {
+        transition: width 120ms cubic-bezier(0.16, 1, 0.3, 1),
+                    height 120ms cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 120ms cubic-bezier(0.16, 1, 0.3, 1),
+                    box-shadow 160ms ease;
+        will-change: transform;
       }
     `;
     document.head.appendChild(style);
@@ -681,32 +786,77 @@
     root.setAttribute('role', 'region');
     root.setAttribute('aria-label', 'Floating Navigation Node');
 
+    // Restore saved coordinates if valid
+    const savedPosStr = safeStorageGet('digidelic_nav_pos', null);
+    if (savedPosStr) {
+      try {
+        const savedPos = JSON.parse(savedPosStr);
+        if (typeof savedPos.left === 'number' && typeof savedPos.top === 'number') {
+          root.style.right = 'auto';
+          root.style.bottom = 'auto';
+          root.style.left = savedPos.left + 'px';
+          root.style.top = savedPos.top + 'px';
+        }
+      } catch (_) {}
+    }
+
     const current = getCurrentInfo();
     let isMinimized = safeStorageGet('digidelic_nav_minimized', 'false') === 'true';
     let currentFilter = 'all';
     let searchQuery = '';
+
+    // Reset to bottom-right dock and clear saved coordinates
+    function resetToDock() {
+      root.style.left = 'auto';
+      root.style.top = 'auto';
+      root.style.right = '';
+      root.style.bottom = '';
+      safeStorageRemove('digidelic_nav_pos');
+    }
+
+    // Ensure floating nav stays completely within viewport
+    function clampRootPosition() {
+      if (root.style.left && root.style.left !== 'auto') {
+        const vpWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+        const vpHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const currentLeft = parseFloat(root.style.left) || 0;
+        const currentTop = parseFloat(root.style.top) || 0;
+        const rootW = root.offsetWidth || 180;
+        const rootH = root.offsetHeight || 40;
+        const maxX = Math.max(4, vpWidth - rootW - 4);
+        const maxY = Math.max(4, vpHeight - rootH - 4);
+        const clampedX = Math.max(4, Math.min(maxX, currentLeft));
+        const clampedY = Math.max(4, Math.min(maxY, currentTop));
+        root.style.left = clampedX + 'px';
+        root.style.top = clampedY + 'px';
+      }
+    }
 
     // Render inner content
     function render() {
       root.innerHTML = '';
 
       if (isMinimized) {
-        // Render Minimized Button
+        // Render Minimized Button (draggable & tappable on mobile)
         const minBtn = document.createElement('button');
         minBtn.id = 'dd-nav-min-btn';
-        minBtn.setAttribute('title', 'Expand Navigation Node Card (Alt+N)');
+        minBtn.setAttribute('title', 'Drag to move · Tap to expand (Alt+N)');
         minBtn.innerHTML = `
           <span class="dd-nav-min-ascii" aria-hidden="true"></span>
+          <span class="dd-nav-drag-grip" aria-hidden="true">⋮⋮</span>
           <span style="display:inline-flex;align-items:center;margin-right:2px;">${getNavEmblemSvg(current.code || '0x04', 14)}</span>
           <span class="dd-min-pip" aria-hidden="true"></span>
           <span>NAV // NODE</span>
           <span class="dd-min-code">${current.code || '0xNAV'}</span>
           <span aria-hidden="true" style="margin-left:2px;font-size:9px;">[+]</span>
         `;
-        minBtn.addEventListener('click', () => {
-          isMinimized = false;
-          safeStorageSet('digidelic_nav_minimized', 'false');
-          render();
+        setupDraggable(minBtn, {
+          isButton: true,
+          onActivate: () => {
+            isMinimized = false;
+            safeStorageSet('digidelic_nav_minimized', 'false');
+            render();
+          }
         });
         root.appendChild(minBtn);
       } else {
@@ -731,9 +881,10 @@
           <div class="dd-nav-checker" aria-hidden="true"></div>
           <div class="dd-nav-checker-gradient" aria-hidden="true"></div>
 
-          <!-- Header -->
+          <!-- Header with Drag Handle & Affordance -->
           <div class="dd-nav-hd" id="dd-nav-drag-handle">
             <div class="dd-nav-title-wrap">
+              <span class="dd-nav-drag-grip" aria-hidden="true" title="Drag to reposition">⋮⋮</span>
               <span class="dd-nav-hd-insignia">${getNavEmblemSvg(current.code || '0x08', 18)}</span>
               <span class="dd-nav-title">NAV <em>//</em> NODE</span>
               <span class="dd-nav-badge-code">0xNAV-01</span>
@@ -862,8 +1013,14 @@
         });
 
         // Draggable Card functionality
-        setupDragging(card);
+        const handle = card.querySelector('#dd-nav-drag-handle');
+        setupDraggable(handle, {
+          isButton: false,
+          ignoreSelector: '#dd-nav-minimize-trigger'
+        });
       }
+
+      requestAnimationFrame(clampRootPosition);
     }
 
     // Fast list re-render without tearing down input focus
@@ -902,66 +1059,190 @@
       }
     }
 
-    // Drag-to-reposition logic
-    function setupDragging(card) {
-      const handle = card.querySelector('#dd-nav-drag-handle');
+    // Unified Pointer & Touch Drag Controller for Desktop & Mobile
+    function setupDraggable(handle, options = {}) {
       if (!handle) return;
 
-      let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+      let startX = 0;
+      let startY = 0;
+      let initialLeft = 0;
+      let initialTop = 0;
+      let hasMoved = false;
       let isDragging = false;
+      let lastTapTime = 0;
+      let activePointerId = null;
+      let isTouchActive = false;
+      let rafId = null;
+      let pendingX = 0;
+      let pendingY = 0;
 
-      handle.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('#dd-nav-minimize-trigger')) return;
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
+      function schedulePosition(x, y) {
+        pendingX = x;
+        pendingY = y;
+        if (!rafId) {
+          rafId = requestAnimationFrame(() => {
+            root.style.left = pendingX + 'px';
+            root.style.top = pendingY + 'px';
+            rafId = null;
+          });
+        }
+      }
+
+      function onDragStart(clientX, clientY, target, pointerId) {
+        if (options.ignoreSelector && target && target.closest(options.ignoreSelector)) {
+          return false;
+        }
+
+        // Check double tap / double click to reset dock
+        const now = Date.now();
+        if (now - lastTapTime < 320) {
+          resetToDock();
+          lastTapTime = 0;
+          return false;
+        }
+        lastTapTime = now;
 
         const rect = root.getBoundingClientRect();
         initialLeft = rect.left;
         initialTop = rect.top;
-
-        root.style.right = 'auto';
-        root.style.bottom = 'auto';
-        root.style.left = initialLeft + 'px';
-        root.style.top = initialTop + 'px';
-
-        handle.setPointerCapture(e.pointerId);
-        e.preventDefault();
-      });
-
-      handle.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-
-        const maxX = window.innerWidth - root.offsetWidth - 8;
-        const maxY = window.innerHeight - root.offsetHeight - 8;
-
-        const newX = Math.max(8, Math.min(maxX, initialLeft + dx));
-        const newY = Math.max(8, Math.min(maxY, initialTop + dy));
-
-        root.style.left = newX + 'px';
-        root.style.top = newY + 'px';
-      });
-
-      function stopDrag(e) {
-        if (!isDragging) return;
+        startX = clientX;
+        startY = clientY;
+        hasMoved = false;
         isDragging = false;
-        try {
-          handle.releasePointerCapture(e.pointerId);
-        } catch (_) {}
+        activePointerId = pointerId;
+
+        return true;
       }
 
-      handle.addEventListener('pointerup', stopDrag);
-      handle.addEventListener('pointercancel', stopDrag);
+      function onDragMove(clientX, clientY) {
+        const dx = clientX - startX;
+        const dy = clientY - startY;
 
-      // Double-click header resets to bottom-right dock
-      handle.addEventListener('dblclick', () => {
-        root.style.left = 'auto';
-        root.style.top = 'auto';
-        root.style.right = '20px';
-        root.style.bottom = '20px';
+        if (!hasMoved) {
+          if (Math.hypot(dx, dy) >= 4) {
+            hasMoved = true;
+            isDragging = true;
+            handle.classList.add('is-dragging');
+            root.style.right = 'auto';
+            root.style.bottom = 'auto';
+            root.style.left = initialLeft + 'px';
+            root.style.top = initialTop + 'px';
+          }
+        }
+
+        if (isDragging) {
+          const vpWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+          const vpHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+          const rootW = root.offsetWidth || 180;
+          const rootH = root.offsetHeight || 40;
+          const maxX = Math.max(4, vpWidth - rootW - 4);
+          const maxY = Math.max(4, vpHeight - rootH - 4);
+
+          const targetX = Math.max(4, Math.min(maxX, initialLeft + dx));
+          const targetY = Math.max(4, Math.min(maxY, initialTop + dy));
+          schedulePosition(targetX, targetY);
+        }
+      }
+
+      function onDragEnd() {
+        if (isDragging) {
+          handle.classList.remove('is-dragging');
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+            root.style.left = pendingX + 'px';
+            root.style.top = pendingY + 'px';
+          }
+          const finalLeft = parseFloat(root.style.left) || initialLeft;
+          const finalTop = parseFloat(root.style.top) || initialTop;
+          safeStorageSet('digidelic_nav_pos', JSON.stringify({ left: finalLeft, top: finalTop }));
+        } else if (options.isButton && !hasMoved) {
+          if (typeof options.onActivate === 'function') {
+            options.onActivate();
+          }
+        }
+
+        isDragging = false;
+        hasMoved = false;
+        activePointerId = null;
+        isTouchActive = false;
+      }
+
+      // Pointer events for desktop & modern mobile
+      handle.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 && e.pointerType === 'mouse') return;
+        if (isTouchActive) return; // Touch handler already active
+        if (!onDragStart(e.clientX, e.clientY, e.target, e.pointerId)) return;
+
+        try {
+          handle.setPointerCapture(e.pointerId);
+        } catch (_) {}
+
+        const onPointerMove = (pe) => {
+          if (activePointerId !== null && pe.pointerId !== activePointerId) return;
+          onDragMove(pe.clientX, pe.clientY);
+          if (isDragging && pe.cancelable) {
+            pe.preventDefault();
+          }
+        };
+
+        const onPointerUp = (pe) => {
+          if (activePointerId !== null && pe.pointerId !== activePointerId) return;
+          try {
+            handle.releasePointerCapture(pe.pointerId);
+          } catch (_) {}
+          window.removeEventListener('pointermove', onPointerMove);
+          window.removeEventListener('pointerup', onPointerUp);
+          window.removeEventListener('pointercancel', onPointerUp);
+          onDragEnd();
+        };
+
+        window.addEventListener('pointermove', onPointerMove, { passive: false });
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
       });
+
+      // Dedicated Touch events fallback for mobile Safari / Chrome WebView
+      handle.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        isTouchActive = true;
+        const touch = e.touches[0];
+        if (!onDragStart(touch.clientX, touch.clientY, e.target, 'touch')) {
+          isTouchActive = false;
+          return;
+        }
+
+        const onTouchMove = (te) => {
+          if (te.touches.length !== 1) return;
+          const t = te.touches[0];
+          onDragMove(t.clientX, t.clientY);
+          if (isDragging && te.cancelable) {
+            te.preventDefault();
+          }
+        };
+
+        const onTouchEnd = () => {
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onTouchEnd);
+          window.removeEventListener('touchcancel', onTouchEnd);
+          onDragEnd();
+        };
+
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
+        window.addEventListener('touchend', onTouchEnd);
+        window.addEventListener('touchcancel', onTouchEnd);
+      }, { passive: true });
+
+      // Double-click reset for desktop mouse
+      handle.addEventListener('dblclick', () => {
+        resetToDock();
+      });
+    }
+
+    // Keep floating nav within viewport on resize
+    window.addEventListener('resize', clampRootPosition);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', clampRootPosition);
     }
 
     // Global Keybindings: Alt+N toggles minimize/restore, Escape minimizes

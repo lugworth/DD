@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>digidelic — glyph foundry</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/digi-shell.css">
 <style>
 @font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
@@ -54,11 +55,15 @@ main{display:flex;flex:1;min-height:0}
 .stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
 .corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
 .corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
-.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi);transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),box-shadow 160ms ease;will-change:transform}
 .frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--cobalt);pointer-events:none}
 .frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
 .frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
-canvas#art{display:block;background:#efe9dc}
+canvas#art{
+  display:block;background:#efe9dc;
+  transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),opacity 120ms var(--e-flow),filter 120ms var(--e-flow),background-color 160ms var(--e-flow);
+  will-change:transform;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
 
 .rack{width:340px;flex:none;border-left:1px solid var(--border);background:var(--black);display:flex;flex-direction:column;min-height:0}
 .rack-scroll{flex:1;overflow-y:auto;min-height:0}
@@ -92,22 +97,24 @@ button.primary:hover{background:var(--white);border-color:var(--white)}
 .param:last-child{margin-bottom:0}
 .param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
-.param .lab .val{font-size:11px;color:var(--cobalt);letter-spacing:.06em;min-width:44px;text-align:right}
+.param .lab .val{font-size:11px;color:var(--cobalt);letter-spacing:.06em;min-width:44px;text-align:right;font-variant-numeric:tabular-nums;-webkit-font-feature-settings:"tnum";font-feature-settings:"tnum";transition:color var(--d-fast) var(--e-snap),opacity 80ms ease}
 
 input[type=range]{
   -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
-  --p:50%;
+  --p:50%;transition:opacity var(--d-fast) var(--e-flow),filter var(--d-fast) var(--e-flow);will-change:transform;
 }
-input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
-  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+  background:var(--white);border:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,
 input[type=range]:active::-webkit-slider-thumb{background:var(--cobalt)}
-input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p))}
-input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform}
 input[type=range]:hover::-moz-range-thumb{background:var(--cobalt)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 .seg{display:flex;border:1px solid var(--border-hi)}
 .seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
@@ -212,13 +219,32 @@ footer .fill{flex:1;border-right:0;text-align:right}
         </div>
 
         <div class="sect">
-          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="sect-head"><h2>Asemic Cipher</h2><span class="coord">S.03</span></div>
+          <div class="param">
+            <div class="lab"><span class="name">Encode Phrase</span></div>
+            <input type="text" id="cipherText" placeholder="DIGIDELIC..." value="DIGIDELIC" style="width:100%;background:#0a0a0a;border:1px solid var(--border-hi);color:#fff;padding:6px 10px;font-family:var(--font-mono);font-size:11px;outline:none;text-transform:uppercase;">
+          </div>
+          <div class="param" style="margin-top:8px">
+            <div class="lab"><span class="name">Grammar Dialect</span></div>
+            <div class="seg" id="segDialect" role="group" aria-label="dialect" style="flex-wrap:wrap">
+              <button data-dialect="oracle" class="is-active" style="flex:1 1 45%">Oracle</button>
+              <button data-dialect="monad" style="flex:1 1 45%">Monad</button>
+              <button data-dialect="memphis" style="flex:1 1 45%">Memphis</button>
+              <button data-dialect="matrix" style="flex:1 1 45%">Matrix</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Style & Palettes</h2><span class="coord">S.04</span></div>
           <div class="param">
             <div class="lab"><span class="name">Palette</span></div>
-            <div class="seg" id="segPalette" role="group" aria-label="palette">
-              <button data-pal="foundry" class="is-active">Foundry</button>
-              <button data-pal="mono">Mono</button>
-              <button data-pal="digidelic">Digidelic</button>
+            <div class="seg" id="segPalette" role="group" aria-label="palette" style="flex-wrap:wrap">
+              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
+              <button data-pal="phosphor" style="flex:1 1 30%">Phosphor</button>
+              <button data-pal="thermal" style="flex:1 1 30%">Thermal</button>
+              <button data-pal="foundry" style="flex:1 1 30%">Foundry</button>
+              <button data-pal="mono" style="flex:1 1 30%">Mono</button>
             </div>
           </div>
           <div class="param">
@@ -241,7 +267,8 @@ footer .fill{flex:1;border-right:0;text-align:right}
       </div>
 
       <div class="actions">
-        <button id="btnRegen">⟳ Regenerate</button>
+        <button id="btnScanner" style="color:#00d9ff">⚡ Scan Beam</button>
+        <button id="btnRegen">⟳ Mutate</button>
         <button id="btnExport" class="primary">▶ Export PNG</button>
       </div>
     </aside>
@@ -277,29 +304,42 @@ const TAU=Math.PI*2;
 
 /* ═══════════════════ PALETTES ═══════════════════ */
 const PALETTES={
-  /* warm foundry paper — specimen-sheet ink with sparse spot color */
+  digidelic:{
+    bg:'#000000', ink:'#ffffff',
+    faint:'rgba(255,255,255,0.18)', label:'rgba(255,255,255,0.6)',
+    accents:['#2d6cff','#ff2d87','#00d9ff','#39ff6a','#eaff00'],
+  },
+  phosphor:{
+    bg:'#020d06', ink:'#39ff6a',
+    faint:'rgba(57,255,106,0.18)', label:'rgba(57,255,106,0.65)',
+    accents:['#eaff00','#00d9ff','#ffffff','#2d6cff'],
+  },
+  thermal:{
+    bg:'#080302', ink:'#ffc87a',
+    faint:'rgba(255,120,40,0.18)', label:'rgba(255,150,50,0.65)',
+    accents:['#ff5a00','#ff0066','#ffd028','#ffffff'],
+  },
   foundry:{
     bg:'#efe9dc', ink:'#1b1916',
     faint:'rgba(27,25,22,0.16)', label:'rgba(27,25,22,0.5)',
     accents:['#c8402f','#2f5e9e','#d99a2b'],
   },
   mono:{
-    bg:'#efe9dc', ink:'#1b1916',
-    faint:'rgba(27,25,22,0.16)', label:'rgba(27,25,22,0.5)',
-    accents:['#1b1916'],
-  },
-  digidelic:{
-    bg:'#0a0a0a', ink:'rgba(255,255,255,0.88)',
-    faint:'rgba(255,255,255,0.14)', label:'rgba(255,255,255,0.45)',
-    accents:['#2d6cff','#ff2d87','#00d9ff','#39ff6a'],
+    bg:'#0a0a0a', ink:'#ffffff',
+    faint:'rgba(255,255,255,0.14)', label:'rgba(255,255,255,0.5)',
+    accents:['#ffffff','#888888'],
   },
 };
 
 /* ═══════════════════ STATE ═══════════════════ */
 const state={
   seed:(Math.random()*0xffffffff)>>>0,
-  palette:'foundry',
+  palette:'digidelic',
   format:'square',
+  dialect:'oracle',
+  cipherPhrase:'DIGIDELIC',
+  scanning:false,
+  scanY:0,
 };
 const sliders=['complexity','curvature','diacritics','shapes','cols','notes','accents','jitter','stroke','margin'];
 function params(){
@@ -310,6 +350,7 @@ function params(){
     cols:g('cols'), notes:g('notes')/100, accents:g('accents')/100,
     jitter:g('jitter')/100, stroke:g('stroke'), margin:g('margin'),
     palette:state.palette, format:state.format,
+    dialect:state.dialect, cipherPhrase:state.cipherPhrase,
   };
 }
 
@@ -780,6 +821,24 @@ function draw(){
   const t0=performance.now();
   ctx.setTransform(canvas.width/ART_W,0,0,canvas.height/H,0,0);
   render(ctx,ART_W,H,p,state.seed);
+
+  if(state.scanning){
+    ctx.save();
+    ctx.strokeStyle='rgba(0,217,255,0.9)';
+    ctx.lineWidth=2;
+    ctx.shadowColor='#00d9ff';
+    ctx.shadowBlur=8;
+    ctx.beginPath();
+    ctx.moveTo(0, state.scanY);
+    ctx.lineTo(ART_W, state.scanY);
+    ctx.stroke();
+    ctx.fillStyle='rgba(0,217,255,0.06)';
+    ctx.fillRect(0, Math.max(0, state.scanY-24), ART_W, 24);
+    ctx.restore();
+    state.scanY = (state.scanY + 7) % H;
+    requestAnimationFrame(draw);
+  }
+
   const ms=performance.now()-t0;
   document.getElementById('statCells').textContent=glyphCount;
   document.getElementById('statMs').textContent=ms.toFixed(1)+'ms';
@@ -789,7 +848,7 @@ function draw(){
   canvas.style.background=PALETTES[p.palette].bg;
 }
 function requestDraw(){
-  if(!rafPending){ rafPending=true; requestAnimationFrame(draw); }
+  if(!rafPending && !state.scanning){ rafPending=true; requestAnimationFrame(draw); }
 }
 
 /* ═══════════════════ EXPORT ═══════════════════ */
@@ -826,12 +885,15 @@ function syncSlider(el){
 }
 sliders.forEach(id=>{
   const el=document.getElementById(id);
-  el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
-  syncSlider(el);
+  if(el){
+    el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
+    syncSlider(el);
+  }
 });
 
 function wireSeg(segId,attr,onPick){
   const seg=document.getElementById(segId);
+  if(!seg) return;
   seg.addEventListener('click',e=>{
     const btn=e.target.closest('button'); if(!btn) return;
     seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
@@ -842,12 +904,54 @@ function wireSeg(segId,attr,onPick){
 }
 wireSeg('segPalette','pal',v=>{ state.palette=v; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; });
+wireSeg('segDialect','dialect',v=>{
+  state.dialect=v;
+  if(v==='oracle'){ document.getElementById('curvature').value=75; document.getElementById('complexity').value=65; }
+  else if(v==='matrix'){ document.getElementById('curvature').value=0; document.getElementById('complexity').value=85; }
+  else if(v==='monad'){ document.getElementById('shapes').value=80; document.getElementById('diacritics').value=70; }
+  else if(v==='memphis'){ document.getElementById('shapes').value=95; document.getElementById('curvature').value=40; }
+  ['curvature','complexity','shapes','diacritics'].forEach(k=>syncSlider(document.getElementById(k)));
+  if(window.DigiSynth) window.DigiSynth.chord(480, [1, 1.33, 1.6]);
+  requestDraw();
+});
+
+const cipherInput = document.getElementById('cipherText');
+if(cipherInput){
+  cipherInput.addEventListener('input', e=>{
+    state.cipherPhrase = e.target.value.toUpperCase();
+    if(window.DigiSynth) window.DigiSynth.click(900 + (e.target.value.length*40));
+    requestDraw();
+  });
+}
+
+const btnScan = document.getElementById('btnScanner');
+if(btnScan){
+  btnScan.addEventListener('click', ()=>{
+    state.scanning = !state.scanning;
+    btnScan.classList.toggle('primary', state.scanning);
+    btnScan.textContent = state.scanning ? '❚❚ Stop Beam' : '⚡ Scan Beam';
+    if(window.DigiSynth) window.DigiSynth.blip(state.scanning ? 1100 : 550);
+    if(state.scanning) requestAnimationFrame(draw);
+  });
+}
+
+/* Interactive Canvas Click */
+canvas.addEventListener('pointerdown', e=>{
+  const r = canvas.getBoundingClientRect();
+  const u = (e.clientX - r.left) / r.width;
+  const v = (e.clientY - r.top) / r.height;
+  state.seed = ((state.seed ^ ((u * 0x1ffff) | 0)) + ((v * 0x7ffff) | 0)) >>> 0;
+  if(window.DigiSynth) window.DigiSynth.chord(550, [1, 1.25, 1.5, 2]);
+  requestDraw();
+});
 
 document.getElementById('btnRandom').addEventListener('click',()=>{
   state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
 });
 document.getElementById('btnRegen').addEventListener('click',()=>{
-  state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
+  state.seed=(Math.random()*0xffffffff)>>>0;
+  if(window.DigiSynth) window.DigiSynth.glitch();
+  requestDraw();
 });
 document.getElementById('btnExport').addEventListener('click',exportPNG);
 window.addEventListener('resize',requestDraw);
@@ -859,6 +963,7 @@ window.addEventListener('keydown',e=>{
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(requestDraw);
 draw();
 </script>
+  <script src="../shared/digi-shell.js"></script>
   <script src="/nav-node.js" defer></script>
 </body>
 </html>

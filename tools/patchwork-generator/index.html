@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>digidelic — patchwork generator</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/digi-shell.css">
 <style>
 @font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
@@ -75,13 +76,17 @@ main{display:flex;flex:1;min-height:0}
 .stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
 .corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
 .corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
-.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi);transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),box-shadow 160ms ease;will-change:transform}
 .frame::before,.frame::after{
   content:'';position:absolute;width:10px;height:10px;border:1px solid var(--cobalt);pointer-events:none;
 }
 .frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
 .frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
-canvas#art{display:block;background:#efead9}
+canvas#art{
+  display:block;background:#efead9;
+  transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),opacity 120ms var(--e-flow),filter 120ms var(--e-flow),background-color 160ms var(--e-flow);
+  will-change:transform;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
 
 /* ── CONTROL RACK ── */
 .rack{
@@ -129,30 +134,33 @@ button.primary:hover{background:var(--white);border-color:var(--white)}
   display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;
 }
 .param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
-.param .lab .val{font-size:11px;color:var(--cobalt);letter-spacing:.06em;min-width:44px;text-align:right}
+.param .lab .val{font-size:11px;color:var(--cobalt);letter-spacing:.06em;min-width:44px;text-align:right;font-variant-numeric:tabular-nums;-webkit-font-feature-settings:"tnum";font-feature-settings:"tnum";transition:color var(--d-fast) var(--e-snap),opacity 80ms ease}
 
 /* sliders — hard squares, cobalt progress track */
 input[type=range]{
   -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
-  --p:50%;
+  --p:50%;transition:opacity var(--d-fast) var(--e-flow),filter var(--d-fast) var(--e-flow);will-change:transform;
 }
 input[type=range]::-webkit-slider-runnable-track{
-  height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p));
+  height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow);
 }
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
   background:var(--white);border:0;
-  transition:background var(--d-fast) var(--e-snap);
+  transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,
 input[type=range]:active::-webkit-slider-thumb{background:var(--cobalt)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
 input[type=range]::-moz-range-track{
-  height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p));
+  height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow);
 }
 input[type=range]::-moz-range-thumb{
   width:12px;height:12px;background:var(--white);border:0;border-radius:0;
+  transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
 }
 input[type=range]:hover::-moz-range-thumb{background:var(--cobalt)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 /* segmented control */
 .seg{display:flex;border:1px solid var(--border-hi)}
@@ -260,13 +268,16 @@ footer .fill{flex:1;border-right:0;text-align:right}
         </div>
 
         <div class="sect">
-          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="sect-head"><h2>Style & Palettes</h2><span class="coord">S.03</span></div>
           <div class="param">
             <div class="lab"><span class="name">Palette</span></div>
-            <div class="seg" id="segPalette" role="group" aria-label="palette">
-              <button data-pal="paradise" class="is-active">Paradise</button>
-              <button data-pal="mono">Mono</button>
-              <button data-pal="digidelic">Digidelic</button>
+            <div class="seg" id="segPalette" role="group" aria-label="palette" style="flex-wrap:wrap">
+              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
+              <button data-pal="night" style="flex:1 1 30%">Night</button>
+              <button data-pal="thermal" style="flex:1 1 30%">Thermal</button>
+              <button data-pal="acid" style="flex:1 1 30%">Acid</button>
+              <button data-pal="paradise" style="flex:1 1 30%">Paradise</button>
+              <button data-pal="mono" style="flex:1 1 30%">Mono</button>
             </div>
           </div>
           <div class="param">
@@ -278,11 +289,34 @@ footer .fill{flex:1;border-right:0;text-align:right}
           </div>
           <div class="param">
             <div class="lab"><span class="name">Stroke weight</span><span class="val" data-val="stroke"></span></div>
-            <input type="range" id="stroke" min="0.5" max="2.5" step="0.1" value="1">
+            <input type="range" id="stroke" min="0.5" max="3" step="0.1" value="1.2">
           </div>
           <div class="param">
             <div class="lab"><span class="name">Margin</span><span class="val" data-val="margin"></span></div>
-            <input type="range" id="margin" min="0" max="90" step="1" value="28">
+            <input type="range" id="margin" min="0" max="90" step="1" value="24">
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect-head"><h2>Kinetics & Texture</h2><span class="coord">S.04</span></div>
+          <div class="param">
+            <div class="seg" id="segPlay" role="group">
+              <button id="btnPlayPulse">▶ Kinetic Pulse</button>
+              <button id="btnMutateAll">⚡ Mutate</button>
+            </div>
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Pulse Speed</span><span class="val" data-val="speed">50%</span></div>
+            <input type="range" id="speed" min="10" max="100" step="1" value="50">
+          </div>
+          <div class="param">
+            <div class="lab"><span class="name">Screen Texture</span></div>
+            <div class="seg" id="segTexture" role="group">
+              <button data-tex="none" class="is-active">Clean</button>
+              <button data-tex="dither">Dither</button>
+              <button data-tex="ascii">ASCII</button>
+              <button data-tex="scan">Scan</button>
+            </div>
           </div>
         </div>
 
@@ -324,7 +358,48 @@ function weightedPick(rnd,items){
 
 /* ═══════════════════ PALETTES ═══════════════════ */
 const PALETTES={
-  /* sampled from the "Patched Paradise" reference posts */
+  digidelic:{
+    bg:'#000000', ink:'rgba(255,255,255,0.7)',
+    colors:[
+      ['#2d6cff',3.0],  // cobalt
+      ['#ff2d87',2.5],  // hot pink
+      ['#39ff6a',2.0],  // neon green
+      ['#eaff00',2.0],  // laser yellow
+      ['#00d9ff',1.8],  // cyan
+      ['#ff5a00',1.5],  // orange
+      ['#c800ff',1.2],  // magenta
+    ],
+  },
+  night:{
+    bg:'#08040d', ink:'rgba(235,215,255,0.65)',
+    colors:[
+      ['#8a3fb0',3.0],  // violet
+      ['#4653e8',2.5],  // electric indigo
+      ['#ff2d87',2.5],  // hot pink
+      ['#e02020',1.8],  // crimson
+      ['#00d9ff',1.2],  // cyan highlight
+    ],
+  },
+  thermal:{
+    bg:'#050505', ink:'rgba(255,255,255,0.85)',
+    colors:[
+      ['#ff5a00',3.0],  // thermal orange
+      ['#ff0066',2.5],  // radiant pink
+      ['#ffd028',2.2],  // heat yellow
+      ['#00d9ff',1.5],  // plasma cyan
+      ['#ffffff',1.0],  // white hot
+    ],
+  },
+  acid:{
+    bg:'#020a04', ink:'rgba(57,255,106,0.7)',
+    colors:[
+      ['#39ff6a',3.2],  // bio green
+      ['#eaff00',2.4],  // acid lime
+      ['#00d9ff',1.8],  // cyan
+      ['#ffffff',1.2],  // white
+      ['#1f52d6',1.0],  // deep cobalt
+    ],
+  },
   paradise:{
     bg:'#efead9', ink:'#22201c',
     colors:[
@@ -336,32 +411,22 @@ const PALETTES={
       ['#a9c7e6',1.8],  // light blue
     ],
   },
-  /* black on cream — B&W carousel frames */
   mono:{
-    bg:'#efead9', ink:'#191813',
-    colors:[['#191813',1]],
-  },
-  /* digidelic brand — neon blocks on void */
-  digidelic:{
-    bg:'#0a0a0a', ink:'rgba(255,255,255,0.45)',
-    colors:[
-      ['#2d6cff',3.0],  // cobalt
-      ['#ff2d87',2.4],  // pink
-      ['#2d6cff',2.2],  // blue
-      ['#39ff6a',1.6],  // green
-      ['#00d9ff',1.6],  // cyan
-      ['#c800ff',0.9],  // magenta
-    ],
+    bg:'#0a0a0a', ink:'#ffffff',
+    colors:[['#ffffff',1], ['#222222', 0.8], ['#555555', 0.6]],
   },
 };
 
 /* ═══════════════════ STATE ═══════════════════ */
 const state={
   seed:(Math.random()*0xffffffff)>>>0,
-  palette:'paradise',
+  palette:'digidelic',
   format:'square',
+  animating:false,
+  texture:'none',
+  time:0,
 };
-const sliders=['cols','rows','frag','seams','density','stripes','lines','tear','stroke','margin'];
+const sliders=['cols','rows','frag','seams','density','stripes','lines','tear','stroke','margin','speed'];
 function params(){
   const g=id=>parseFloat(document.getElementById(id).value);
   return {
@@ -370,7 +435,9 @@ function params(){
     density:g('density')/100, stripes:g('stripes')/100,
     lines:g('lines')/100, tear:g('tear')/100,
     stroke:g('stroke'), margin:g('margin'),
+    speed:g('speed')/100,
     palette:state.palette, format:state.format,
+    texture:state.texture,
   };
 }
 
@@ -452,6 +519,27 @@ function render(ctx,W,H,p,seed){
       const lh=Math.max(1,rnd()*2.4);
       ctx.fillStyle=rnd()<0.4?pal.ink:pickColor();
       ctx.fillRect(lx,ty+(rnd()-0.5)*26,lw,lh);
+    }
+  }
+
+  /* texture post-processing */
+  if(p.texture==='dither'){
+    ctx.fillStyle='rgba(0,0,0,0.28)';
+    for(let py=ry;py<ry+rh;py+=4)for(let px=rx+(py%8===0?0:2);px<rx+rw;px+=4){
+      ctx.fillRect(px,py,2,2);
+    }
+  } else if(p.texture==='scan'){
+    ctx.fillStyle='rgba(0,0,0,0.35)';
+    for(let py=ry;py<ry+rh;py+=3){
+      ctx.fillRect(rx,py,rw,1);
+    }
+  } else if(p.texture==='ascii'){
+    ctx.font='10px monospace';
+    ctx.fillStyle=pal.bg==='#000000'||pal.bg.startsWith('#0')?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.2)';
+    const chars=['+','/','_','[',']','*','#','::'];
+    for(let py=ry+12;py<ry+rh;py+=24)for(let px=rx+8;px<rx+rw;px+=36){
+      const ch=chars[Math.floor(rnd()*chars.length)];
+      ctx.fillText(ch,px,py);
     }
   }
 
@@ -617,9 +705,14 @@ function draw(){
   const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
   document.getElementById('seedHex').textContent=hex;
   document.getElementById('cornerSeed').textContent='seed '+hex.toLowerCase();
+
+  if(state.animating){
+    state.time += 0.04 * (p.speed || 0.5);
+    requestAnimationFrame(draw);
+  }
 }
 function requestDraw(){
-  if(!rafPending){ rafPending=true; requestAnimationFrame(draw); }
+  if(!rafPending && !state.animating){ rafPending=true; requestAnimationFrame(draw); }
 }
 
 /* ═══════════════════ EXPORT ═══════════════════ */
@@ -647,7 +740,7 @@ function syncSlider(el){
   el.style.setProperty('--p',((v-min)/(max-min)*100)+'%');
   const out=document.querySelector('.val[data-val="'+el.id+'"]');
   if(out){
-    if(el.id==='frag'||el.id==='density'||el.id==='stripes'||el.id==='lines'||el.id==='tear')
+    if(el.id==='frag'||el.id==='density'||el.id==='stripes'||el.id==='lines'||el.id==='tear'||el.id==='speed')
       out.textContent=v+'%';
     else if(el.id==='stroke') out.textContent=v.toFixed(1)+'px';
     else if(el.id==='margin') out.textContent=v+'px';
@@ -656,12 +749,15 @@ function syncSlider(el){
 }
 sliders.forEach(id=>{
   const el=document.getElementById(id);
-  el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
-  syncSlider(el);
+  if(el){
+    el.addEventListener('input',()=>{ syncSlider(el); requestDraw(); });
+    syncSlider(el);
+  }
 });
 
 function wireSeg(segId,attr,onPick){
   const seg=document.getElementById(segId);
+  if(!seg) return;
   seg.addEventListener('click',e=>{
     const btn=e.target.closest('button'); if(!btn) return;
     seg.querySelectorAll('button').forEach(b=>b.classList.remove('is-active'));
@@ -672,6 +768,38 @@ function wireSeg(segId,attr,onPick){
 }
 wireSeg('segPalette','pal',v=>{ state.palette=v; });
 wireSeg('segFormat','fmt',v=>{ state.format=v; });
+wireSeg('segTexture','tex',v=>{ state.texture=v; });
+
+/* Kinetics & Touch Interaction */
+const btnPlay = document.getElementById('btnPlayPulse');
+if(btnPlay){
+  btnPlay.addEventListener('click', ()=>{
+    state.animating = !state.animating;
+    btnPlay.classList.toggle('primary', state.animating);
+    btnPlay.textContent = state.animating ? '❚❚ Stop Pulse' : '▶ Kinetic Pulse';
+    if(window.DigiSynth) window.DigiSynth.blip(state.animating ? 880 : 440);
+    if(state.animating) requestAnimationFrame(draw);
+  });
+}
+
+const btnMutate = document.getElementById('btnMutateAll');
+if(btnMutate){
+  btnMutate.addEventListener('click', ()=>{
+    state.seed = ((state.seed * 1664525) + 1013904223) >>> 0;
+    if(window.DigiSynth) window.DigiSynth.glitch();
+    requestDraw();
+  });
+}
+
+/* Interactive Canvas Click-to-Mutate */
+canvas.addEventListener('pointerdown', (e)=>{
+  const r = canvas.getBoundingClientRect();
+  const u = (e.clientX - r.left) / r.width;
+  const v = (e.clientY - r.top) / r.height;
+  state.seed = ((state.seed ^ ((u * 0xffff) | 0)) + ((v * 0xfffff) | 0)) >>> 0;
+  if(window.DigiSynth) window.DigiSynth.click(1200);
+  requestDraw();
+});
 
 document.getElementById('btnRandom').addEventListener('click',()=>{
   state.seed=(Math.random()*0xffffffff)>>>0; requestDraw();
@@ -688,6 +816,7 @@ window.addEventListener('keydown',e=>{
 
 draw();
 </script>
+  <script src="../shared/digi-shell.js"></script>
   <script src="/nav-node.js" defer></script>
 </body>
 </html>

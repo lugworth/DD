@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>digidelic — circuit matrix</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/digi-shell.css">
 <style>
 @font-face{font-family:'Geist Mono';src:url('../../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:'Red Hat Mono';src:url('../../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
@@ -54,11 +55,15 @@ main{display:flex;flex:1;min-height:0}
 .stage .corner{position:absolute;color:var(--white-dim);font-size:10px;letter-spacing:.18em;pointer-events:none}
 .corner.tl{top:12px;left:16px}.corner.tr{top:12px;right:16px}
 .corner.bl{bottom:12px;left:16px}.corner.br{bottom:12px;right:16px}
-.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi)}
+.frame{position:relative;box-shadow:0 0 0 1px var(--border-hi);transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),box-shadow 160ms ease;will-change:transform}
 .frame::before,.frame::after{content:'';position:absolute;width:10px;height:10px;border:1px solid var(--yellow);pointer-events:none}
 .frame::before{top:-6px;left:-6px;border-width:1px 0 0 1px}
 .frame::after{bottom:-6px;right:-6px;border-width:0 1px 1px 0}
-canvas#art{display:block;background:#050505;cursor:crosshair;touch-action:none}
+canvas#art{
+  display:block;background:#050505;cursor:crosshair;touch-action:none;
+  transition:width 120ms var(--e-flow),height 120ms var(--e-flow),transform 120ms var(--e-flow),opacity 120ms var(--e-flow),filter 120ms var(--e-flow),background-color 160ms var(--e-flow);
+  will-change:transform;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
 .stage .hint{
   position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
   color:var(--white-dim);font-size:10px;letter-spacing:.2em;text-transform:uppercase;pointer-events:none;
@@ -98,22 +103,24 @@ button:disabled{opacity:.5;cursor:default}
 .param:last-child{margin-bottom:0}
 .param .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 .param .lab .name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--white-soft)}
-.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right}
+.param .lab .val{font-size:11px;color:var(--yellow);letter-spacing:.06em;min-width:44px;text-align:right;font-variant-numeric:tabular-nums;-webkit-font-feature-settings:"tnum";font-feature-settings:"tnum";transition:color var(--d-fast) var(--e-snap),opacity 80ms ease}
 
 input[type=range]{
   -webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;
-  --p:50%;
+  --p:50%;transition:opacity var(--d-fast) var(--e-flow),filter var(--d-fast) var(--e-flow);will-change:transform;
 }
-input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
-  background:var(--white);border:0;transition:background var(--d-fast) var(--e-snap);
+  background:var(--white);border:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,
 input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
-input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p))}
-input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform}
 input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 .seg{display:flex;border:1px solid var(--border-hi)}
 .seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
@@ -234,13 +241,16 @@ footer .fill{flex:1;border-right:0;text-align:right}
         </div>
 
         <div class="sect">
-          <div class="sect-head"><h2>Style</h2><span class="coord">S.03</span></div>
+          <div class="sect-head"><h2>Style & Palettes</h2><span class="coord">S.03</span></div>
           <div class="param">
             <div class="lab"><span class="name">Palette</span></div>
-            <div class="seg" id="segPalette" role="group" aria-label="palette">
-              <button data-pal="breadboard" class="is-active">Breadboard</button>
-              <button data-pal="copper">Copper</button>
-              <button data-pal="digidelic">Digidelic</button>
+            <div class="seg" id="segPalette" role="group" aria-label="palette" style="flex-wrap:wrap">
+              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
+              <button data-pal="matrix" style="flex:1 1 30%">Matrix</button>
+              <button data-pal="cyberpunk" style="flex:1 1 30%">Cyber</button>
+              <button data-pal="thermal" style="flex:1 1 30%">Thermal</button>
+              <button data-pal="breadboard" style="flex:1 1 30%">Breadboard</button>
+              <button data-pal="copper" style="flex:1 1 30%">Copper</button>
             </div>
           </div>
           <div class="param">
@@ -271,7 +281,9 @@ footer .fill{flex:1;border-right:0;text-align:right}
 
       <div class="actions">
         <button id="btnPlay">❚❚ Pause</button>
+        <button id="btnOverload" style="color:#eaff00">⚡ Overload</button>
         <button id="btnRecord">⏺ Rec 6s</button>
+        <button id="btnExport" class="primary">▶ Export PNG</button>
         <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
         <button id="btnMp4" title="capture 6s as MP4 — plays inline where WebM does not">▣ MP4 6s</button>
         <button id="btnShare" hidden>⇪ Share</button>
@@ -317,6 +329,43 @@ const TAU=Math.PI*2;
 
 /* ═══════════════════ PALETTES — sampled from the reference panel ═══ */
 const PALETTES={
+  digidelic:{
+    bg:'#000000', unlit:'rgba(255,255,255,0.05)',
+    colors:[
+      [[234,255,0],2.6],    // yellow
+      [[255,45,135],2.4],   // pink
+      [[0,217,255],2.2],    // cyan
+      [[57,255,106],1.8],   // green
+      [[45,108,255],1.4],   // cobalt
+    ],
+  },
+  matrix:{
+    bg:'#020d05', unlit:'rgba(57,255,106,0.06)',
+    colors:[
+      [[57,255,106],3.0],   // phosphor green
+      [[234,255,0],2.2],    // lime
+      [[0,217,255],1.5],    // cyan highlight
+      [[255,255,255],0.8],  // white spike
+    ],
+  },
+  cyberpunk:{
+    bg:'#080210', unlit:'rgba(255,45,135,0.05)',
+    colors:[
+      [[0,217,255],2.8],    // laser cyan
+      [[255,45,135],2.4],   // neon pink
+      [[200,0,255],1.8],    // magenta
+      [[234,255,0],1.2],    // yellow spike
+    ],
+  },
+  thermal:{
+    bg:'#080302', unlit:'rgba(255,90,0,0.05)',
+    colors:[
+      [[255,90,0],2.8],     // thermal orange
+      [[255,208,40],2.2],   // sun yellow
+      [[255,0,102],1.8],    // laser red
+      [[255,255,255],0.8],  // white hot
+    ],
+  },
   breadboard:{
     bg:'#050505', unlit:'rgba(255,255,255,0.045)',
     colors:[
@@ -337,22 +386,12 @@ const PALETTES={
       [[240,230,180],0.8],  // solder bright
     ],
   },
-  digidelic:{
-    bg:'#060607', unlit:'rgba(255,255,255,0.05)',
-    colors:[
-      [[234,255,0],2.6],    // yellow
-      [[255,45,135],2.2],   // pink
-      [[0,217,255],2.0],    // cyan
-      [[57,255,106],1.6],   // green
-      [[45,76,255],1.2],    // blue
-    ],
-  },
 };
 
 /* ═══════════════════ STATE ═══════════════════ */
 const state={
   seed:(Math.random()*0xffffffff)>>>0,
-  palette:'breadboard',
+  palette:'digidelic',
   format:'panel',
   playing:true,
   tick:0,
@@ -984,6 +1023,37 @@ rack.wireSeg('segMic','mic',v=>{ micToggle(v==='on'); });
 rack.wireSeg('segCtl','ctl',extControl);
 rack.wireSeg('segPalette','pal',v=>{ state.palette=v; canvas.style.background=PALETTES[v].bg; dirty=true; });
 
+// Overload Surge button
+const btnOverload = document.getElementById('btnOverload');
+if(btnOverload){
+  btnOverload.addEventListener('click', ()=>{
+    if(window.DigiSynth){
+      window.DigiSynth.glitch();
+      window.DigiSynth.chord(110, [1, 1.414, 2, 2.82]);
+    }
+    const p = params();
+    for(let i=0; i<16; i++){
+      const gx = 1 + ((Math.random()*(board.W-2))|0);
+      const gy = 1 + ((Math.random()*(board.H-2))|0);
+      spawnWalker(p, gx, gy);
+    }
+    flashStatus('⚡ high-voltage bus surge triggered_');
+  });
+}
+
+// Interactive trace spawner on pointer
+canvas.addEventListener('pointerdown', e=>{
+  const r = canvas.getBoundingClientRect();
+  const u = (e.clientX - r.left) / r.width;
+  const v = (e.clientY - r.top) / r.height;
+  const gx = Math.max(1, Math.min(board.W-2, Math.floor(u * board.W)));
+  const gy = Math.max(1, Math.min(board.H-2, Math.floor(v * board.H)));
+  const p = params();
+  for(let i=0; i<3; i++) spawnWalker(p, gx, gy);
+  if(window.DigiSynth) window.DigiSynth.blip(600 + (gx * 8));
+  flashStatus('trace bus tapped · node ['+gx+','+gy+']_');
+});
+
 // Init A11y
 initAccessibility();
 
@@ -1016,6 +1086,7 @@ initAccessibility();
 
 requestAnimationFrame(frame);
 </script>
+  <script src="../shared/digi-shell.js"></script>
   <script src="/nav-node.js" defer></script>
 </body>
 </html>

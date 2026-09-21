@@ -1,0 +1,428 @@
+<!-- @dsCard group="Components" name="Navigation" subtitle="Top bar, side rails, segmented tabs, breadcrumb trails, steppers and pagination" viewport="1280x1600" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Navigation</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/vendor/react.production.min.js"></script>
+<script>if (!window.React) document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\\/script>');</script>
+<script src="/vendor/react-dom.production.min.js"></script>
+<script>if (!window.ReactDOM) document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\\/script>');</script>
+<script src="/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#000;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px}
+a{color:#00d9ff}a:hover{color:#ff2d87}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
+.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:68ch;margin:0 0 30px}
+.lab{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:0 0 12px}
+.sec{border-top:1px solid rgba(255,255,255,.22);padding-top:13px;margin-top:34px}
+.note{font-size:11px;line-height:1.7;color:rgba(255,255,255,.55);max-width:72ch;margin:0 0 14px}
+.night{background:#150a1c;padding:20px 22px;margin-top:14px;border:1px solid rgba(255,255,255,.1)}
+.cream{background:#e8e3d0;color:#0a0a0a;padding:20px 22px;margin-top:14px;border:1px solid rgba(0,0,0,.15)}
+.cream .lab{color:rgba(10,10,10,.5)}
+.chk{height:7px;background-color:#ff6050;background-image:linear-gradient(45deg,#00d9ff 25%,transparent 25%,transparent 75%,#00d9ff 75%),linear-gradient(45deg,#00d9ff 25%,transparent 25%,transparent 75%,#00d9ff 75%);background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px 26px}
+code{color:#00d9ff}
+.nav-box{background:#0a0a0a;border:1px solid rgba(255,255,255,.12);padding:18px}
+</style>
+</head>
+<body>
+<div class="chk"></div>
+<h1>Navigation</h1>
+<p class="sub">Structured directional controls designed for dense telemetry environments. Provides monolithic topbars with status telemetry, collapsible coordinate side-rails, segmented tabs, multi-depth breadcrumbs, progress steppers, and tabular pagination.</p>
+<div id="root"></div>
+
+<script>
+const { createElement: h, Fragment, useState } = React;
+const Sec = (label, note, children) => h('div', { className: 'sec' },
+  h('p', { className: 'lab' }, label),
+  note ? h('p', { className: 'note' }, note) : null, children);
+const Col = (label, children) => h('div', null, h('p', { className: 'lab' }, label), children);
+
+function Demo() {
+  const [topActive, setTopActive] = useState('overview');
+  const [sideActive, setSideActive] = useState('sec-1');
+  const [tabPill, setTabPill] = useState('telemetry');
+  const [tabBar, setTabBar] = useState('raw');
+  const [step, setStep] = useState(1);
+  const [page, setPage] = useState(2);
+  const [bcPath, setBcPath] = useState(['SECTORS', 'A1-PACIFIC', 'NODE-047']);
+
+  const topItems = [
+    { id: 'overview', label: 'OVERVIEW', code: '01' },
+    { id: 'nodes', label: 'NODES', code: '02' },
+    { id: 'signals', label: 'SIGNALS', code: '03' },
+    { id: 'security', label: 'SECURITY', code: '04' }
+  ];
+
+  const sideItems = [
+    { id: 'sec-1', coord: '01', name: 'CORE ROUTER', count: '14' },
+    { id: 'sec-2', coord: '02', name: 'DIFFUSION FIELD', count: '8' },
+    { id: 'sec-3', coord: '03', name: 'OPTICAL ARRAY', count: '29' },
+    { id: 'sec-4', coord: '04', name: 'CIRCUIT RELAY', count: '3' }
+  ];
+
+  const pillItems = [
+    { id: 'telemetry', label: 'TELEMETRY', count: 'LIVE' },
+    { id: 'diagnostics', label: 'DIAGNOSTICS', count: 4 },
+    { id: 'relays', label: 'RELAYS', count: 12 },
+    { id: 'archive', label: 'ARCHIVE' }
+  ];
+
+  const steps = [
+    { id: '1', label: 'INGEST STREAM' },
+    { id: '2', label: 'CALIBRATE' },
+    { id: '3', label: 'PARITY VERIFY' },
+    { id: '4', label: 'DISPATCH' }
+  ];
+
+  return h(Fragment, null,
+    Sec('01 · top bar — telemetry header', 'Universal header with checker logo badge, glitch nav links, status pulse, and action CTA.',
+      h('div', { className: 'nav-box', style: { padding: 0 } },
+        h('header', {
+          style: {
+            display: 'flex', alignItems: 'stretch', height: 48, background: '#050505',
+            border: '1px solid rgba(255,255,255,.14)', fontFamily: 'Geist Mono, monospace'
+          }
+        },
+          h('div', {
+            style: {
+              display: 'flex', alignItems: 'center', gap: 10, padding: '0 18px',
+              borderRight: '1px solid rgba(255,255,255,.12)'
+            }
+          },
+            h('span', {
+              style: {
+                width: 12, height: 12,
+                backgroundColor: '#ff6050',
+                backgroundImage: 'linear-gradient(45deg, #00d9ff 25%, transparent 25%, transparent 75%, #00d9ff 75%), linear-gradient(45deg, #00d9ff 25%, transparent 25%, transparent 75%, #00d9ff 75%)',
+                backgroundSize: '6px 6px',
+                backgroundPosition: '0 0, 3px 3px'
+              }
+            }),
+            h('span', { style: { fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 16, letterSpacing: '-0.02em' } }, 'DIGIDELIC // OS')
+          ),
+          h('nav', { style: { display: 'flex', flex: 1, alignItems: 'stretch' } },
+            topItems.map(item => {
+              const active = item.id === topActive;
+              return h('button', {
+                key: item.id,
+                type: 'button',
+                onClick: () => setTopActive(item.id),
+                style: {
+                  background: active ? '#2d6cff' : 'transparent',
+                  color: active ? '#000' : 'rgba(255,255,255,.6)',
+                  border: 'none',
+                  borderRight: '1px solid rgba(255,255,255,.1)',
+                  padding: '0 16px',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '.14em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }
+              },
+                h('span', { style: { fontSize: 8, opacity: active ? 0.6 : 0.4 } }, `[${item.code}]`),
+                h('span', null, item.label)
+              );
+            })
+          ),
+          h('div', {
+            style: {
+              display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px',
+              fontSize: 10, letterSpacing: '.12em', color: 'rgba(255,255,255,.5)',
+              borderLeft: '1px solid rgba(255,255,255,.1)'
+            }
+          },
+            h('span', { style: { width: 6, height: 6, background: '#39ff6a', display: 'inline-block' } }),
+            'SYS_ONLINE'
+          ),
+          h('button', {
+            type: 'button',
+            onClick: () => alert('Action: Vector dispathed to node grid'),
+            style: {
+              padding: '0 18px', background: '#ff2d87', color: '#000', border: 'none',
+              font: '700 11px/1 Geist Mono, monospace', letterSpacing: '.14em',
+              textTransform: 'uppercase', cursor: 'pointer'
+            }
+          }, 'DEPLOY ▶')
+        )
+      )
+    ),
+
+    Sec('02 · side rail & hierarchical directory', 'Collapsible left panel with hex coordinates, telemetry counters, and active sector markers.',
+      h('div', { className: 'grid' },
+        h('div', { className: 'nav-box', style: { padding: 0, width: 280 } },
+          h('div', {
+            style: {
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,.1)',
+              fontSize: 9, letterSpacing: '.2em', color: 'rgba(255,255,255,.4)'
+            }
+          },
+            h('span', null, '// SECTOR NAVIGATOR'),
+            h('span', { style: { color: '#00d9ff' } }, '0x04 NODES')
+          ),
+          sideItems.map(it => {
+            const active = it.id === sideActive;
+            return h('div', {
+              key: it.id,
+              onClick: () => setSideActive(it.id),
+              style: {
+                display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px',
+                borderBottom: '1px solid rgba(255,255,255,.05)', cursor: 'pointer',
+                background: active ? 'rgba(45,108,255,.12)' : 'transparent',
+                borderLeft: active ? '3px solid #2d6cff' : '3px solid transparent',
+                color: active ? '#fff' : 'rgba(255,255,255,.55)',
+                transition: 'all 120ms'
+              }
+            },
+              h('span', {
+                style: {
+                  fontSize: 8, padding: '2px 4px', border: '1px solid rgba(255,255,255,.18)',
+                  color: active ? '#00d9ff' : 'rgba(255,255,255,.4)', letterSpacing: '.08em'
+                }
+              }, it.coord),
+              h('span', { style: { fontSize: 11, fontWeight: 600, letterSpacing: '.1em' } }, it.name),
+              h('span', {
+                style: {
+                  marginLeft: 'auto', fontSize: 9, padding: '1px 5px',
+                  border: '1px solid currentColor', opacity: active ? 1 : 0.4
+                }
+              }, it.count)
+            );
+          })
+        ),
+        h('div', { className: 'nav-box', style: { display: 'flex', flexDirection: 'column', gap: 16 } },
+          h('div', { className: 'lab' }, '// ACTIVE CONTEXT METRICS'),
+          h('p', { style: { fontSize: 11, lineHeight: 1.6, color: 'rgba(255,255,255,.7)' } },
+            'Selected Route: ', h('b', { style: { color: '#00d9ff' } }, sideActive.toUpperCase()),
+            h('br'),
+            'Status: Active listening on socket 0x4B3. Parity checks running at 60Hz.'
+          ),
+          h('div', { style: { display: 'flex', gap: 8 } },
+            h('button', {
+              type: 'button',
+              onClick: () => setSideActive('sec-1'),
+              style: { padding: '6px 12px', background: '#0a0a0a', border: '1px solid rgba(255,255,255,.2)', color: '#fff', fontSize: 10, cursor: 'pointer' }
+            }, 'RESET TO CORE'),
+            h('button', {
+              type: 'button',
+              onClick: () => alert('Ping transmitted to ' + sideActive),
+              style: { padding: '6px 12px', background: '#2d6cff', border: 'none', color: '#000', fontSize: 10, fontWeight: 700, cursor: 'pointer' }
+            }, 'PING ROUTE')
+          )
+        )
+      )
+    ),
+
+    Sec('03 · segmented tabs — pill & bar variations', 'Switching modes without changing routing level.',
+      h('div', { className: 'nav-box', style: { display: 'flex', flexDirection: 'column', gap: 20 } },
+        Col('segmented pills (rounded button matrix)',
+          h('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
+            pillItems.map(p => {
+              const active = p.id === tabPill;
+              return h('button', {
+                key: p.id,
+                type: 'button',
+                onClick: () => setTabPill(p.id),
+                style: {
+                  padding: '7px 14px',
+                  border: active ? '1px solid #00d9ff' : '1px solid rgba(255,255,255,.16)',
+                  background: active ? '#00d9ff' : 'transparent',
+                  color: active ? '#000' : 'rgba(255,255,255,.6)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '.12em',
+                  cursor: 'pointer',
+                  transition: 'all 120ms'
+                }
+              },
+                p.label,
+                p.count ? h('span', { style: { marginLeft: 6, fontSize: 9, opacity: active ? 0.8 : 0.5 } }, `[${p.count}]`) : null
+              );
+            })
+          )
+        ),
+        Col('underline tabs (docked line indicator)',
+          h('div', { style: { display: 'flex', borderBottom: '1px solid rgba(255,255,255,.1)' } },
+            ['raw telemetry', 'spectrum map', 'packet inspect', 'export log'].map(b => {
+              const active = b === tabBar;
+              return h('button', {
+                key: b,
+                type: 'button',
+                onClick: () => setTabBar(b),
+                style: {
+                  padding: '9px 18px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: active ? '2px solid #ff2d87' : '2px solid transparent',
+                  color: active ? '#fff' : 'rgba(255,255,255,.45)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '.14em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  marginBottom: -1,
+                  transition: 'all 120ms'
+                }
+              }, b);
+            })
+          )
+        )
+      )
+    ),
+
+    Sec('04 · breadcrumb navigation trails', 'Explicit deep hierarchy path indicators with selectable ancestor steps.',
+      h('div', { className: 'nav-box', style: { display: 'flex', flexDirection: 'column', gap: 16 } },
+        Col('standard slash separator',
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 } },
+            bcPath.map((seg, i) => {
+              const isLast = i === bcPath.length - 1;
+              return h(Fragment, { key: seg },
+                h('span', {
+                  onClick: () => !isLast && setBcPath(bcPath.slice(0, i + 1)),
+                  style: {
+                    color: isLast ? '#00d9ff' : 'rgba(255,255,255,.5)',
+                    fontWeight: isLast ? 700 : 400,
+                    cursor: isLast ? 'default' : 'pointer'
+                  }
+                }, seg),
+                !isLast && h('span', { style: { color: 'rgba(255,255,255,.25)' } }, '/')
+              );
+            }),
+            bcPath.length < 5 && h('button', {
+              type: 'button',
+              onClick: () => setBcPath([...bcPath, 'CHANNEL-0' + (bcPath.length + 1)]),
+              style: { marginLeft: 12, padding: '2px 6px', background: 'transparent', border: '1px dashed rgba(255,255,255,.3)', color: '#fff', fontSize: 9, cursor: 'pointer' }
+            }, '+ DRILL DOWN')
+          )
+        ),
+        Col('cyber arrow separator (▶)',
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 } },
+            ['GRID_SYSTEM', 'CLUSTER_X7', 'ARRAY_4', 'STREAM_ACTIVE'].map((seg, i, arr) => {
+              const isLast = i === arr.length - 1;
+              return h(Fragment, { key: seg },
+                h('span', { style: { color: isLast ? '#39ff6a' : 'rgba(255,255,255,.5)', fontWeight: isLast ? 700 : 400 } }, seg),
+                !isLast && h('span', { style: { color: '#ff6050', fontSize: 8 } }, '▶')
+              );
+            })
+          )
+        )
+      )
+    ),
+
+    Sec('05 · multi-stage sequence stepper', 'Execution lifecycle showing completed, active, and pending stages.',
+      h('div', { className: 'nav-box' },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' } },
+          steps.map((st, i) => {
+            const isDone = i < step;
+            const isCurrent = i === step;
+            return h(Fragment, { key: st.id },
+              h('div', {
+                onClick: () => setStep(i),
+                style: {
+                  display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                  color: isDone ? '#39ff6a' : isCurrent ? '#00d9ff' : 'rgba(255,255,255,.35)',
+                  fontSize: 11, fontWeight: 700, letterSpacing: '.12em'
+                }
+              },
+                h('div', {
+                  style: {
+                    width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '1px solid currentColor',
+                    background: isCurrent ? '#00d9ff' : 'transparent',
+                    color: isCurrent ? '#000' : 'currentColor',
+                    fontSize: 10, fontWeight: 900
+                  }
+                }, isDone ? '✓' : `0${i + 1}`),
+                h('span', null, st.label)
+              ),
+              i < steps.length - 1 && h('div', {
+                style: { width: 32, height: 1, background: isDone ? '#39ff6a' : 'rgba(255,255,255,.15)' }
+              })
+            );
+          })
+        ),
+        h('div', { style: { marginTop: 18, display: 'flex', gap: 8 } },
+          h('button', {
+            type: 'button',
+            disabled: step <= 0,
+            onClick: () => setStep(s => Math.max(0, s - 1)),
+            style: { padding: '6px 12px', background: '#111', border: '1px solid rgba(255,255,255,.2)', color: '#fff', fontSize: 10, cursor: step <= 0 ? 'not-allowed' : 'pointer' }
+          }, '◀ PREV STAGE'),
+          h('button', {
+            type: 'button',
+            disabled: step >= steps.length - 1,
+            onClick: () => setStep(s => Math.min(steps.length - 1, s + 1)),
+            style: { padding: '6px 12px', background: '#00d9ff', border: 'none', color: '#000', fontSize: 10, fontWeight: 700, cursor: step >= steps.length - 1 ? 'not-allowed' : 'pointer' }
+          }, 'NEXT STAGE ▶')
+        )
+      )
+    ),
+
+    Sec('06 · pagination & index controls', 'Tabular navigation for dataset chunks with page stepping and jump controls.',
+      h('div', { className: 'nav-box', style: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' } },
+        h('button', {
+          type: 'button',
+          disabled: page <= 1,
+          onClick: () => setPage(p => p - 1),
+          style: { minWidth: 28, height: 28, background: 'transparent', border: '1px solid rgba(255,255,255,.2)', color: page <= 1 ? 'rgba(255,255,255,.2)' : '#fff', cursor: page <= 1 ? 'not-allowed' : 'pointer' }
+        }, '◀'),
+        [1, 2, 3, 4, 5, 6].map(p => {
+          const active = p === page;
+          return h('button', {
+            key: p,
+            type: 'button',
+            onClick: () => setPage(p),
+            style: {
+              minWidth: 28, height: 28,
+              background: active ? '#2d6cff' : 'transparent',
+              color: active ? '#000' : 'rgba(255,255,255,.7)',
+              border: active ? '1px solid #2d6cff' : '1px solid rgba(255,255,255,.15)',
+              fontSize: 11, fontWeight: active ? 700 : 400,
+              cursor: 'pointer'
+            }
+          }, p);
+        }),
+        h('button', {
+          type: 'button',
+          disabled: page >= 6,
+          onClick: () => setPage(p => p + 1),
+          style: { minWidth: 28, height: 28, background: 'transparent', border: '1px solid rgba(255,255,255,.2)', color: page >= 6 ? 'rgba(255,255,255,.2)' : '#fff', cursor: page >= 6 ? 'not-allowed' : 'pointer' }
+        }, '▶'),
+        h('span', { style: { marginLeft: 16, fontSize: 10, color: 'rgba(255,255,255,.4)', letterSpacing: '.1em' } },
+          `PAGE ${page} OF 6 // 142 TOTAL TELEMETRY NODES`
+        )
+      )
+    ),
+
+    Sec('07 · surfaces — night and cream grounds', 'High contrast legibility across all three brand surfaces.',
+      h('div', null,
+        h('div', { className: 'night' },
+          h('p', { className: 'lab', style: { color: 'rgba(255,255,255,.5)' } }, '// NIGHT SURFACE (#150a1c)'),
+          h('div', { style: { display: 'flex', gap: 8 } },
+            h('span', { style: { padding: '6px 12px', background: '#00d9ff', color: '#000', fontWeight: 700, fontSize: 11 } }, '01 · ROUTE_A'),
+            h('span', { style: { padding: '6px 12px', border: '1px solid rgba(255,255,255,.2)', color: '#fff', fontSize: 11 } }, '02 · ROUTE_B')
+          )
+        ),
+        h('div', { className: 'cream' },
+          h('p', { className: 'lab' }, '// CREAM SURFACE (#e8e3d0)'),
+          h('div', { style: { display: 'flex', gap: 8 } },
+            h('span', { style: { padding: '6px 12px', background: '#0a0a0a', color: '#fff', fontWeight: 700, fontSize: 11 } }, '01 · ROUTE_A'),
+            h('span', { style: { padding: '6px 12px', border: '1px solid rgba(0,0,0,.3)', color: '#0a0a0a', fontSize: 11 } }, '02 · ROUTE_B')
+          )
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.render(h(Demo), document.getElementById('root'));
+</script>
+  <script src="/nav-node.js" defer></script>
+</body>
+</html>

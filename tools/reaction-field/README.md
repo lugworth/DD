@@ -1,47 +1,47 @@
-# Reaction Field
+# Diffusion Field (Reaction Field)
 
 Live **animated** generative tool — a Gray-Scott reaction-diffusion
-simulation shaded as glossy 3D relief, after the ferrofluid-like "growing
-coral" Reels reference: labyrinthine ridge fields in the core dissolving
-into dot colonies at the rim, embossed silver on black.
+WebGL2 float simulation with dynamic chemical diffusion, organic morphing regimes,
+custom text matrix seeding, interactive reactant injection, and high-resolution export.
 
-Fourth sibling of the patchwork / cosmogram / glyph-foundry tools — same
-shell, same rack UX, but the canvas runs a continuous simulation instead of
-a static render. Open `index.html` in a browser. No build step, no
-dependencies — single self-contained file styled with the digidelic design
-system.
+Sibling of the patchwork / cosmogram / glyph-foundry / colony-display tools — same
+cybernetic shell, same rack UX, running a GPU-accelerated WebGL2 simulation. Open `index.html` in a browser. No build step, no
+dependencies — single self-contained file styled with the digidelic design system.
 
 ## How it works
 
-Two virtual chemicals diffuse and react on a grid
-(`A' = A + dA·∇²A − AB² + F(1−A)`, `B' = B + dB·∇²B + AB² − (F+k)B`).
-The feed (F) and kill (k) coefficients **drift radially** with seeded noise
-wobble — labyrinth-regime values at the core blending into dot-colony
-values at the rim — which is what gives the reference its stripes-center /
-dots-edge anatomy. The concentration field is then lit as an embossed
-surface: normals from the height gradient, Lambert diffuse plus a
-Blinn-style specular bloom on ridge tops.
+Two virtual chemicals diffuse and react on a float render-target texture
+(`A' = A + (dA·∇²A − AB² + F(1−A))·dt`, `B' = B + (dB·∇²B + AB² − (F+K)B)·dt`).
+Feed (F) and kill (K) rates determine the morphological regime:
+- **Fingerprint**: Tight concentric ridge loops
+- **Labyrinth**: Dense serpentine maze corridors
+- **Coral**: Branching cellular reefs
+- **Mitosis**: Active dividing spots
+- **Worms**: Traveling filament strands
+- **Voids**: Spongiform negative cavity holes
+- **Flow**: Dynamic directional drift
+- **Mixed field**: Spatially varying gradient with Perlin/fbm turbulence
 
 ## Parameter rack
 
 | Section | Control | Effect |
 |---|---|---|
-| Seed | Hex readout + `⟳ Reseed` | Deterministic starting culture and noise field |
-| Reaction | Feed rate / Kill rate | Core-regime Gray-Scott coefficients — stripes, worms, dots, mitosis |
-| | Diffusion | dB/dA diffusion ratio — low = sharp thin filaments, high = soft fat blobs |
-| | Anisotropy | Skews the Laplacian horizontally/vertically — the pattern grows a directional grain |
-| | Morph drift | How far the coefficients drift toward the dot regime at the rim |
-| | Rim size | Where the labyrinth-to-dots regime boundary sits |
-| | Agitation | Droplets of chemical B raining onto the field, keeping the culture churning |
-| | Speed | Simulation steps per animation frame |
-| Surface | Relief depth | Height exaggeration of the embossed shading |
-| | Gloss | Specular strength and tightness |
-| | Light angle | Direction of the key light |
-| | Detail | Simulation grid resolution (re-seeds the culture) |
-| Style | Palette | `Ferro` (silver on black) · `Porcelain` (dark relief on paper) · `Digidelic` (phosphor green + cobalt specular on void) |
-| | Format | 1:1 square or 4:5 portrait |
+| Regimes | 8 Regime Buttons | Mitosis, Coral, Labyrinth, Fingerprint, Worms, Voids, Flow, Mixed |
+| Reaction | Feed / Kill | Kinetic coefficients F & K deciding growth morphology |
+| | Diffusion A & B | Chemical diffusion rates (dA, dB) |
+| | Time step / Steps per frame | Simulation step scale (dt) and iteration count per frame |
+| Variation | Gradients / Turbulence | Spatial F/K variations (↔ / ↕) and fbm turbulence |
+| | Evolve drift | Temporal oscillation evolving patterns over time |
+| Rendering | Line weight / Edge softness | Visual line thickness and crispness / thresholding |
+| | Ink & Paper / Palettes | Custom colors + Digidelic presets (Phosphor, UV Laser, Cobalt, Hot Coral, Acid) |
+| Geometry | Aspect Ratio / Detail | Phone (9:16), Portrait (3:4, 4:5), Square (1:1), Wide (16:9) + Grid detail |
+| Seeding | Starting pattern | Dots, Organic patches, Single center, Ring, Bands, Static noise, Text Matrix |
+| | Text Seeding | Render typography directly into the chemical reaction field |
+| | Paint Mode | Drag/touch on canvas to directly inject chemical reactant |
+| Execution | Pause / Restart / Settle | Toggle animation, restart from seed, or rapidly settle 1000 generations |
+| | Export | High-resolution PNG export (1080p, 2K, 4K) + 6-second live WebM capture |
 
-`space` = reseed, `p` = play/pause, `e` = export PNG.
+`space` = play/pause, `r` = reseed, `e` = export PNG.
 
 ## Export
 
