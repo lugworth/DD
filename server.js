@@ -54,6 +54,11 @@ app.use((req, res, next) => {
     if (fs.existsSync(dirIndexPath) && fs.statSync(dirIndexPath).isFile()) {
       return sendHtmlWithNav(dirIndexPath, res);
     }
+    // Check if clean URL without .html extension matches an HTML file
+    const cleanHtmlPath = path.join(__dirname, `${rawPath}.html`);
+    if (fs.existsSync(cleanHtmlPath) && fs.statSync(cleanHtmlPath).isFile()) {
+      return sendHtmlWithNav(cleanHtmlPath, res);
+    }
   }
   next();
 });
@@ -61,8 +66,11 @@ app.use((req, res, next) => {
 // Serve static assets from project root
 app.use(express.static(__dirname));
 
-// Fallback for not-found HTML routes
+// Fallback for not-found routes: do not return HTML for static assets
 app.use((req, res) => {
+  if (path.extname(req.path)) {
+    return res.status(404).type('text/plain').send('404 Not Found');
+  }
   sendHtmlWithNav(path.join(__dirname, 'tools', 'index.html'), res);
 });
 

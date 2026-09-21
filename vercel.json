@@ -1,9 +1,31 @@
 {
-  "cleanUrls": false,
-  "trailingSlash": false,
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "node scripts/build.js",
+  "outputDirectory": ".",
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/", "destination": "/tools/", "permanent": false },
+    { "source": "/tools", "destination": "/tools/", "permanent": false },
+    { "source": "/components", "destination": "/components/", "permanent": false }
+  ],
   "rewrites": [
-    { "source": "/", "destination": "/tools/index.html" },
-    { "source": "/components", "destination": "/components/index.html" },
-    { "source": "/tools", "destination": "/tools/index.html" }
+    { "source": "/tools/", "destination": "/tools/index.html" },
+    { "source": "/components/", "destination": "/components/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/fonts/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
   ]
 }

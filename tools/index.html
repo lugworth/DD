@@ -10,8 +10,8 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="/components/Emblem/Emblem.js"></script>
 <style>
-@font-face{font-family:'Geist Mono';src:url('../fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
-@font-face{font-family:'Red Hat Mono';src:url('../fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:'Geist Mono';src:url('/fonts/GeistMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Red Hat Mono';src:url('/fonts/RedHatMono-VariableFont_wght.ttf') format('truetype-variations');font-weight:300 700;font-style:normal;font-display:swap}
 
 :root{
   --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
@@ -41,7 +41,7 @@ body::after{
 /* Ambient Hard-Light ASCII Grid Layer */
 .ambient-ascii{
   position:fixed; inset:0; pointer-events:none; z-index:0;
-  background-image:url('../assets/tex-ascii-dense.png');
+  background-image:url('/assets/tex-ascii-dense.png');
   background-size:480px; background-repeat:repeat;
   mix-blend-mode:hard-light; opacity:0.055;
   filter:contrast(180%) brightness(120%);
@@ -72,7 +72,7 @@ header{
 }
 header::before{
   content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
-  background-image:url('../assets/tex-ascii-01.png');background-size:380px;
+  background-image:url('/assets/tex-ascii-01.png');background-size:380px;
   mix-blend-mode:hard-light;opacity:0.08;filter:contrast(170%);
 }
 header > *{position:relative;z-index:2}
@@ -115,7 +115,7 @@ header > *{position:relative;z-index:2}
 }
 .bar::before{
   content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
-  background-image:url('../assets/tex-ascii-dense.png');background-size:400px;
+  background-image:url('/assets/tex-ascii-dense.png');background-size:400px;
   mix-blend-mode:hard-light;opacity:0.06;filter:contrast(170%);
 }
 .bar > *{position:relative;z-index:2}
@@ -184,7 +184,7 @@ main{padding:24px;position:relative;z-index:2}
 .card .shot{position:relative;display:block;border-bottom:1px solid var(--border);background:#000;overflow:hidden}
 .card .shot::after{
   content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
-  background-image:url('../assets/tex-ascii-dense.png');background-size:260px;
+  background-image:url('/assets/tex-ascii-dense.png');background-size:260px;
   mix-blend-mode:hard-light;opacity:0.14;filter:contrast(180%) brightness(120%);
 }
 .card canvas{display:block;width:100%;aspect-ratio:16/9;background:#000;position:relative;z-index:1}
@@ -385,8 +385,8 @@ footer .fill{flex:1;border-right:0;text-align:right}
     <div class="sub">generative instrument rack · <span id="toolCount">—</span> builds</div>
   </div>
   <nav class="hub-nav" aria-label="site sections">
-    <a href="./index.html" class="is-active" aria-current="page">Tools</a>
-    <a href="../components/index.html">Components</a>
+    <a href="/tools/index.html" class="is-active" aria-current="page">Tools</a>
+    <a href="/components/index.html">Components</a>
   </nav>
   <div class="head-coords">
     <span>A1.2</span><span>X.06</span><span>0x4F3A</span><span class="live">live</span>
@@ -449,9 +449,9 @@ const TAU=Math.PI*2;
 /* Links resolve for wherever this page is opened from: the repo's tools/
    directory, or next to the baked single-file builds in dist/. */
 const IN_DIST=/(^|\/)dist\//.test(location.pathname);
-const href=slug=>IN_DIST?`./tools-${slug}.html`:`./${slug}/index.html`;
-const standalone=slug=>IN_DIST?`./tools-${slug}.html`:`../dist/tools-${slug}.html`;
-const readme=slug=>IN_DIST?null:`./${slug}/README.md`;
+const href=slug=>IN_DIST?`./tools-${slug}.html`:`/tools/${slug}/index.html`;
+const standalone=slug=>IN_DIST?`./tools-${slug}.html`:`/dist/tools-${slug}.html`;
+const readme=slug=>IN_DIST?null:`/tools/${slug}/README.md`;
 
 function rng(seed){
   return function(){

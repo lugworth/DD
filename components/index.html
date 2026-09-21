@@ -5,87 +5,374 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>digidelic — components</title>
-<link rel="stylesheet" href="../styles.css">
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="../_ds_bundle.js"></script>
-<script src="./Emblem/Emblem.js"></script>
+<link rel="stylesheet" href="/styles.css">
+<script src="/vendor/react.production.min.js"></script>
+<script>if (!window.React) document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\\/script>');</script>
+<script src="/vendor/react-dom.production.min.js"></script>
+<script>if (!window.ReactDOM) document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\\/script>');</script>
+<script src="/_ds_bundle.js"></script>
 <style>
-:root{
+:root {
   --grad-blue-pink: linear-gradient(90deg, #2d6cff 0%, #ff2d87 100%);
   --grad-blue-pink-135: linear-gradient(135deg, #2d6cff 0%, #a82fff 50%, #ff2d87 100%);
 }
-body{margin:0;background:#050505;color:#fff;font-family:'Geist Mono','Red Hat Mono',monospace;padding:34px 38px 46px;position:relative}
-.ambient-ascii{
-  position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:url('../assets/tex-ascii-dense.png');
-  background-size:480px;background-repeat:repeat;
-  mix-blend-mode:hard-light;opacity:0.055;
-  filter:contrast(180%) brightness(120%);
+body {
+  margin: 0;
+  background: #050505;
+  color: #fff;
+  font-family: 'Geist Mono', 'Red Hat Mono', monospace;
+  padding: 34px 38px 46px;
+  position: relative;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
-.page-content{position:relative;z-index:1}
-a{color:#00d9ff;transition:color 100ms ease}
-a:hover{color:#ff2d87}
-h1{font-family:'Space Grotesk',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:34px;margin:0 0 6px}
-h1 em{font-style:normal;background:var(--grad-blue-pink);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.sub{color:rgba(255,255,255,.55);font-size:12px;line-height:1.6;max-width:64ch;margin:0 0 24px}
-.chk{
-  height:7px;background-color:#ff6050;
-  background-image:linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%),
-                   linear-gradient(45deg,#2d6cff 25%,transparent 25%,transparent 75%,#2d6cff 75%);
-  background-size:14px 14px;background-position:0 0,7px 7px;margin:0 0 0
+.ambient-ascii {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url('/assets/tex-ascii-dense.png');
+  background-size: 480px;
+  background-repeat: repeat;
+  mix-blend-mode: hard-light;
+  opacity: 0.055;
+  filter: contrast(180%) brightness(120%);
 }
-.chk-accent{height:2px;background:var(--grad-blue-pink);margin:0 0 24px}
-.p{font-size:11px;line-height:1.7;margin:0 0 12px;opacity:.72}
-.exports{font-size:9.5px;letter-spacing:.05em;color:rgba(255,255,255,.4);margin:0}
-.exports b{color:rgba(255,255,255,.7);font-weight:400}
-.go{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#2d6cff;font-weight:700;margin-top:auto;padding-top:6px;transition:color 100ms ease}
-.dd-card-int:hover .go{color:#ff2d87}
-.dd-card-int:hover{box-shadow:0 8px 24px rgba(0,0,0,0.8), 0 0 0 1px rgba(45,108,255,0.3)}
-code{color:#00d9ff}
-::selection{background:#ff2d87;color:#000}
+.page-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+a {
+  color: #00d9ff;
+  transition: color 100ms ease;
+  text-decoration: none;
+}
+a:hover {
+  color: #ff2d87;
+}
+h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  font-size: 34px;
+  margin: 0 0 6px;
+}
+h1 em {
+  font-style: normal;
+  background: var(--grad-blue-pink);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.sub {
+  color: rgba(255,255,255,0.55);
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 64ch;
+  margin: 0 0 24px;
+}
+.chk {
+  height: 7px;
+  background-color: #ff6050;
+  background-image: linear-gradient(45deg, #2d6cff 25%, transparent 25%, transparent 75%, #2d6cff 75%),
+                    linear-gradient(45deg, #2d6cff 25%, transparent 25%, transparent 75%, #2d6cff 75%);
+  background-size: 14px 14px;
+  background-position: 0 0, 7px 7px;
+  margin: 0 0 0;
+}
+.chk-accent {
+  height: 2px;
+  background: var(--grad-blue-pink);
+  margin: 0 0 24px;
+}
+
+/* Static fallback & React card styling */
+.comp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+.comp-card {
+  font-family: 'Geist Mono', 'Red Hat Mono', monospace;
+  border: 1px solid rgba(255,255,255,0.14);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #111110;
+  color: #fff;
+  text-decoration: none;
+  min-height: 172px;
+  box-sizing: border-box;
+  transition: border-color .12s linear, box-shadow .12s ease, transform .12s ease;
+  cursor: pointer;
+  outline: none;
+}
+.comp-card:hover, .comp-card:focus-visible {
+  border-color: var(--card-accent, #2d6cff);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.85), 0 0 0 1px var(--card-accent, #2d6cff);
+  transform: translateY(-2px);
+}
+.comp-card-strip {
+  height: 6px;
+  flex: none;
+  background-color: var(--card-accent, #2d6cff);
+  background-image: linear-gradient(45deg, var(--card-accent, #2d6cff) 25%, transparent 25%, transparent 75%, var(--card-accent, #2d6cff) 75%),
+                    linear-gradient(45deg, var(--card-accent, #2d6cff) 25%, transparent 25%, transparent 75%, var(--card-accent, #2d6cff) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+}
+.comp-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.comp-card-lab {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.42);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.comp-card-code {
+  color: var(--card-accent, #2d6cff);
+  font-weight: 700;
+}
+.comp-card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1.15;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: #fff;
+}
+.comp-card-desc {
+  font-size: 11px;
+  line-height: 1.65;
+  margin: 0;
+  color: rgba(255,255,255,0.72);
+}
+.comp-card-exports {
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.4);
+  margin: 0;
+}
+.comp-card-exports b {
+  color: rgba(255,255,255,0.75);
+  font-weight: 400;
+}
+.comp-card-go {
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--card-accent, #2d6cff);
+  font-weight: 700;
+  margin-top: auto;
+  padding-top: 8px;
+  transition: color 100ms ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.comp-card:hover .comp-card-go {
+  color: #ff2d87;
+}
+
+/* Digidelic bundle styles */
+.p { font-size: 11px; line-height: 1.7; margin: 0 0 12px; opacity: 0.72; }
+.exports { font-size: 9.5px; letter-spacing: .05em; color: rgba(255,255,255,.4); margin: 0; }
+.exports b { color: rgba(255,255,255,.7); font-weight: 400; }
+.go { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: #2d6cff; font-weight: 700; margin-top: auto; padding-top: 6px; transition: color 100ms ease; }
+.dd-card-int:hover .go { color: #ff2d87; }
+.dd-card-int:hover { box-shadow: 0 10px 28px rgba(0,0,0,0.85), 0 0 0 1px var(--dd-hbd, #2d6cff); }
+code { color: #00d9ff; }
+::selection { background: #ff2d87; color: #000; }
 </style>
 </head>
 <body>
 <div class="ambient-ascii" aria-hidden="true"></div>
 <div class="page-content">
-<div class="chk"></div>
-<div class="chk-accent"></div>
-<h1>Components <em>// Spec</em></h1>
-<p class="sub">Seven source files, twenty-five exports. Each card opens that component's own demo page — every variant, surface and state, standalone.</p>
-<div id="root"></div>
+  <div class="chk"></div>
+  <div class="chk-accent"></div>
+  <h1>Components <em>// Spec</em></h1>
+  <p class="sub">Seven source files, twenty-five exports. Each card opens that component's own demo page — every variant, surface and state, standalone.</p>
+
+  <div id="root">
+    <!-- Resilient zero-flash static card grid matching the live design system -->
+    <div class="comp-grid">
+      <!-- Badge -->
+      <a href="/components/Badge/Badge.html" class="comp-card" id="card-Badge" style="--card-accent: #ff5a00;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xBG</span>
+          </div>
+          <h2 class="comp-card-title">Badge</h2>
+          <p class="comp-card-desc">Fixed-meaning status chips and seeded label chips — three surfaces.</p>
+          <p class="comp-card-exports"><b>Badge</b> · <b>BadgeCount</b> · <b>BadgeRow</b></p>
+          <div class="comp-card-go">view Badge →</div>
+        </div>
+      </a>
+
+      <!-- Emblem -->
+      <a href="/components/Emblem/Emblem.html" class="comp-card" id="card-Emblem" style="--card-accent: #00d9ff;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xEM</span>
+          </div>
+          <h2 class="comp-card-title">Emblem</h2>
+          <p class="comp-card-desc">Vector cosmogram rosettes, planetary armillaries, clovers, starbursts & stepped code emblems.</p>
+          <p class="comp-card-exports"><b>Emblem</b> · <b>EmblemBadge</b> · <b>EmblemCluster</b> · <b>EmblemGrid</b></p>
+          <div class="comp-card-go">view Emblem →</div>
+        </div>
+      </a>
+
+      <!-- Button -->
+      <a href="/components/Button/Button.html" class="comp-card" id="card-Button" style="--card-accent: #2d6cff;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xBT</span>
+          </div>
+          <h2 class="comp-card-title">Button</h2>
+          <p class="comp-card-desc">Seeded hue, four variants, flat texture and stepped motion — black, night and cream.</p>
+          <p class="comp-card-exports"><b>Button</b> · <b>ButtonRow</b></p>
+          <div class="comp-card-go">view Button →</div>
+        </div>
+      </a>
+
+      <!-- Card -->
+      <a href="/components/Card/Card.html" class="comp-card" id="card-Card" style="--card-accent: #39ff6a;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xCD</span>
+          </div>
+          <h2 class="comp-card-title">Card</h2>
+          <p class="comp-card-desc">Panel, raised, flat, accent and outline grounds — with checker trim and flat texture.</p>
+          <p class="comp-card-exports"><b>Card</b> · <b>CardSection</b> · <b>CardGrid</b></p>
+          <div class="comp-card-go">view Card →</div>
+        </div>
+      </a>
+
+      <!-- Field -->
+      <a href="/components/Field/Field.html" class="comp-card" id="card-Field" style="--card-accent: #c6ff3a;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xFD</span>
+          </div>
+          <h2 class="comp-card-title">Field</h2>
+          <p class="comp-card-desc">Inputs, selects, checkboxes — seeded focus ring, validation, three surfaces.</p>
+          <p class="comp-card-exports"><b>Field</b> · <b>Input</b> · <b>Select</b> · <b>Checkbox</b></p>
+          <div class="comp-card-go">view Field →</div>
+        </div>
+      </a>
+
+      <!-- NodeCard -->
+      <a href="/components/NodeCard/NodeCard.html" class="comp-card" id="card-NodeCard" style="--card-accent: #ff2d87;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xNC</span>
+          </div>
+          <h2 class="comp-card-title">NodeCard</h2>
+          <p class="comp-card-desc">The signature form — node panels, sector roll-ups, stat tiles, ASCII meters.</p>
+          <p class="comp-card-exports"><b>NodeCard</b> · <b>SectorCard</b> · <b>StatCard</b> · <b>NodeMeter</b></p>
+          <div class="comp-card-go">view NodeCard →</div>
+        </div>
+      </a>
+
+      <!-- Progress -->
+      <a href="/components/Progress/Progress.html" class="comp-card" id="card-Progress" style="--card-accent: #c800ff;">
+        <div class="comp-card-strip" aria-hidden="true"></div>
+        <div class="comp-card-body">
+          <div class="comp-card-lab">
+            <span>COMPONENT</span>
+            <span class="comp-card-code">0xPG</span>
+          </div>
+          <h2 class="comp-card-title">Progress</h2>
+          <p class="comp-card-desc">Solid bars, discrete segments, stacked breakdowns, ASCII meters and stepped spinners.</p>
+          <p class="comp-card-exports"><b>Progress</b> · <b>ProgressSegments</b> · <b>ProgressStack</b> · <b>ProgressAscii</b> · <b>Spinner</b></p>
+          <div class="comp-card-go">view Progress →</div>
+        </div>
+      </a>
+    </div>
+  </div>
 </div>
+
 <script>
-const { CardGrid, Card } = window.DigidelicDesignSystem_da5439;
-const { createElement: h, Fragment } = React;
+(function () {
+  const COMPONENTS = [
+    { slug: 'Badge', code: '0xBG', accent: '#ff5a00', blurb: 'Fixed-meaning status chips and seeded label chips — three surfaces.', exports: ['Badge', 'BadgeCount', 'BadgeRow'] },
+    { slug: 'Emblem', code: '0xEM', accent: '#00d9ff', blurb: 'Vector cosmogram rosettes, planetary armillaries, clovers, starbursts & stepped code emblems.', exports: ['Emblem', 'EmblemBadge', 'EmblemCluster', 'EmblemGrid'] },
+    { slug: 'Button', code: '0xBT', accent: '#2d6cff', blurb: 'Seeded hue, four variants, flat texture and stepped motion — black, night and cream.', exports: ['Button', 'ButtonRow'] },
+    { slug: 'Card', code: '0xCD', accent: '#39ff6a', blurb: 'Panel, raised, flat, accent and outline grounds — with checker trim and flat texture.', exports: ['Card', 'CardSection', 'CardGrid'] },
+    { slug: 'Field', code: '0xFD', accent: '#c6ff3a', blurb: 'Inputs, selects, checkboxes — seeded focus ring, validation, three surfaces.', exports: ['Field', 'Input', 'Select', 'Checkbox'] },
+    { slug: 'NodeCard', code: '0xNC', accent: '#ff2d87', blurb: 'The signature form — node panels, sector roll-ups, stat tiles, ASCII meters.', exports: ['NodeCard', 'SectorCard', 'StatCard', 'NodeMeter'] },
+    { slug: 'Progress', code: '0xPG', accent: '#c800ff', blurb: 'Solid bars, discrete segments, stacked breakdowns, ASCII meters and stepped spinners.', exports: ['Progress', 'ProgressSegments', 'ProgressStack', 'ProgressAscii', 'Spinner'] },
+  ];
 
-const COMPONENTS = [
-  { slug: 'Badge', blurb: 'Fixed-meaning status chips and seeded label chips — three surfaces.', exports: ['Badge', 'BadgeCount', 'BadgeRow'] },
-  { slug: 'Emblem', blurb: 'Vector cosmogram rosettes, planetary armillaries, clovers, starbursts & stepped code emblems.', exports: ['Emblem', 'EmblemBadge', 'EmblemCluster', 'EmblemGrid'] },
-  { slug: 'Button', blurb: 'Seeded hue, four variants, flat texture and stepped motion — black, night and cream.', exports: ['Button', 'ButtonRow'] },
-  { slug: 'Card', blurb: 'Panel, raised, flat, accent and outline grounds — with checker trim and flat texture.', exports: ['Card', 'CardSection', 'CardGrid'] },
-  { slug: 'Field', blurb: 'Inputs, selects, checkboxes — seeded focus ring, validation, three surfaces.', exports: ['Field', 'Input', 'Select', 'Checkbox'] },
-  { slug: 'NodeCard', blurb: 'The signature form — node panels, sector roll-ups, stat tiles, ASCII meters.', exports: ['NodeCard', 'SectorCard', 'StatCard', 'NodeMeter'] },
-  { slug: 'Progress', blurb: 'Solid bars, discrete segments, stacked breakdowns, ASCII meters and stepped spinners.', exports: ['Progress', 'ProgressSegments', 'ProgressStack', 'ProgressAscii', 'Spinner'] },
-];
+  function openComponent(slug) {
+    window.location.href = '/components/' + slug + '/' + slug + '.html';
+  }
 
-function open(slug) { location.href = `./${slug}/${slug}.html`; }
+  // Hydrate with React and live design system bundle if available
+  try {
+    if (window.React && window.ReactDOM && window.DigidelicDesignSystem_da5439) {
+      const { CardGrid, Card } = window.DigidelicDesignSystem_da5439;
+      if (CardGrid && Card) {
+        const h = React.createElement;
+        const Fragment = React.Fragment;
 
-function Demo() {
-  return h(CardGrid, { min: 260 },
-    ...COMPONENTS.map(c => h(Card, {
-      key: c.slug, id: c.slug, label: 'component', title: c.slug,
-      interactive: true, strip: true,
-      onClick: () => open(c.slug),
-      style: { minHeight: 168 },
-    },
-      h('p', { className: 'p' }, c.blurb),
-      h('p', { className: 'exports' }, c.exports.map((e, i) => h(Fragment, { key: e }, i > 0 ? ' · ' : '', h('b', null, e)))),
-      h('div', { className: 'go' }, `view ${c.slug} →`)
-    ))
-  );
-}
-ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+        function LiveDemo() {
+          return h(CardGrid, { min: 280, gap: 18 },
+            ...COMPONENTS.map(c => h(Card, {
+              key: c.slug,
+              id: 'card-' + c.slug,
+              label: 'component // ' + c.code,
+              title: c.slug,
+              interactive: true,
+              strip: true,
+              accent: c.accent,
+              onClick: () => openComponent(c.slug),
+              style: { minHeight: 172 }
+            },
+              h('p', { className: 'p' }, c.blurb),
+              h('p', { className: 'exports' }, c.exports.map((e, i) => h(Fragment, { key: e }, i > 0 ? ' · ' : '', h('b', null, e)))),
+              h('div', { className: 'go' }, 'view ' + c.slug + ' →')
+            ))
+          );
+        }
+
+        const rootEl = document.getElementById('root');
+        if (rootEl) {
+          ReactDOM.createRoot(rootEl).render(h(LiveDemo));
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[components] live React mount skipped, fallback active:', err);
+  }
+})();
 </script>
 <script src="/nav-node.js" defer></script>
 </body>

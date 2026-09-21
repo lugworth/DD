@@ -18,6 +18,25 @@
   if (window.__DIGIDELIC_NAV_NODE_MOUNTED__) return;
   window.__DIGIDELIC_NAV_NODE_MOUNTED__ = true;
 
+  // Safe storage wrappers to prevent SecurityError in sandboxes/iframes
+  function safeStorageGet(key, fallback) {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) return fallback;
+      const val = window.localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function safeStorageSet(key, value) {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, value);
+      }
+    } catch (_) {}
+  }
+
   // Navigation catalog of all digidelic tools, components, and kits
   const DESTINATIONS = [
     // Primary Hubs
@@ -58,10 +77,20 @@
     { id: 'fnd-nav', cat: 'docs', name: 'NAVIGATION SPEC', desc: 'Bars, rails, tabs, breadcrumbs', path: '/preview/components-nav.html', code: '0xNV' }
   ];
 
+  // Match path helper supporting clean URLs (with or without /index.html and trailing slashes)
+  function isCurrentPath(targetPath) {
+    const norm = p => (p || '').replace(/\/index\.html$/, '').replace(/\/$/, '') || '/';
+    const current = norm(window.location.pathname);
+    const target = norm(targetPath);
+    if (current === target) return true;
+    if (window.location.pathname && (window.location.pathname === targetPath || window.location.pathname.endsWith(targetPath))) return true;
+    return false;
+  }
+
   // Detect current location
   function getCurrentInfo() {
-    const p = window.location.pathname;
-    const match = DESTINATIONS.find(d => p.endsWith(d.path) || p === d.path);
+    const p = window.location.pathname || '';
+    const match = DESTINATIONS.find(d => isCurrentPath(d.path));
     if (match) return match;
     if (p.includes('/patchwork-generator')) return { name: 'PATCHWORK', code: '0x01' };
     if (p.includes('/cosmogram-generator')) return { name: 'COSMOGRAM', code: '0x02' };
@@ -70,7 +99,7 @@
     if (p.includes('/colony-display')) return { name: 'COLONY DISPLAY', code: '0x05' };
     if (p.includes('/circuit-matrix')) return { name: 'CIRCUIT MATRIX', code: '0x06' };
     if (p.includes('/components/Emblem')) return { name: 'EMBLEM BADGE', code: '0xEM' };
-    if (p.includes('/components/')) return { name: 'COMPONENTS', code: '0xCP' };
+    if (p.includes('/components')) return { name: 'COMPONENTS', code: '0xCP' };
     if (p.includes('/tools')) return { name: 'TOOLS RACK', code: '0xTL' };
     return { name: 'DIGIDELIC', code: '0xSYS' };
   }
@@ -653,7 +682,7 @@
     root.setAttribute('aria-label', 'Floating Navigation Node');
 
     const current = getCurrentInfo();
-    let isMinimized = localStorage.getItem('digidelic_nav_minimized') === 'true';
+    let isMinimized = safeStorageGet('digidelic_nav_minimized', 'false') === 'true';
     let currentFilter = 'all';
     let searchQuery = '';
 
@@ -676,7 +705,7 @@
         `;
         minBtn.addEventListener('click', () => {
           isMinimized = false;
-          localStorage.setItem('digidelic_nav_minimized', 'false');
+          safeStorageSet('digidelic_nav_minimized', 'false');
           render();
         });
         root.appendChild(minBtn);
@@ -753,7 +782,7 @@
             ${filtered.length === 0 ? `
               <div class="dd-nav-empty">no destinations match query_</div>
             ` : filtered.map(d => {
-              const isCurr = window.location.pathname.endsWith(d.path) || window.location.pathname === d.path;
+              const isCurr = isCurrentPath(d.path);
               return `
                 <a href="${d.path}" class="dd-nav-item ${isCurr ? 'is-current' : ''}">
                   ${getNavEmblemSvg(d.code, 15)}
@@ -799,7 +828,7 @@
           minTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
             isMinimized = true;
-            localStorage.setItem('digidelic_nav_minimized', 'true');
+            safeStorageSet('digidelic_nav_minimized', 'true');
             render();
           });
         }
@@ -940,11 +969,11 @@
       if (e.altKey && (e.key === 'n' || e.key === 'N')) {
         e.preventDefault();
         isMinimized = !isMinimized;
-        localStorage.setItem('digidelic_nav_minimized', isMinimized ? 'true' : 'false');
+        safeStorageSet('digidelic_nav_minimized', isMinimized ? 'true' : 'false');
         render();
       } else if (e.key === 'Escape' && !isMinimized) {
         isMinimized = true;
-        localStorage.setItem('digidelic_nav_minimized', 'true');
+        safeStorageSet('digidelic_nav_minimized', 'true');
         render();
       }
     });
@@ -953,10 +982,27 @@
     document.body.appendChild(root);
   }
 
-  // Mount when DOM is ready
+  // Mount when DOM is ready, with body guard
+  function safeMount() {
+    if (!document.body) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', safeMount, { once: true });
+      } else {
+        setTimeout(safeMount, 30);
+      }
+      return;
+    }
+    if (document.getElementById('dd-floating-nav-root')) return;
+    try {
+      initFloatingNav();
+    } catch (err) {
+      console.warn('[digidelic nav-node] failed to initialize:', err);
+    }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFloatingNav);
+    document.addEventListener('DOMContentLoaded', safeMount);
   } else {
-    initFloatingNav();
+    safeMount();
   }
 })();

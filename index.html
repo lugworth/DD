@@ -2,11 +2,108 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=/tools/index.html">
-  <title>digidelic — tools & design system</title>
-  <script>window.location.replace('/tools/index.html');</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="0; url=/tools/">
+  <title>Digidelic Design System</title>
+  <meta name="description" content="A saturated neon-on-void brand, UI system, and generative instrument rack with interactive tools and components.">
+  <meta property="og:title" content="Digidelic Design System">
+  <meta property="og:description" content="A saturated neon-on-void brand, UI system, and generative instrument rack with interactive tools and components.">
+  <link rel="canonical" href="/tools/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #050505;
+      --pink: #ff2d87;
+      --cyan: #00d9ff;
+      --yellow: #eaff00;
+      --white: #ffffff;
+      --white-dim: rgba(255, 255, 255, 0.45);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .brand {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      margin-bottom: 12px;
+    }
+    .brand em {
+      font-style: normal;
+      color: var(--pink);
+    }
+    .sub {
+      color: var(--white-dim);
+      font-size: 14px;
+      max-width: 440px;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+    .links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: transform 0.1s ease;
+    }
+    .btn-primary {
+      background: var(--pink);
+      color: #000;
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--white);
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+    .btn-primary:hover {
+      background: var(--cyan);
+    }
+    .loader {
+      margin-top: 32px;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--yellow);
+      text-transform: uppercase;
+    }
+  </style>
+  <script>
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+      window.location.replace('/tools/');
+    }
+  </script>
 </head>
 <body>
-  <p>Redirecting to <a href="/tools/index.html">digidelic tools</a>...</p>
+  <div class="brand">digi<em>delic</em></div>
+  <p class="sub">A saturated neon-on-void brand, UI system, and generative instrument rack with interactive tools and components.</p>
+  <div class="links">
+    <a href="/tools/" class="btn btn-primary">Launch Tools Rack →</a>
+    <a href="/components/" class="btn btn-secondary">Components Hub</a>
+  </div>
+  <div class="loader">Redirecting to instruments rack...</div>
+  <script src="/nav-node.js" defer></script>
 </body>
 </html>
