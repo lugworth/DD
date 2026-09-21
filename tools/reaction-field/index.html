@@ -144,10 +144,9 @@ canvas#c.painting{touch-action:none}
 .knob{
   position:absolute;top:50%;width:10px;height:14px;margin-top:-7px;margin-left:-5px;
   background:var(--white);border:1px solid var(--border-hi);pointer-events:none;
-  transition:transform .12s ease, background .12s ease, border-color .12s ease;
 }
 .slider:hover .knob{background:var(--cyan);border-color:#fff}
-.slider.active .knob{background:var(--cyan);transform:scale(1.2);border-color:#fff;box-shadow:0 0 8px rgba(0,217,255,.5)}
+.slider.active .knob{background:var(--cyan);border-color:#fff;box-shadow:0 0 8px rgba(0,217,255,.5)}
 .slider.active .sfill{background:var(--cyan)}
 .slider:focus-visible{outline:2px solid var(--cobalt);outline-offset:2px}
 
@@ -345,12 +344,12 @@ footer .fill{flex:1;border-right:0;text-align:right}
             <div class="swlab">Paper</div>
           </div>
           <div class="palette-pills">
-            <button data-ink="#39ff6a" data-paper="#000000" data-inv="false">Phosphor</button>
-            <button data-ink="#00d9ff" data-paper="#040a18" data-inv="false">UV Laser</button>
-            <button data-ink="#2d6cff" data-paper="#000000" data-inv="false">Cobalt</button>
-            <button data-ink="#ff2d87" data-paper="#050508" data-inv="false">Hot Coral</button>
-            <button data-ink="#000000" data-paper="#ffffff" data-inv="false">Zine B/W</button>
-            <button data-ink="#ff0026" data-paper="#0008ff" data-inv="false">Acid Red/Blue</button>
+            <button data-ink="#39ff6a" data-paper="#000000" data-inv="false" style="--pal-grad:linear-gradient(90deg, #000000, #39ff6a)"><span class="pal-chip"></span>Phosphor</button>
+            <button data-ink="#00d9ff" data-paper="#040a18" data-inv="false" style="--pal-grad:linear-gradient(90deg, #040a18, #00d9ff)"><span class="pal-chip"></span>UV Laser</button>
+            <button data-ink="#2d6cff" data-paper="#000000" data-inv="false" style="--pal-grad:linear-gradient(90deg, #000000, #2d6cff)"><span class="pal-chip"></span>Cobalt</button>
+            <button data-ink="#ff2d87" data-paper="#050508" data-inv="false" style="--pal-grad:linear-gradient(90deg, #050508, #ff2d87)"><span class="pal-chip"></span>Hot Coral</button>
+            <button data-ink="#000000" data-paper="#ffffff" data-inv="false" style="--pal-grad:linear-gradient(90deg, #ffffff, #000000)"><span class="pal-chip"></span>Zine B/W</button>
+            <button data-ink="#ff0026" data-paper="#0008ff" data-inv="false" style="--pal-grad:linear-gradient(90deg, #0008ff, #ff0026)"><span class="pal-chip"></span>Acid Red/Blue</button>
           </div>
           <label class="toggle" style="margin-top:8px"><input type="checkbox" id="invert"><span>Swap ink and paper</span></label>
         </div>
@@ -454,7 +453,7 @@ footer .fill{flex:1;border-right:0;text-align:right}
             <button id="restart">Restart</button>
           </div>
           <div class="row" style="margin-top:6px">
-            <button id="settle">⚡ Settle 1000 Gen</button>
+            <button id="settle">⚡ Settle 2500 Gen</button>
           </div>
           <div class="row" style="margin-top:6px">
             <select id="exportSize" aria-label="Export size">
@@ -507,6 +506,8 @@ const PRESETS = {
   "Labyrinth":  {feed:0.0290,kill:0.0570,dA:1.0,dB:0.5,detail:420,gradF:0,gradK:0,turb:0,weight:0.28},
   "Coral":      {feed:0.0545,kill:0.0620,dA:1.0,dB:0.5,detail:380,gradF:0,gradK:0,turb:0,weight:0.24},
   "Mitosis":    {feed:0.0367,kill:0.0649,dA:1.0,dB:0.5,detail:340,gradF:0,gradK:0,turb:0,weight:0.22},
+  "Bubbles":    {feed:0.0980,kill:0.0555,dA:1.0,dB:0.5,detail:360,gradF:0,gradK:0,turb:0,weight:0.28},
+  "Ferro":      {feed:0.0240,kill:0.0600,dA:1.0,dB:0.5,detail:480,gradF:0,gradK:0,turb:0,weight:0.32},
   "Worms":      {feed:0.0780,kill:0.0610,dA:1.0,dB:0.5,detail:400,gradF:0,gradK:0,turb:0,weight:0.26},
   "Voids":      {feed:0.0390,kill:0.0580,dA:1.0,dB:0.5,detail:230,gradF:0,gradK:0,turb:0,weight:0.34},
   "Flow":       {feed:0.0620,kill:0.0609,dA:1.0,dB:0.5,detail:430,gradF:0,gradK:0,turb:0,weight:0.26},
@@ -558,10 +559,13 @@ uniform sampler2D u_tex;
 uniform sampler2D u_mask;
 uniform vec2 u_texel;
 uniform float u_dA,u_dB,u_feed,u_kill,u_dt;
-uniform float u_gradF,u_gradK,u_turb,u_turbScale,u_seed,u_aspect,u_anchor;
+uniform float u_gradF,u_gradK,u_turb,u_turbScale,u_seed,u_aspect,u_anchor,u_glitch;
 ${NOISE}
 void main(){
   vec2 uv = v_uv, t = u_texel;
+  if(u_glitch > 0.0){
+    uv += (vec2(hash21(uv+u_seed), hash21(uv*1.1-u_seed))-0.5)*0.015*u_glitch;
+  }
   vec2 c  = texture(u_tex,uv).rg;
   vec2 w_ = texture(u_tex,uv+vec2(-t.x,0.0)).rg;
   vec2 e_ = texture(u_tex,uv+vec2( t.x,0.0)).rg;
@@ -867,6 +871,7 @@ function step(){
   gl.uniform1f(progSim.u.u_seed,P.seed);
   gl.uniform1f(progSim.u.u_aspect,P.aspect);
   gl.uniform1f(progSim.u.u_anchor, (P.seedMode===6 ? P.txAnchor : 0));
+  gl.uniform1f(progSim.u.u_glitch, document.body.classList.contains('glitch-active') ? 1.0 : 0.0);
   gl.uniform1i(progSim.u.u_tex,0);
   gl.uniform1i(progSim.u.u_mask,1);
   gl.activeTexture(gl.TEXTURE1);
@@ -1219,14 +1224,22 @@ const settleBtn = document.getElementById("settle");
 settleBtn.addEventListener("click",()=>{
   const save = P.steps;
   settleBtn.disabled = true; settleBtn.textContent = "⚡ Settling…";
-  P.steps = 100;
+  P.steps = 50;
   if(window.DigiSynth) window.DigiSynth.glitch();
-  requestAnimationFrame(()=>{
-    for(let i=0;i<10;i++) step();
-    P.steps = save;
-    render();
-    settleBtn.disabled = false; settleBtn.textContent = "⚡ Settle 1000 Gen";
-  });
+  let done = 0;
+  const target = 50; // 50 * 50 = 2500 steps
+  function loop(){
+    for(let i=0;i<5;i++){ step(); done++; }
+    settleBtn.textContent = `⚡ Settling ${Math.round(done/target*100)}%`;
+    if(done < target) requestAnimationFrame(loop);
+    else {
+      P.steps = save;
+      render();
+      settleBtn.disabled = false; settleBtn.textContent = "⚡ Settle 2500 Gen";
+      if(window.DigiSynth) window.DigiSynth.chord(400, [1, 1.5, 2]);
+    }
+  }
+  loop();
 });
 
 let running = true;

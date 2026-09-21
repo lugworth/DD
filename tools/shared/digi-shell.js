@@ -27,128 +27,19 @@
   class CyberSynth {
     constructor() {
       this.ctx = null;
-      this.muted = localStorage.getItem('digi_sound_muted') === 'true';
+      this.muted = true;
       this.masterGain = null;
-      this._boundInit = this.init.bind(this);
-      window.addEventListener('pointerdown', this._boundInit, { once: true });
-      window.addEventListener('keydown', this._boundInit, { once: true });
     }
 
-    init() {
-      if (this.ctx) return;
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AudioContext();
-        this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.setValueAtTime(this.muted ? 0 : 0.15, this.ctx.currentTime);
-        this.masterGain.connect(this.ctx.destination);
-      } catch (e) {
-        console.warn('[DigiSynth] AudioContext unavailable:', e);
-      }
-    }
-
-    ensureContext() {
-      if (!this.ctx) this.init();
-      if (this.ctx && this.ctx.state === 'suspended') {
-        this.ctx.resume();
-      }
-    }
-
-    setMute(muted) {
-      this.muted = muted;
-      localStorage.setItem('digi_sound_muted', muted ? 'true' : 'false');
-      if (this.masterGain && this.ctx) {
-        this.masterGain.gain.setValueAtTime(muted ? 0 : 0.15, this.ctx.currentTime);
-      }
-      return this.muted;
-    }
-
-    toggleMute() {
-      return this.setMute(!this.muted);
-    }
-
-    click(pitch = 1200) {
-      if (this.muted) return;
-      this.ensureContext();
-      if (!this.ctx) return;
-
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(pitch, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.025);
-
-      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.025);
-
-      osc.connect(gain);
-      gain.connect(this.masterGain);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.03);
-    }
-
-    blip(freq = 640) {
-      if (this.muted) return;
-      this.ensureContext();
-      if (!this.ctx) return;
-
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.06);
-
-      osc.connect(gain);
-      gain.connect(this.masterGain);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.07);
-    }
-
-    glitch() {
-      if (this.muted) return;
-      this.ensureContext();
-      if (!this.ctx) return;
-
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      const now = this.ctx.currentTime;
-      osc.frequency.setValueAtTime(220, now);
-      osc.frequency.linearRampToValueAtTime(1400, now + 0.02);
-      osc.frequency.linearRampToValueAtTime(80, now + 0.06);
-
-      gain.gain.setValueAtTime(0.25, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-
-      osc.connect(gain);
-      gain.connect(this.masterGain);
-      osc.start();
-      osc.stop(now + 0.08);
-    }
-
-    chord(base = 220, intervals = [1, 1.25, 1.5]) {
-      if (this.muted) return;
-      this.ensureContext();
-      if (!this.ctx) return;
-
-      const now = this.ctx.currentTime;
-      intervals.forEach(ratio => {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(base * ratio, now);
-
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
-        osc.connect(gain);
-        gain.connect(this.masterGain);
-        osc.start(now);
-        osc.stop(now + 0.38);
-      });
-    }
+    init() {}
+    ensureContext() {}
+    setMute() { return true; }
+    toggleMute() { return true; }
+    click() {}
+    blip() {}
+    glitch() {}
+    whoosh() {}
+    chord() {}
   }
 
   const synth = new CyberSynth();
@@ -160,7 +51,39 @@
     const path = window.location.pathname;
     const currentTool = TOOLS.find(t => path.includes('/' + t.slug)) || null;
 
-    // 1. Inject Top Checkerboard Trim if not already in document
+    // 1. Inject Boot Overlay
+    if (!document.querySelector('.digi-boot-overlay')) {
+      const overlay = document.createElement('div');
+      overlay.className = 'digi-boot-overlay';
+      overlay.innerHTML = `
+        <div class="boot-terminal">
+          <div class="boot-line">> INITIALIZING NEURAL_LINK...</div>
+          <div class="boot-line">> ALLOCATING VIDEO_BUFFER...</div>
+          <div class="boot-line">> SYNCING_INSTRUMENT_RACK...</div>
+          <div class="boot-line">> ${currentTool ? currentTool.name.toUpperCase() : 'SYSTEM'} ONLINE.</div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      // Trigger animation if first load in session
+      if (!sessionStorage.getItem('digi_booted')) {
+        overlay.classList.add('is-active');
+        const lines = overlay.querySelectorAll('.boot-line');
+        lines.forEach((line, i) => {
+          setTimeout(() => {
+            line.classList.add('typing');
+            synth.click(800 + i * 200);
+          }, 400 + i * 250);
+        });
+        setTimeout(() => {
+          overlay.classList.remove('is-active');
+          sessionStorage.setItem('digi_booted', 'true');
+          synth.chord(400, [1, 1.25, 1.5, 2]);
+        }, 1800);
+      }
+    }
+
+    // 2. Inject Top Checkerboard Trim if not already in document
     if (!document.querySelector('.chk-strip')) {
       const strip = document.createElement('div');
       strip.className = 'chk-strip';
@@ -234,7 +157,7 @@
       const btn = switcherWrap.querySelector('#digiToolSwitcherBtn');
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        synth.click(900);
+        synth.whoosh(0.3);
         const isOpen = switcherWrap.classList.toggle('is-open');
         btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       });
@@ -252,12 +175,8 @@
       const toggles = document.createElement('div');
       toggles.className = 'hud-quick-toggles';
 
-      const audioActive = !synth.muted;
+      const audioActive = false;
       toggles.innerHTML = `
-        <button type="button" class="hud-btn ${audioActive ? 'is-active' : ''}" id="btnAudioToggle" title="Toggle cybernetic synthesized audio feedback">
-          <span>🔊</span>
-          <span class="lbl">${audioActive ? 'SOUND ON' : 'MUTED'}</span>
-        </button>
         <button type="button" class="hud-btn" id="btnGlitchToggle" title="Toggle RGB glitch & chromatic sync shift">
           <span>⚡</span>
           <span>GLITCH</span>
@@ -276,14 +195,6 @@
       }
 
       // Wire Toggles
-      const btnAudio = toggles.querySelector('#btnAudioToggle');
-      btnAudio.addEventListener('click', () => {
-        const isMuted = synth.toggleMute();
-        btnAudio.classList.toggle('is-active', !isMuted);
-        btnAudio.querySelector('.lbl').textContent = isMuted ? 'MUTED' : 'SOUND ON';
-        if (!isMuted) synth.blip(880);
-      });
-
       const btnGlitch = toggles.querySelector('#btnGlitchToggle');
       btnGlitch.addEventListener('click', () => {
         synth.glitch();
@@ -299,37 +210,11 @@
       });
     }
 
-    // 5. Wire Interactive Slider Audio Feedback & Button Feedback
-    document.querySelectorAll('input[type=range]').forEach(slider => {
-      let lastVal = slider.value;
-      slider.addEventListener('input', () => {
-        if (Math.abs(slider.value - lastVal) > 1) {
-          lastVal = slider.value;
-          synth.click(600 + Math.min(1200, slider.value * 8));
-        }
-      });
-    });
-
-    document.querySelectorAll('button:not(.hud-btn):not(.tool-switcher-btn)').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.classList.contains('primary') || btn.id.includes('random') || btn.id.includes('seed')) {
-          synth.chord(300, [1, 1.33, 1.5, 2]);
-        } else {
-          synth.click(950);
-        }
-      });
-    });
-
-    // 6. Global Keyboard Shortcuts
+    // 5. Global Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       // Don't intercept if user is typing in an input or textarea
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
 
-      // 'M' -> toggle sound
-      if (e.key === 'm' || e.key === 'M') {
-        const btn = document.getElementById('btnAudioToggle');
-        if (btn) btn.click();
-      }
       // 'G' -> toggle glitch
       if (e.key === 'g' || e.key === 'G') {
         const btn = document.getElementById('btnGlitchToggle');

@@ -147,20 +147,18 @@ input[type=range]::-webkit-slider-runnable-track{
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
   background:var(--white);border:0;
-  transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
+  will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,
 input[type=range]:active::-webkit-slider-thumb{background:var(--cobalt)}
-input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
 input[type=range]::-moz-range-track{
   height:2px;background:linear-gradient(90deg,var(--cobalt) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow);
 }
 input[type=range]::-moz-range-thumb{
   width:12px;height:12px;background:var(--white);border:0;border-radius:0;
-  transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
+  will-change:transform;
 }
 input[type=range]:hover::-moz-range-thumb{background:var(--cobalt)}
-input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 /* segmented control */
 .seg{display:flex;border:1px solid var(--border-hi)}
@@ -272,12 +270,12 @@ footer .fill{flex:1;border-right:0;text-align:right}
           <div class="param">
             <div class="lab"><span class="name">Palette</span></div>
             <div class="seg" id="segPalette" role="group" aria-label="palette" style="flex-wrap:wrap">
-              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
-              <button data-pal="night" style="flex:1 1 30%">Night</button>
-              <button data-pal="thermal" style="flex:1 1 30%">Thermal</button>
-              <button data-pal="acid" style="flex:1 1 30%">Acid</button>
-              <button data-pal="paradise" style="flex:1 1 30%">Paradise</button>
-              <button data-pal="mono" style="flex:1 1 30%">Mono</button>
+              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, #2d6cff, #ff2d87, #39ff6a, #00d9ff)"><span class="pal-chip"></span>Digidelic</button>
+              <button data-pal="night" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, #1a1a1a, #2d6cff, #ff2d87)"><span class="pal-chip"></span>Night</button>
+              <button data-pal="thermal" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, #ff5a00, #ff0066, #ffd028, #00d9ff, #ffffff)"><span class="pal-chip"></span>Thermal</button>
+              <button data-pal="acid" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, #39ff6a, #eaff00, #00d9ff, #ffffff, #1f52d6)"><span class="pal-chip"></span>Acid</button>
+              <button data-pal="paradise" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, #d7402b, #2e62b5, #e8721c, #f2c230, #41773c, #a9c7e6)"><span class="pal-chip"></span>Paradise</button>
+              <button data-pal="mono" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, #ffffff, #222222, #555555)"><span class="pal-chip"></span>Mono</button>
             </div>
           </div>
           <div class="param">

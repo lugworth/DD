@@ -1,6 +1,6 @@
 {
-  "name": "Digidelic Design System",
-  "description": "A saturated neon-on-void brand, UI system, and generative instrument rack with interactive tools and components.",
-  "requestFramePermissions": [],
+  "name": "Digidelic Instrument Rack",
+  "description": "A unified cybernetic design system and generative instrument rack featuring 13 canonical tools for audiovisual synthesis, growth simulation, and procedural graphics.",
+  "requestFramePermissions": ["camera", "microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -4,6 +4,19 @@
  * CRT/glitch phosphor stages, and zero-radius enforcement across all tools.
  */
 
+:root{
+  --black:#000; --black-soft:#0a0a0a; --black-panel:#111110; --black-raised:#1a1a18;
+  --white:#fff; --white-soft:rgba(255,255,255,.86); --white-dim:rgba(255,255,255,.42); --white-ghost:rgba(255,255,255,.12);
+  --yellow:#eaff00; --pink:#ff2d87; --green:#39ff6a; --blue:#2d4cff; --cyan:#00d9ff; --cobalt:#2d6cff;
+  --border:var(--white-ghost); --border-hi:rgba(255,255,255,.25);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-mono:'Geist Mono','Red Hat Mono','Courier New',monospace;
+  --d-fast:100ms; --d-base:160ms;
+  --e-snap:cubic-bezier(.2,0,0,1); --e-flow:cubic-bezier(.16,1,.3,1);
+  --e-tactile:cubic-bezier(0.34, 1.56, 0.64, 1);
+  --d-tactile:0.25s;
+}
+
 /* Canonical Digidelic Top Checkerboard Trim */
 .chk-strip {
   height: 7px;
@@ -38,6 +51,74 @@
   mix-blend-mode: hard-light;
   opacity: 0.055;
   filter: contrast(180%) brightness(120%);
+  animation: digiAsciiBreath 20s ease-in-out infinite;
+}
+@keyframes digiAsciiBreath {
+  0%, 100% { opacity: 0.045; }
+  50% { opacity: 0.07; }
+}
+
+/* Boot Sequence Overlay */
+.digi-boot-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-mono, monospace);
+  color: #39ff6a;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.digi-boot-overlay.is-active {
+  opacity: 1;
+  pointer-events: all;
+}
+.boot-terminal {
+  width: 400px;
+  max-width: 90vw;
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.05em;
+}
+.boot-line {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  margin-bottom: 2px;
+}
+.boot-line.done { width: 100%; }
+.boot-line.typing {
+  animation: digiType 0.1s steps(20, end) forwards;
+}
+@keyframes digiType {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Scanline Heartbeat */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(45, 108, 255, 0.15);
+  box-shadow: 0 0 10px rgba(45, 108, 255, 0.5);
+  z-index: 9999;
+  pointer-events: none;
+  animation: digiScanline 8s linear infinite;
+  opacity: 0;
+}
+body.crt-active::before { opacity: 1; }
+@keyframes digiScanline {
+  0% { top: -2%; }
+  100% { top: 102%; }
 }
 
 /* Tool Switcher Component */
@@ -195,6 +276,46 @@ body.crt-active .stage::after {
               linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
   background-size: 100% 3px, 6px 100%;
   z-index: 30;
+}
+
+/* Palette Preview Chips */
+.seg button .pal-chip,
+.palette-pills button .pal-chip {
+  display: block;
+  height: 3px;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--pal-grad, transparent);
+  pointer-events: none;
+}
+.seg button,
+.palette-pills button {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Tactile Slider Thumb Feedback */
+input[type=range]::-webkit-slider-thumb {
+  transition: transform var(--d-tactile) var(--e-tactile), background var(--d-tactile) ease !important;
+}
+input[type=range]:active::-webkit-slider-thumb {
+  transform: scale(1.35) !important;
+}
+input[type=range]::-moz-range-thumb {
+  transition: transform var(--d-tactile) var(--e-tactile), background var(--d-tactile) ease !important;
+}
+input[type=range]:active::-moz-range-thumb {
+  transform: scale(1.35) !important;
+}
+
+/* Custom UI Knob Feedback (e.g. Reaction Field) */
+.knob, .slider-knob {
+  transition: transform var(--d-tactile) var(--e-tactile), background var(--d-tactile) ease, border-color var(--d-tactile) ease !important;
+}
+.slider.active .knob, .slider:active .knob {
+  transform: scale(1.35) !important;
 }
 
 /* Enforce Zero Radius Everywhere */

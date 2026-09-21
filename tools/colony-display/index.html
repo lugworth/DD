@@ -112,15 +112,13 @@ input[type=range]{
 input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-5px;
-  background:var(--white);border:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform;
+  background:var(--white);border:0;will-change:transform;
 }
 input[type=range]:hover::-webkit-slider-thumb,
 input[type=range]:active::-webkit-slider-thumb{background:var(--yellow)}
-input[type=range]:active::-webkit-slider-thumb{transform:scale(1.18)}
 input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--yellow) var(--p),var(--white-ghost) var(--p));transition:background 90ms var(--e-flow)}
-input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0;transition:transform 90ms var(--e-flow),background var(--d-fast) var(--e-snap),box-shadow 120ms ease;will-change:transform}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--white);border:0;border-radius:0;will-change:transform}
 input[type=range]:hover::-moz-range-thumb{background:var(--yellow)}
-input[type=range]:active::-moz-range-thumb{transform:scale(1.18)}
 
 .seg{display:flex;border:1px solid var(--border-hi)}
 .seg button{flex:1;border:0;border-right:1px solid var(--border);height:32px;font-size:10px;letter-spacing:.16em}
@@ -232,6 +230,9 @@ footer .fill{flex:1;border-right:0;text-align:right}
             <div class="lab"><span class="name">S</span><span class="val" id="ruleSDisplay">3</span></div>
             <div class="seg" id="segSurvive" style="height:28px"></div>
           </div>
+          <div class="row" style="margin-top:14px">
+            <button id="btnMutate" style="width:100%">⚡ Mutate Rules</button>
+          </div>
         </div>
 
         <div class="sect">
@@ -263,11 +264,11 @@ footer .fill{flex:1;border-right:0;text-align:right}
           <div class="param">
             <div class="lab"><span class="name">Palette</span></div>
             <div class="seg" id="segPalette" role="group" aria-label="palette" style="flex-wrap:wrap">
-              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%">Digidelic</button>
-              <button data-pal="biolum" style="flex:1 1 30%">Biolum</button>
-              <button data-pal="plasma" style="flex:1 1 30%">Plasma</button>
-              <button data-pal="phosphor" style="flex:1 1 30%">Phosphor</button>
-              <button data-pal="amber" style="flex:1 1 30%">Amber</button>
+              <button data-pal="digidelic" class="is-active" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, rgb(30,35,5), rgb(234,255,0), rgb(255,255,240))"><span class="pal-chip"></span>Digidelic</button>
+              <button data-pal="biolum" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, rgb(8,45,20), rgb(57,255,106), rgb(210,255,230))"><span class="pal-chip"></span>Biolum</button>
+              <button data-pal="plasma" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, rgb(50,10,40), rgb(255,45,135), rgb(255,220,240))"><span class="pal-chip"></span>Plasma</button>
+              <button data-pal="phosphor" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, #021a0a, #39ff6a, #ffffff)"><span class="pal-chip"></span>Phosphor</button>
+              <button data-pal="amber" style="flex:1 1 30%; --pal-grad:linear-gradient(90deg, #1a0f02, #ff8c00, #fff0e0)"><span class="pal-chip"></span>Amber</button>
             </div>
           </div>
           <div class="param">
@@ -1332,6 +1333,20 @@ function wireRules() {
     state.birthRule = parse(b);
     state.surviveRule = parse(s);
     document.querySelectorAll('#segRules button').forEach(b => b.classList.toggle('is-active', b === btn));
+    syncRuleButtons();
+    pushHistory();
+  });
+  document.getElementById('btnMutate').addEventListener('click', () => {
+    const mutate = (mask) => {
+      let m = mask;
+      for (let i = 0; i <= 8; i++) {
+        if (Math.random() < 0.1) m ^= (1 << i);
+      }
+      return m;
+    };
+    state.birthRule = mutate(state.birthRule);
+    state.surviveRule = mutate(state.surviveRule);
+    if (window.DigiSynth) window.DigiSynth.glitch();
     syncRuleButtons();
     pushHistory();
   });
