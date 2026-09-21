@@ -359,6 +359,10 @@ const PALETTES={
   },
 };
 
+/* ═══════════════════ RULES ═══════════════════ */
+const isB = (p, n) => (p.birthRule & (1 << n)) !== 0;
+const isS = (p, n) => (p.surviveRule & (1 << n)) !== 0;
+
 /* ═══════════════════ STATE ═══════════════════ */
 const state={
   seed:(Math.random()*0xffffffff)>>>0,
@@ -369,8 +373,8 @@ const state={
   gen:0,
   sugar:3,
   sulfate:3,
-  birthRule:3,
-  surviveRule:3,
+  birthRule: 8,      // B3  (1 << 3)
+  surviveRule: 12,   // S23 (1 << 2 | 1 << 3)
 };
 const sliders=['density','vitality','decay','tempo','grid','diffusion','glow','dotsize','ripples','sugar','sulfate'];
 function params(){
@@ -381,9 +385,8 @@ function params(){
     grid:g('grid')|0, diffusion:g('diffusion')/100,
     glow:g('glow')/100, dotsize:g('dotsize')/100,
     ripples:g('ripples')/100,
+    sugar:g('sugar'), sulfate:g('sulfate'),
     palette:state.palette,
-    sugar:state.sugar,
-    sulfate:state.sulfate,
     birthRule:state.birthRule,
     surviveRule:state.surviveRule,
   };
@@ -500,7 +503,6 @@ function step(p){
         if(p.sugar===8 && !salt) u[i]+=0.04;
       }
     }
-    cell(y0,ym,yp,N-1,N-2,0);
     cell(y0,ym,yp,N-1,N-2,0);
   }
   sim.next=sim.alive; sim.alive=next;
@@ -910,10 +912,16 @@ function recordClip(){
 function serializeState(){
   const vals={};
   sliders.forEach(id=>{ vals[id]=document.getElementById(id).value; });
-  return {seed:state.seed,palette:state.palette,sound:state.sound,dotEngine:state.dotEngine,vals};
+  return {
+    seed:state.seed, palette:state.palette, sound:state.sound, dotEngine:state.dotEngine,
+    birthRule:state.birthRule, surviveRule:state.surviveRule,
+    vals
+  };
 }
 function applyState(s){
   state.seed=s.seed; state.palette=s.palette; state.sound=!!s.sound;
+  if(s.birthRule!==undefined) state.birthRule=s.birthRule;
+  if(s.surviveRule!==undefined) state.surviveRule=s.surviveRule;
   sliders.forEach(id=>{
     if(s.vals[id]===undefined) return;
     const el=document.getElementById(id);
@@ -925,6 +933,7 @@ function applyState(s){
     document.querySelectorAll('#segEngine button').forEach(b=>b.classList.toggle('is-active',b.dataset.eng===s.dotEngine));
     setDotEngine(s.dotEngine);
   }
+  if(typeof syncRuleButtons==='function') syncRuleButtons();
   canvas.style.background=PALETTES[state.palette].bg;
   reseed(params());
   updateSeedDisplay();
@@ -1272,6 +1281,63 @@ wireSeg('segSound','snd',v=>{
   state.sound=v==='on';
   if(state.sound&&audio&&audio.ctx.state==='suspended') audio.ctx.resume();
 });
+
+function syncRuleButtons() {
+  const sync = (id, rule) => {
+    document.querySelectorAll(`#${id} button`).forEach(btn => {
+      btn.classList.toggle('is-active', (rule & (1 << parseInt(btn.dataset.n))) !== 0);
+    });
+  };
+  sync('segBirth', state.birthRule);
+  sync('segSurvive', state.surviveRule);
+  const getStr = rule => {
+    let str = '';
+    for (let i = 0; i <= 8; i++) if ((rule & (1 << i)) !== 0) str += i;
+    return str || '·';
+  };
+  document.getElementById('ruleBDisplay').textContent = getStr(state.birthRule);
+  document.getElementById('ruleSDisplay').textContent = getStr(state.surviveRule);
+}
+
+function wireRules() {
+  const populate = (id, ruleKey, displayId) => {
+    const el = document.getElementById(id);
+    const display = document.getElementById(displayId);
+    for (let i = 0; i <= 8; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.dataset.n = i;
+      btn.addEventListener('click', () => {
+        state[ruleKey] ^= (1 << i);
+        syncRuleButtons();
+        pushHistory();
+      });
+      el.appendChild(btn);
+    }
+  };
+  populate('segBirth', 'birthRule', 'ruleBDisplay');
+  populate('segSurvive', 'surviveRule', 'ruleSDisplay');
+
+  document.getElementById('segRules').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const rule = btn.dataset.rule;
+    let b, s;
+    if (rule === 'coral') { b = "3"; s = "45678"; }
+    else { [b, s] = rule.split('/'); }
+    const parse = str => {
+      let mask = 0;
+      for (const char of str) mask |= (1 << parseInt(char));
+      return mask;
+    };
+    state.birthRule = parse(b);
+    state.surviveRule = parse(s);
+    document.querySelectorAll('#segRules button').forEach(b => b.classList.toggle('is-active', b === btn));
+    syncRuleButtons();
+    pushHistory();
+  });
+  syncRuleButtons();
+}
+wireRules();
 
 function updateSeedDisplay(){
   const hex='0x'+state.seed.toString(16).padStart(8,'0').toUpperCase();
