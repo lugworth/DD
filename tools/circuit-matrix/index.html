@@ -285,7 +285,6 @@ footer .fill{flex:1;border-right:0;text-align:right}
         <button id="btnGif" title="capture a 3s looping GIF">◉ GIF 3s</button>
         <button id="btnMp4" title="capture 6s as MP4 — plays inline where WebM does not">▣ MP4 6s</button>
         <button id="btnShare" hidden>⇪ Share</button>
-        <button id="btnExport" class="primary">▶ Export PNG</button>
         <button id="btnExportSVG" title="export traces, pads and modules as SVG">◈ Export SVG</button>
       </div>
     </aside>
@@ -724,9 +723,9 @@ function boardToSVG(p){
     const d=el.cells.map((i,idx)=>{
       const x=(i%W)*cell, y=(Math.floor(i/W))*cell;
       return (idx===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1);
-    }).join(' ')+'Z';
+    }).join(' ');
     path.setAttribute('d',d);
-    path.setAttribute('fill',color);
+    path.setAttribute('fill','none');
     path.setAttribute('stroke',color);
     path.setAttribute('stroke-width',Math.max(0.4,cell*0.18).toFixed(3));
     path.setAttribute('stroke-linejoin','round');
@@ -805,18 +804,6 @@ function frame(tNow){
   requestAnimationFrame(frame);
 }
 
-/* ═══════════════════ TOUCH — solder a trace where you point ═══ */
-canvas.addEventListener('pointerdown',ev=>{
-  const rect=canvas.getBoundingClientRect();
-  const x=((ev.clientX-rect.left)/rect.width*board.W)|0;
-  const y=((ev.clientY-rect.top)/rect.height*board.H)|0;
-  const p=params();
-  for(let k=0;k<3;k++) spawnWalker(p,
-    Math.max(1,Math.min(board.W-2,x+((board.rnd()*5)|0)-2)),
-    Math.max(1,Math.min(board.H-2,y+((board.rnd()*5)|0)-2)));
-  dirty=true;
-});
-
 /* ═══════════════════ SHELL INTEGRATION ═══════════════════ */
 function getSliderVals() {
   const vals={};
@@ -833,25 +820,28 @@ function flashStatus(msg){
   flashStatus._t=setTimeout(()=>{ el.textContent=prev; },1600);
 }
 
+function applyState(s) {
+  state.seed=s.seed; state.palette=s.palette; state.format=s.format;
+  sliders.forEach(id=>{
+    if(s.vals[id]===undefined) return;
+    const el=document.getElementById(id);
+    if (!el) return;
+    el.value=s.vals[id];
+    if (rack) rack.syncSlider(el);
+  });
+  document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
+  document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===state.format));
+  canvas.style.background=PALETTES[state.palette].bg;
+  reseed(params());
+  if (rack) rack.updateSeedDisplay();
+  saveProject('circuit-matrix', { seed: state.seed, settings: s.vals, schemaVersion: 1, toolId: 'circuit-matrix' });
+}
+
 const history = createHistoryManager(
   () => {
     return { seed: state.seed, palette: state.palette, format: state.format, vals: getSliderVals() };
   },
-  (s) => {
-    state.seed=s.seed; state.palette=s.palette; state.format=s.format;
-    sliders.forEach(id=>{
-      if(s.vals[id]===undefined) return;
-      const el=document.getElementById(id);
-      el.value=s.vals[id];
-      rack.syncSlider(el);
-    });
-    document.querySelectorAll('#segPalette button').forEach(b=>b.classList.toggle('is-active',b.dataset.pal===state.palette));
-    document.querySelectorAll('#segFormat button').forEach(b=>b.classList.toggle('is-active',b.dataset.fmt===state.format));
-    canvas.style.background=PALETTES[state.palette].bg;
-    reseed(params());
-    rack.updateSeedDisplay();
-    saveProject('circuit-matrix', { seed: state.seed, settings: s.vals, schemaVersion: 1, toolId: 'circuit-matrix' });
-  }
+  applyState
 );
 
 const exportMgr = new ExportManager(canvas, () => {
@@ -877,7 +867,6 @@ const rack = createParameterRack({
   seedReadoutId: 'seedReadout',
   cornerSeedId: 'cornerSeed',
   formatSegId: 'segFormat',
-  paletteSegId: 'segPalette',
   terminalSegId: 'segTerminal',
   syncSliderCb: (el, out, v) => {
     if(['spawn','straight','pads','modules','turnover','glow','dotsize','zones'].includes(el.id)) out.textContent=v+'%';
@@ -897,7 +886,7 @@ const rack = createParameterRack({
   recordGIFCb: () => exportMgr.recordGIF({ duration: 3000, fps: 12 }),
   recordMP4Cb: () => exportMgr.recordMP4({ duration: 6000, fps: 30 }),
   copyPermalinkCb: () => {
-    history.fitCanvas();
+    rack.fitCanvas();
     navigator.clipboard?.writeText(location.href).then(
       () => flashStatus('link copied_'),
       () => flashStatus('copy link failed_')
@@ -1059,7 +1048,7 @@ initAccessibility();
 {
   const fromLink = location.hash ? history.decodeState(location.hash.slice(1)) : null;
   if (fromLink) {
-    history.applyState(fromLink);
+    applyState(fromLink);
   } else {
     loadProject('circuit-matrix').then(proj => {
       if (proj && proj.settings) {

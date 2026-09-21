@@ -734,11 +734,20 @@ function SectorsView() {
               </div>
             </div>
             {/* SEGMENTED STATUS RIBBON — data rendered AS color blocks */}
-            <div style={{display:'flex', height:10, margin:'0'}}>
+            <div style={{padding:'8px 12px', display:'flex', flexDirection:'column', gap:4}}>
               {byStatus.map(s=>(
-                <div key={s.id} title={`${s.label} ${s.count}`} style={{width:`${(s.count/nodes.length)*100}%`, background:s.color}}/>
+                <div key={s.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <span style={{fontSize:8, color:C.fg4, letterSpacing:'0.12em'}}>{s.label}</span>
+                  <span style={{fontSize:9, color:s.color, fontWeight:700}}>{s.count}</span>
+                </div>
               ))}
             </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 // ── TELEMETRY & DATA VIZ VIEW (DIGIDELIC VISUAL SYSTEM) ───────────
 function TelemetryVizView({ sector }) {
   const [anomaly, setAnomaly] = useState(0);
