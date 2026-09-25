@@ -21,6 +21,7 @@ export function createParameterRack(config) {
     cornerSeedId,
     formatSegId,
     paletteSegId,
+    terminalSegId,
     syncSliderCb,
     reseedCb,
     exportPNGCb,
@@ -107,7 +108,7 @@ export function createParameterRack(config) {
   });
 
   // URL sync
-  function fitCanvas() { history.replaceState(null, '', '#' + encodeStateCb()); }
+  function fitCanvas() { window.history.replaceState(null, '', '#' + encodeStateCb()); }
 
   // Boot from URL hash
   const fromLink = location.hash ? decodeStateCb(location.hash.slice(1)) : null;
